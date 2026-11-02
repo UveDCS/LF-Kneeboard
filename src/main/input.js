@@ -41,13 +41,16 @@ class Input extends EventEmitter {
     this.devices = new Map();
     this.capturing = null;
     this.proc = null;
+    this.tablets = new Map(); // tid → { id, name, mx, my, mp, ab, devId }
+    this.tabletStatus = { state: 'no-server', server: '' };
     this.stopped = false;
   }
 
-  start() {
+  start(args = this.args || []) {
+    this.args = args;
     this.stopped = false;
     try {
-      this.proc = spawn(this.exePath, [], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+      this.proc = spawn(this.exePath, args, { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
     } catch (e) {
       this.emit('log', `No se pudo iniciar el lector de controles: ${e.message}`);
       return;
@@ -77,7 +80,52 @@ class Input extends EventEmitter {
     }
   }
 
+  // Tabletas gráficas por OTD-IPC (ver native/input-helper/tablet.c). Los botones de la tableta son botones de
+  // un mando más (se asignan en Controles); el lápiz se manda aparte como «tablet».
+  tabletInfo() {
+    return { ...this.tabletStatus, tablets: [...this.tablets.values()].map((t) => ({ name: t.name, mx: t.mx, my: t.my })) };
+  }
+
+  onTablet(ev) {
+    const t = this.tablets.get(ev.tid);
+    if (!t) return;
+    if (ev.v & 16) {
+      const changed = (ev.ab ^ t.ab) >>> 0;
+      if (changed) {
+        t.ab = ev.ab >>> 0;
+        for (let b = 0; b < 32; b++) if (changed & (1 << b)) this.onEvent({ t: 'btn', id: t.devId, b, v: (t.ab >>> b) & 1 });
+        return;
+      }
+    }
+    // Sin dato de proximidad (p. ej. Huion), el lápiz se da por cerca mientras llegan posiciones (100 ms).
+    clearTimeout(t.timer);
+    if (ev.near === -1) t.timer = setTimeout(() => this.emit('tablet', { active: false }), 100);
+    this.emit('tablet', { active: ev.near !== 0, x: ev.x, y: ev.y, mx: t.mx, my: t.my, p: t.mp ? ev.p / t.mp : 0.5, pb: ev.pb >>> 0 });
+  }
+
   onEvent(ev) {
+    if (ev.t === 'tstatus') {
+      this.tabletStatus = { state: ev.state, server: ev.server || '' };
+      if (ev.state !== 'connected') {
+        for (const t of this.tablets.values()) this.onEvent({ t: 'gone', id: t.devId });
+        this.tablets.clear();
+        this.emit('tablet', { active: false });
+      }
+      this.emit('tablet-status', this.tabletInfo());
+      return;
+    }
+    if (ev.t === 'tdev') {
+      const devId = `{TABLETA-${String(ev.id || ev.tid).replace(/[^A-Za-z0-9]/g, '').slice(-24) || ev.tid}}`;
+      const prev = this.tablets.get(ev.tid);
+      this.tablets.set(ev.tid, { id: ev.id, name: ev.name || 'Tableta', mx: ev.mx || 1, my: ev.my || 1, mp: ev.mp || 1, ab: prev ? prev.ab : 0, devId });
+      this.onEvent({ t: 'dev', id: devId, name: `Tableta: ${ev.name || 'gráfica'}` });
+      this.emit('tablet-status', this.tabletInfo());
+      return;
+    }
+    if (ev.t === 'tab') {
+      this.onTablet(ev);
+      return;
+    }
     if (ev.t === 'dev') {
       const name = String(ev.name || '').trim() || 'Mando';
       this.devices.set(ev.id, name);

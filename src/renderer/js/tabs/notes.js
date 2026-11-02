@@ -2,6 +2,69 @@
 // Las coordenadas llegan del centro del mapa F10 (como DCS Scratchpad), de un clic en el Mapa o del vuelo.
 import { icon } from '../icons.js';
 import { h, clear, copyText } from '../util.js';
+import { drawStrokes } from '../ink.js';
+
+// Campo para escribir a mano con el lápiz de una tableta (también vale el ratón o el dedo). Los trazos se
+// guardan normalizados al tamaño del campo, y lo que estuviera escrito con el teclado se sigue viendo debajo.
+function handPad(field, text, strokes, { onChange, onStart }) {
+  const canvas = h('canvas');
+  const pad = h('div.handpad', { style: { height: field.area ? `${Math.max(4, field.area) * 1.45}rem` : '2.7rem' } },
+    text ? h('div.handpad-text', text) : null,
+    canvas,
+    h('button.btn.small.handpad-clear', {
+      title: 'Borrar lo escrito a mano en este campo',
+      onpointerdown: (e) => e.stopPropagation(),
+      onclick: () => { strokes.length = 0; draw(); onChange(); },
+    }, icon('eraser')));
+  let cur = null;
+  const pos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, e.pressure || 0.5];
+  };
+  function draw() {
+    const r = pad.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    if (!r.width) return;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    const ink = getComputedStyle(pad).getPropertyValue('--ink').trim() || '#e6edf5';
+    drawStrokes(canvas.getContext('2d'), strokes.map((s) => ({ ...s, c: ink })), canvas.width, canvas.height, dpr);
+  }
+  function eraseAt([x, y]) {
+    const keep = strokes.filter((s) => !s.p.some(([px, py]) => Math.hypot(px - x, (py - y) * 0.4) < 0.02));
+    if (keep.length !== strokes.length) { strokes.splice(0, strokes.length, ...keep); draw(); }
+  }
+  pad.addEventListener('pointerdown', (e) => {
+    if (e.button > 0 && !(e.buttons & 32)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try { pad.setPointerCapture(e.pointerId); } catch { /* puntero ya suelto: se sigue sin captura */ }
+    onStart();
+    // La goma del lápiz (el extremo de atrás) borra.
+    if (e.buttons & 32) { cur = { id: e.pointerId, erase: true }; eraseAt(pos(e)); return; }
+    cur = { id: e.pointerId, s: { w: 2.2, p: [pos(e)] } };
+    strokes.push(cur.s);
+    draw();
+  });
+  pad.addEventListener('pointermove', (e) => {
+    if (!cur || e.pointerId !== cur.id) return;
+    e.preventDefault();
+    if (cur.erase) { eraseAt(pos(e)); return; }
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    for (const p of evs.length ? evs : [e]) cur.s.p.push(pos(p));
+    draw();
+  });
+  const end = (e) => {
+    if (!cur || e.pointerId !== cur.id) return;
+    cur = null;
+    onChange();
+  };
+  pad.addEventListener('pointerup', end);
+  pad.addEventListener('pointercancel', end);
+  new ResizeObserver(draw).observe(pad);
+  pad.isDrawing = () => !!cur;
+  return pad;
+}
 
 export const TEMPLATES = [
   { id: 'libre', title: 'Notas', fields: [{ k: 'text', label: '', area: 18 }] },
@@ -71,17 +134,18 @@ export const notes = {
     const el = h('div');
     const Geo = ctx.Geo;
     let page = 0;
-    let data = { values: {}, points: [] };
+    let data = { values: {}, points: [], ink: {}, hand: false };
     let lastLoc = null; // { tpl, k, at }
     const key = `notes:${tab.id}`;
 
     ctx.kb.storeGet(key).then((d) => {
-      if (d) data = { values: d.values || {}, points: d.points || [] };
+      if (d) data = { values: d.values || {}, points: d.points || [], ink: d.ink || {}, hand: !!d.hand };
       render();
     });
+    const drawing = () => [...el.querySelectorAll('.handpad')].some((p) => p.isDrawing && p.isDrawing());
     ctx.kb.on('store-changed', (name, d) => {
-      if (name !== key || el.contains(document.activeElement)) return;
-      data = { values: d.values || {}, points: d.points || [] };
+      if (name !== key || el.contains(document.activeElement) || drawing()) return;
+      data = { values: d.values || {}, points: d.points || [], ink: d.ink || {}, hand: !!d.hand };
       render();
     });
     const save = () => ctx.kb.storeSet(key, data);
@@ -116,17 +180,33 @@ export const notes = {
         el.append(h('div.pts', data.points.map(pointCard)));
         return;
       }
-      el.append(h('div.h1', tpl.title));
+      el.append(h('div.h1', tpl.title,
+        h('button.btn.small', {
+          className: `btn small${data.hand ? ' primary' : ''}`, style: { marginLeft: 'auto' },
+          title: data.hand ? 'Volver a escribir con el teclado' : 'Escribir a mano con el lápiz de una tableta, el ratón o el dedo',
+          onclick: () => { data.hand = !data.hand; save(); render(); },
+        }, icon('pen'), ' A mano')));
       const vals = (data.values[tpl.id] = data.values[tpl.id] || {});
+      const inks = (data.ink[tpl.id] = data.ink[tpl.id] || {});
       for (const f of tpl.fields) {
-        const input = f.area
-          ? h('textarea.f', { rows: f.area, value: vals[f.k] || '' })
-          : h('input.f', { value: vals[f.k] || '' });
-        input.addEventListener('input', () => { vals[f.k] = input.value; save(); });
-        if (f.loc) input.addEventListener('focus', () => { lastLoc = { tpl: tpl.id, k: f.k, at: Date.now() }; });
-        el.append(h('div.field', f.label || f.n ? h('label', f.n ? h('b', f.n) : null, f.label, f.loc ? h('span.muted', icon('crosshair')) : null) : null, input));
+        let input;
+        if (data.hand) {
+          input = handPad(f, vals[f.k] || '', (inks[f.k] = inks[f.k] || []), {
+            onChange: save,
+            onStart: () => { if (f.loc) lastLoc = { tpl: tpl.id, k: f.k, at: Date.now() }; },
+          });
+        } else {
+          input = f.area
+            ? h('textarea.f', { rows: f.area, value: vals[f.k] || '' })
+            : h('input.f', { value: vals[f.k] || '' });
+          input.addEventListener('input', () => { vals[f.k] = input.value; save(); });
+          if (f.loc) input.addEventListener('focus', () => { lastLoc = { tpl: tpl.id, k: f.k, at: Date.now() }; });
+        }
+        const hasInk = !data.hand && (inks[f.k] || []).length;
+        el.append(h('div.field', f.label || f.n || hasInk ? h('label', f.n ? h('b', f.n) : null, f.label, f.loc ? h('span.muted', icon('crosshair')) : null,
+          hasInk ? h('span.tag', { title: 'Tiene algo escrito a mano: pulsa «A mano» para verlo' }, 'a mano') : null) : null, input));
       }
-      el.append(h('div.card-row', h('button.btn.small', { onclick: () => { data.values[tpl.id] = {}; save(); render(); } }, 'Borrar plantilla'),
+      el.append(h('div.card-row', h('button.btn.small', { onclick: () => { data.values[tpl.id] = {}; data.ink[tpl.id] = {}; save(); render(); } }, 'Borrar plantilla'),
         h('button.btn.small', { onclick: () => {
           const txt = tpl.fields.map((f) => `${f.n ? `${f.n}. ` : ''}${f.label}: ${vals[f.k] || ''}`).join('\n');
           ctx.kb.shareSend({ type: 'note', title: tpl.title, text: txt }).then((ok) => ok && ctx.toast(`${tpl.title} enviado al vuelo`));

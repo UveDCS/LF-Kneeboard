@@ -9,30 +9,55 @@ const KINDS = [
   { id: 'chat', label: 'Chat' },
 ];
 
+// Cuánto tiempo se ven los mensajes (minutos; 0 = toda la sesión). Se guarda en la configuración.
+const KEEP = [
+  { min: 0, label: 'Toda la sesión' },
+  { min: 60, label: '60 min' },
+  { min: 30, label: '30 min' },
+  { min: 15, label: '15 min' },
+  { min: 5, label: '5 min' },
+];
+
 export const radiolog = {
   icon: 'messages',
   label: 'Mensajes de DCS (radio, misión, chat)',
   create(ctx, tab) {
     const el = h('div');
     let filter = 'all';
+    let timer = null;
+    const keepMin = () => Number((ctx.S.config.messages || {}).keepMin) || 0;
     function render() {
       clear(el);
-      el.append(h('div.h1', 'Mensajes'));
+      el.append(h('div.h1', 'Mensajes',
+        h('button.btn.small', { style: { marginLeft: 'auto' }, title: 'Borrar todos los mensajes', onclick: () => { if (confirm('¿Borrar todos los mensajes?')) ctx.kb.messagesClear(); } }, icon('trash'), ' Vaciar')));
       el.append(h('div.chips', KINDS.map((k) => h('button.chip', { className: `chip${k.id === filter ? ' sel' : ''}`, onclick: () => { filter = k.id; render(); } }, k.label))));
-      const list = ctx.S.messages.filter((m) => filter === 'all' || m.kind === filter).slice(-150).reverse();
-      if (!list.length) return el.append(emptyState(icon('messages'), 'Sin mensajes', 'Aquí aparecen los mensajes de radio, los avisos de la misión y el chat mientras vuelas.'));
+      el.append(h('div.chips', { title: 'Los mensajes más antiguos dejan de verse' },
+        h('span.muted', { style: { fontSize: '.75rem', alignSelf: 'center', marginRight: '.2rem' } }, 'Guardar:'),
+        KEEP.map((k) => h('button.chip', {
+          className: `chip${k.min === keepMin() ? ' sel' : ''}`,
+          onclick: () => { ctx.S.config.messages = { ...(ctx.S.config.messages || {}), keepMin: k.min }; ctx.kb.patchConfig({ messages: { keepMin: k.min } }); render(); },
+        }, k.label))));
+      const since = keepMin() ? Date.now() - keepMin() * 60000 : 0;
+      const list = ctx.S.messages.filter((m) => (filter === 'all' || m.kind === filter) && (!since || (m.at || 0) >= since)).slice(-150).reverse();
+      if (!list.length) return el.append(emptyState(icon('messages'), 'Sin mensajes', keepMin() ? `No hay mensajes de los últimos ${keepMin()} minutos.` : 'Aquí aparecen los mensajes de radio, los avisos de la misión y el chat mientras vuelas.'));
       for (const m of list) {
         el.append(h('div.card', { style: { padding: '.45rem .65rem' } },
           h('div.card-row', h('span.tag', m.kind), h('span.mono.muted', m.mt != null ? hms(m.mt) : '')),
           h('div', { style: { whiteSpace: 'pre-wrap', marginTop: '.25rem', userSelect: 'text' } }, m.text)));
       }
     }
+    const visible = () => !el.classList.contains('hidden');
     return {
       el,
       pages: () => 1,
-      show: render,
+      show() {
+        render();
+        // Con un límite de tiempo, los mensajes viejos se van quitando mientras miras la pestaña.
+        clearInterval(timer);
+        timer = setInterval(() => { if (keepMin() && visible()) render(); }, 30000);
+      },
       title: () => 'Mensajes',
-      onMessage: () => { if (!el.classList.contains('hidden')) render(); },
+      onMessage: () => { if (visible()) render(); },
     };
   },
 };

@@ -289,6 +289,81 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
       }
     }
 
+    // Página en la pestaña Misión sin ser marcador; Bloc a mano; Mensajes con su duración.
+    {
+      const list = cfg.get().tabs;
+      const lib = list.findIndex((t) => t.type === 'library');
+      const mis = list.findIndex((t) => t.type === 'dcs-kneeboard');
+      if (lib >= 0 && mis >= 0) {
+        await goTab(lib);
+        win.webContents.send('action', 'next_page');
+        win.webContents.send('action', 'next_page');
+        await wait(900);
+        await exec(`document.getElementById('bmBtn').click()`);
+        await wait(500);
+        await shot('bm-menu-mision');
+        const added = await exec(`(() => { const b = [...document.querySelectorAll('#overlay button')].find((x) => /Añadir a la pestaña Misión/.test(x.textContent)); if (b) b.click(); return !!b; })()`);
+        await wait(700);
+        await goTab(mis);
+        await wait(1200);
+        say(`página añadida a Misión sin marcador: botón ${added}, contador «${await exec(`(document.querySelector('.bar-page') || {}).textContent || ''`)}»`);
+        await shot('mision-sin-marcador');
+      }
+      const nti = list.findIndex((t) => t.type === 'notes');
+      if (nti >= 0) {
+        await goTab(nti);
+        await wait(400);
+        for (let k = 0; k < 8; k++) { win.webContents.send('action', 'prev_page'); await wait(80); }
+        win.webContents.send('action', 'next_page'); // Coordenadas
+        await wait(150);
+        win.webContents.send('action', 'next_page'); // 9-line
+        await wait(500);
+        say(`bloc: títulos visibles ${await exec(`JSON.stringify([...document.querySelectorAll('.h1')].filter((x) => x.offsetParent).map((x) => x.textContent))`)} · página ${await exec(`(document.querySelector('.bar-page') || {}).textContent || ''`)} · pestaña ${await exec(`(document.querySelector('#tabs .tab.sel') || {}).title || ''`)}`);
+        await exec(`(() => { const b = [...document.querySelectorAll('.h1 button')].find((x) => /A mano/.test(x.textContent)); if (b) b.click(); })()`);
+        await wait(600);
+        // Trazos simulados con un lápiz (pointerType pen, con presión) en los primeros campos.
+        const drawn = await exec(`(() => {
+          const pads = [...document.querySelectorAll('.handpad')].filter((p) => p.offsetParent);
+          const strokes = [
+            [[.05, .35], [.09, .75], [.13, .35]], [[.17, .7], [.2, .3], [.24, .7], [.21, .55], [.18, .55]],
+            [[.30, .3], [.30, .75]], [[.36, .3], [.42, .3], [.36, .75], [.42, .75]],
+          ];
+          pads.slice(0, 4).forEach((pad, n) => {
+            const r = pad.getBoundingClientRect();
+            for (const st of strokes) {
+              const pt = ([x, y], i) => ({ pointerId: 7, pointerType: 'pen', pressure: .6, buttons: 1, bubbles: true, clientX: r.left + (x + n * .08) * r.width, clientY: r.top + y * r.height });
+              pad.dispatchEvent(new PointerEvent('pointerdown', pt(st[0])));
+              for (let i = 1; i < st.length; i++) pad.dispatchEvent(new PointerEvent('pointermove', pt(st[i])));
+              pad.dispatchEvent(new PointerEvent('pointerup', pt(st[st.length - 1])));
+            }
+          });
+          return pads.length;
+        })()`);
+        await wait(800);
+        say(`bloc a mano: ${drawn} campos para escribir`);
+        await shot('bloc-a-mano');
+      }
+      const rl = list.findIndex((t) => t.type === 'radiolog');
+      if (rl >= 0) {
+        await goTab(rl);
+        await wait(500);
+        await exec(`[...document.querySelectorAll('.chip')].find((b) => /^15 min$/.test(b.textContent)).click()`);
+        await wait(500);
+        say(`mensajes: guardar ${JSON.stringify((cfg.get().messages || {}).keepMin)} min`);
+        await shot('mensajes');
+      }
+      // Tableta gráfica (OTD-IPC falso, ver native/test/otdipc_server.c): trazo en la pizarra y cursor.
+      const dr = list.findIndex((t) => t.type === 'draw');
+      if (process.env.LFKB_TABLET_GO && dr >= 0) {
+        await goTab(dr);
+        await wait(700);
+        fs.writeFileSync(process.env.LFKB_TABLET_GO, '1');
+        await wait(3500);
+        say(`tableta: cursor ${await exec(`(() => { const c = document.querySelector('.tablet-cursor'); return c && !c.hidden ? c.style.transform : 'oculto'; })()`)}`);
+        await shot('tableta-pizarra');
+      }
+    }
+
     // Pestaña siguiente/anterior con favoritas: solo pasa por ellas (también saliendo de una que no lo es).
     {
       const list = cfg.get().tabs;

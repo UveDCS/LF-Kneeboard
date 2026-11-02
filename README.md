@@ -25,6 +25,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 - Pestañas de **PDF**, **carpeta de imágenes**, **kneeboard de DCS** (las imágenes del `.miz` y de `Saved Games\DCS\Kneeboard\<avión>`), **web o archivo local** y **captura de una ventana** (SRS, Discord…).
 - La pestaña web admite una dirección `https://…` o la ruta de un archivo de tu PC (`C:\…\guia.html`). Los enlaces relativos de esa página funcionan. La dirección se **escribe en la propia pestaña** (Intro para abrirla; se queda guardada) y el botón de la carpeta **abre un archivo del PC**: los PDF con el visor de la app (páginas con el HOTAS y marcadores), y HTML, imágenes y texto en la pestaña.
 - **Lápiz** sobre cualquier página, con la presión de tu tableta.
+- **Tableta gráfica como en OpenKneeboard** (Wacom, Huion, Gaomon…): toda la superficie de la tableta es el kneeboard, con un **cursor que se ve también en el visor** cuando acercas el lápiz. Apoyarlo escribe o pulsa, el botón del lápiz borra, y los botones de la tableta se asignan como los de un mando. No le quita el foco a DCS y funciona aunque la ventana del kneeboard esté oculta. Usa el mismo camino que OpenKneeboard: **OpenTabletDriver con el plugin OTD-IPC** (o **wintab-adapter** si usas el driver del fabricante). Solo un programa a la vez puede leer la tableta. Orientación y kneeboard que controla, en Ajustes › Controles.
 - **Dos kneeboards** a la vez, cada uno con su pestaña.
 - **Ampliar al mirarlo** en VR, con opacidad distinta mientras lo miras.
 - **Controles personalizables**: teclado y botones o setas de cualquier mando DirectInput. Admiten varias asignaciones por acción y combinaciones con modificador. Funcionan aunque DCS tenga el foco.
@@ -32,6 +33,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 ### Marcadores y navegación
 - **Marcadores con tipo** (Tierra, Rodaje, Salida, En ruta, Misión, Aproximación, Emergencias, General) en las páginas de Misión, Biblioteca, Carpeta y PDF. **Cada avión tiene los suyos**: marcar o quitar una página en el F-16 no cambia los del F/A-18. Se guardan aunque cierres el programa o DCS.
 - Con el modo **AUTO** activado, al empezar cada fase del vuelo el kneeboard abre **tu** marcador de esa fase. El programa no decide por ti qué página corresponde a cada fase.
+- **Añadir a Misión sin marcador**: en el menú del marcador, «Añadir a la pestaña Misión» la pone en Misión (grupo «En Misión», tras las marcadas) sin que el modo AUTO ni la lista de marcadores la usen. También va por avión.
 - **Ir a una página escribiendo su número**: pulsa el contador «3/77» o teclea el número directamente.
 - **Índice del Piernógrafo**: miniaturas de todas las páginas agrupadas por juego, con saltos directos a cada juego. Con el HOTAS, la acción «Índice de páginas» lo abre y «Página siguiente / anterior» salta de juego mientras está abierto. También hay acciones «Juego siguiente / anterior» y la orden de voz «índice».
 - **Pestañas favoritas**: la barra de abajo enseña solo las que marques con la estrella. Las demás están en la cuadrícula (botón de la izquierda de la barra). La barra se desplaza con la rueda o arrastrándola. Pestaña siguiente/anterior del HOTAS recorre solo las favoritas.
@@ -58,9 +60,11 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 - **Radios**: los presets de la misión o de tu archivo **DTC**, con cada frecuencia identificada (intravuelo, AWACS, torre…). Incluye también las frecuencias útiles.
 - **Apoyo**: AWACS, tanqueros, barcos (TACAN, ICLS, Link 4) y JTAC. El bullseye muestra tu posición respecto a él.
 - **Tiempos**: hora de la misión, cronómetro, cuenta atrás al *push*, y bingo y joker según la distancia a casa.
+- **Mensajes**: radio, avisos de la misión y chat. Eliges cuánto tiempo se ven (toda la sesión, 60, 30, 15 o 5 minutos) y los vacías con un botón.
 
 ### Bloc y coordenadas (como DCS Scratchpad)
 - Plantillas: notas libres, **9-line**, **check-in JTAC**, **autorización ATC**, **repostaje** y **BDA**.
+- **A mano**: con el botón «A mano», cada campo de la plantilla se rellena escribiendo con el lápiz de una tableta (con presión), el ratón o el dedo. Se guarda por campo, la goma del lápiz borra y lo escrito con el teclado se sigue viendo debajo.
 - **Captura de coordenadas del centro del mapa F10** con una tecla o botón. En el monitor sale una cruz que marca el punto.
 - **Clic en el Mapa** para pasar un punto al bloc.
 - Cada punto sale en los formatos de tu avión (DDM o DMS con la precisión de su cabina, MGRS) y con su elevación. Si estabas rellenando un campo de ubicación (por ejemplo, la línea 6 del 9-line), se completa solo.
@@ -147,6 +151,7 @@ npm start            # ejecutar en desarrollo
 npm test             # geodesia, .miz, controles, sala compartida, biblioteca, secuencia de waypoints, plantillas, presets, perfil y DTC
 npm run test:voz     # órdenes de voz con la voz española de Windows (sin micrófono)
 npm run test:hook -- ruta\mision.miz   # el hook de DCS con Lua 5.1 y un DCS simulado
+npm run test:tableta # el lector de tabletas contra un servidor OTD-IPC falso (native/test/otdipc_server.c)
 npm run native       # compila la capa OpenXR y el lector de mandos (pip install ziglang)
 npm run dist         # genera el instalador en dist/ (sin publicar)
 npm run release      # genera el instalador y lo publica en GitHub Releases (necesita GH_TOKEN)
@@ -159,7 +164,7 @@ Estructura:
 - `src/main/`: proceso principal. Configuración, enlace UDP con DCS, lector de `.miz`, fases de vuelo, controles, puente VR (memoria compartida) y sala compartida.
 - `src/renderer/`: kneeboard y ajustes (HTML/CSS/JS sin framework). Cada tipo de pestaña está en `js/tabs/`.
 - `native/openxr-layer/`: capa implícita OpenXR (C++/D3D11). `native/test/layer_test.cpp` la prueba sin visor, con un runtime simulado.
-- `native/input-helper/`: lector DirectInput y teclado en segundo plano (C).
+- `native/input-helper/`: lector DirectInput y teclado en segundo plano (C), y tabletas gráficas por OTD-IPC (`tablet.c`).
 - `dcs-scripts/Hooks/`: el script que se instala en DCS.
 - `relay/`: servidor de salas.
 - `data/airports.json`: aeródromos, frecuencias, TACAN y pistas de cada mapa (`npm run airports`, a partir de pydcs).

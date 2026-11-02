@@ -140,7 +140,7 @@ export const chart = {
     stage.addEventListener('pointerdown', (e) => {
       if (calibrating) return;
       drag = { x: e.clientX, y: e.clientY, pan: { ...pan } };
-      stage.setPointerCapture(e.pointerId);
+      try { stage.setPointerCapture(e.pointerId); } catch { /* lápiz de la tableta (OTD-IPC): sin captura */ }
     });
     stage.addEventListener('pointermove', (e) => {
       if (!drag || zoom === 1) return;

@@ -117,6 +117,45 @@ local ok, err = pcall(function()
 
   local resendPlan = false   -- la aplicación ha pedido la misión (se acaba de abrir): repetir el diagnóstico
 
+  -- Prueba (a petición, desde Ajustes): ¿se puede leer el texto de los kneeboards dinámicos de los módulos
+  -- (Viggen…)? Esos textos los rellena el módulo en sus indicadores; aquí se mira qué da list_indication.
+  local function kneeboardProbe()
+    local fn = nil
+    local where = 'ninguno'
+    if type(list_indication) == 'function' then fn, where = list_indication, 'global'
+    elseif type(Export) == 'table' and type(Export.list_indication) == 'function' then fn, where = Export.list_indication, 'Export'
+    end
+    local lines, found = {}, 0
+    lines[#lines + 1] = 'list_indication: ' .. where
+    pcall(function()
+      local s = Export.LoGetSelfData()
+      lines[#lines + 1] = 'avion: ' .. tostring(s and s.Name)
+    end)
+    if type(Export) == 'table' then
+      local names = {}
+      for k in pairs(Export) do if tostring(k):lower():find('indic') or tostring(k):lower():find('device') then names[#names + 1] = tostring(k) end end
+      lines[#lines + 1] = 'Export (indic/device): ' .. table.concat(names, ', ')
+    end
+    if fn then
+      for i = 0, 40 do
+        local okL, txt = pcall(fn, i)
+        if okL and type(txt) == 'string' and txt ~= '' then
+          found = found + 1
+          lines[#lines + 1] = string.format('===== indicador %d (%d caracteres)', i, #txt)
+          lines[#lines + 1] = txt
+        end
+      end
+    end
+    local dir = lfs.writedir() .. 'Temp\\LFKneeboard'
+    lfs.mkdir(lfs.writedir() .. 'Temp')
+    lfs.mkdir(dir)
+    local path = dir .. '\\kneeboard-probe.txt'
+    local f = io.open(path, 'w')
+    if f then f:write(table.concat(lines, '\n')) f:close() end
+    log(string.format('prueba del kneeboard del módulo: list_indication %s, %d indicadores con texto', where, found))
+    return { where = where, found = found, path = path }
+  end
+
   local function handle(cmd)
     if cmd.cmd == 'capture' then
       local pt = cameraPoint()
@@ -130,6 +169,9 @@ local ok, err = pcall(function()
       send({ t = 'converted', id = cmd.id, pts = res })
     elseif cmd.cmd == 'ping' then
       send({ t = 'pong', version = LFKB.version })
+    elseif cmd.cmd == 'kbprobe' then
+      local r = kneeboardProbe()
+      send({ t = 'kbprobe', id = cmd.id, where = r.where, found = r.found, path = r.path })
     elseif cmd.cmd == 'mission' then
       sendMission()
       resendPlan = true

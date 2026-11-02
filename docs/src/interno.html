@@ -335,6 +335,7 @@
         <dt>Teclado</dt><dd>Consulta qué teclas están pulsadas (<code>GetAsyncKeyState</code>). Ve el estado de todas las teclas, porque no sabe de antemano cuáles has asignado.</dd>
         <dt>A dónde va</dt><dd>Por una tubería interna, solo a la aplicación, que compara lo pulsado con tus combinaciones y lo olvida. No se guarda en ningún archivo ni sale de tu PC.</dd>
         <dt>Cuándo</dt><dd>Mientras la aplicación está abierta. Se cierra con ella.</dd>
+        <dt>Tableta</dt><dd>Si tienes OpenTabletDriver con su plugin OTD-IPC (o wintab-adapter), lee el lápiz por el mismo socket local que OpenKneeboard (protocolo OTD-IPC, MIT). Solo lee: posición, presión y botones. El cursor que ves en el visor lo dibuja la propia página, y el lápiz nunca le quita el foco a DCS.</dd>
       </dl>
     </div>
     <div class="card">
@@ -361,6 +362,7 @@
     <tr><th style="width:36mm">Conexión</th><th style="width:30mm">A dónde</th><th style="width:30mm">Cuándo</th><th>Qué viaja</th></tr>
     <tr><td>Script y mod de DCS</td><td><code>127.0.0.1</code> UDP 7788 / 7789</td><td>Con DCS abierto</td><td>Estado de tu avión, misión, mensajes, ruta, DTC del editor. No sale de tu PC.</td></tr>
     <tr><td>Lector de mandos</td><td>Tubería interna</td><td>Con la app abierta</td><td>Botones y teclas pulsados. No sale de tu PC.</td></tr>
+    <tr><td>Tableta gráfica</td><td>Socket local de OTD-IPC</td><td>Si tienes OpenTabletDriver con OTD-IPC (o wintab-adapter)</td><td>La posición, la presión y los botones del lápiz y de la tableta. Solo se lee, dentro de tu PC.</td></tr>
     <tr><td>Teselas del mapa</td><td>Esri, OpenTopoMap, CARTO</td><td>Al abrir el Mapa o la Carta</td><td>Las coordenadas de la zona que miras, como cualquier mapa web.</td></tr>
     <tr><td>Actualizaciones</td><td>GitHub Releases</td><td>Al arrancar y cada 6 h</td><td>La consulta de la última versión y, si hay una nueva, su descarga. Se desactiva en Ajustes.</td></tr>
     <tr><td>Vuelo compartido</td><td>La sala (un compañero o un servidor de salas)</td><td>Solo si te unes</td><td>Tu indicativo y lo que tú envíes: páginas, notas, puntos, dibujos, pizarra, DTC.</td></tr>

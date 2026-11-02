@@ -53,6 +53,8 @@ setTimeout(async () => {
   ok(got.live && got.live.missionTime > 50400, `Hora de misión ${got.live && got.live.missionTime}`);
   ok(got.msg && /prueba/.test(got.msg.text), `Mensaje de la misión: ${got.msg && got.msg.text}`);
   const p = await link.capture();
+  const kp = await link.request({ cmd: 'kbprobe' }, 3000);
+  ok(kp && kp.where === 'global' && kp.found === 1 && /KUTAISI/.test(fs.readFileSync(kp.path, 'utf8')), `Prueba del kneeboard del módulo: ${kp && `${kp.where}, ${kp.found} indicador(es)`}`);
   ok(p && Math.abs(p.lat - 42.123456) < 1e-6 && p.alt === 321 && p.mgrs === '38T KM 12345 67890' && p.src === 'F10', `Captura del F10: ${JSON.stringify(p)}`);
 }, 2500);
 

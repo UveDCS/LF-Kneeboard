@@ -166,6 +166,10 @@ function pageKeyOf(inst, p) {
 // Marcadores por avión: cada módulo tiene los suyos (quitar uno en el F-16 no lo quita en el F/A-18).
 // Al volar un avión por primera vez se copian los marcadores de antes (cuando eran comunes) y desde ahí van aparte.
 const bmStoreOf = (ac) => `bookmarks@${ac || 'general'}`;
+// Páginas añadidas a la pestaña Misión sin ser marcadores (no cuentan para el modo AUTO ni para la lista de
+// marcadores). También van por avión.
+const mpStoreOf = (ac) => `misionpages@${ac || 'general'}`;
+const canBeInMission = (key) => /^(lib|ac|mis):/.test(key || '');
 let bmLoading = null;
 async function loadBookmarks() {
   const name = bmStoreOf(ctx.aircraft());
@@ -177,12 +181,13 @@ async function loadBookmarks() {
       data = { ...((await kb.storeGet('bookmarks')) || {}) };
       if (Object.keys(data).length) kb.storeSet(name, data);
     }
-    return data;
+    return { data, pages: (await kb.storeGet(mpStoreOf(ctx.aircraft()))) || {} };
   })();
   bmLoading = job;
-  const data = await job;
+  const { data, pages: mp } = await job;
   if (bmLoading !== job) return;
   S.bookmarks = data;
+  S.missionPages = mp;
   for (const { inst } of instances.values()) if (inst.onBookmarks) inst.onBookmarks();
   renderChrome();
 }
@@ -190,6 +195,20 @@ async function loadBookmarks() {
 function saveBookmarks() {
   kb.storeSet(S.bmStore || bmStoreOf(ctx.aircraft()), S.bookmarks);
   for (const { inst } of instances.values()) if (inst.onBookmarks) inst.onBookmarks();
+}
+
+function setMissionPage(on) {
+  const inst = curInst();
+  const key = pageKeyOf(inst, curPage());
+  if (!key) return;
+  if (on) {
+    S.missionPages[key] = { label: inst.pageLabel ? inst.pageLabel(curPage()) : `Página ${curPage() + 1}`, at: Date.now() };
+    toast(`Página añadida a la pestaña Misión${ctx.aircraft() ? ` (solo en ${ctx.aircraft()})` : ''}`);
+  } else delete S.missionPages[key];
+  kb.storeSet(mpStoreOf(ctx.aircraft()), S.missionPages);
+  for (const { inst: i } of instances.values()) if (i.onBookmarks) i.onBookmarks();
+  closeOverlay();
+  renderChrome();
 }
 
 function setBookmark(type) {
@@ -257,6 +276,14 @@ function openBookmarkMenu() {
     BOOKMARK_TYPES.map((t) => h('button.bm-type', { className: `bm-type${cur && cur.type === t.id ? ' sel' : ''}`, onclick: () => setBookmark(t.id) },
       h('span.tag', t.short), t.label)),
     cur ? h('button.btn', { onclick: () => setBookmark(null) }, icon('close'), ' Quitar el marcador') : null),
+  canBeInMission(key) ? h('div', { style: { marginTop: '.9rem' } },
+    h('div.h2', { style: { marginTop: 0 } }, 'Sin marcador'),
+    S.missionPages[key]
+      ? h('button.btn', { onclick: () => setMissionPage(false) }, icon('close'), ' Quitar de la pestaña Misión')
+      : h('button.btn', { onclick: () => setMissionPage(true) }, icon('plus'), ' Añadir a la pestaña Misión'),
+    h('div.muted', { style: { fontSize: '.75rem', marginTop: '.35rem' } }, cur
+      ? 'Ya sale en Misión por su marcador. Así saldría también aunque le quites el marcador.'
+      : 'La página sale en la pestaña Misión, pero no es un marcador: el modo AUTO no la abre y no está en la lista de marcadores.')) : null,
   h('div.muted', { style: { fontSize: '.78rem', marginTop: '.8rem', lineHeight: 1.45 } },
     'Cada avión tiene sus propios marcadores: lo que marques o quites aquí no cambia los de otros módulos. Se guardan aunque cierres el programa o DCS. Con el modo AUTO activado, al empezar cada fase del vuelo el kneeboard abre el marcador de ese tipo.'));
 }
@@ -648,6 +675,55 @@ function setupGrip() {
   grip.addEventListener('pointerup', () => { start = null; kb.resizeDone(); });
 }
 
+// ------------------------------------------------------------------ tableta gráfica
+// El lápiz llega de main.js (OTD-IPC) ya en coordenadas de la ventana (0..1). Se dibuja un cursor, que también
+// sale en el visor porque es parte de la página, y el lápiz se convierte en eventos de lápiz (pointerType «pen»)
+// sobre lo que haya debajo: el lápiz de las páginas, la pizarra, el Bloc a mano, botones y pestañas.
+const pen = { el: null, down: null };
+function onTabletPen(m) {
+  if (!pen.el) {
+    pen.el = h('div.tablet-cursor', { hidden: true });
+    document.body.append(pen.el);
+  }
+  const W = window.innerWidth, H = window.innerHeight;
+  const x = (m.x || 0) * W, y = (m.y || 0) * H;
+  const fire = (target, type, extra = {}) => target && target.dispatchEvent(new PointerEvent(type, {
+    pointerId: 9001, pointerType: 'pen', isPrimary: true, bubbles: true, cancelable: true, composed: true,
+    clientX: x, clientY: y, pressure: m.p || 0.5, button: 0, buttons: 0, ...extra,
+  }));
+  if (!m.active) {
+    pen.el.hidden = true;
+    if (pen.down) { fire(pen.down.target, 'pointerup'); pen.down = null; }
+    return;
+  }
+  pen.el.hidden = false;
+  pen.el.style.transform = `translate(${x}px, ${y}px)`;
+  pen.el.classList.toggle('touch', !!m.touch);
+  pen.el.classList.toggle('erase', !!m.erase);
+  const buttons = m.erase ? 32 : 1;
+  if (m.touch && !pen.down) {
+    const target = document.elementFromPoint(x, y);
+    if (!target) return;
+    pen.down = { target, x, y, moved: false };
+    fire(target, 'pointerdown', { buttons, button: m.erase ? 5 : 0 });
+  } else if (m.touch && pen.down) {
+    if (Math.hypot(x - pen.down.x, y - pen.down.y) > 6) pen.down.moved = true;
+    fire(pen.down.target, 'pointermove', { buttons });
+  } else if (!m.touch && pen.down) {
+    const d = pen.down;
+    pen.down = null;
+    fire(d.target, 'pointerup');
+    // Un toque sin arrastrar es un clic (botones, pestañas, enlaces); en un campo de texto, además, lo enfoca.
+    if (!d.moved && document.contains(d.target)) {
+      d.target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: x, clientY: y }));
+      if (d.target.matches('input, textarea, select')) d.target.focus();
+    }
+  } else {
+    const target = document.elementFromPoint(x, y);
+    if (target) fire(target, 'pointermove');
+  }
+}
+
 // ------------------------------------------------------------------ arranque
 async function main() {
   const init = await kb.init();
@@ -658,6 +734,7 @@ async function main() {
   });
   if (S.config.hidden) document.body.classList.add('kb-out');
   S.bookmarks = {};
+  S.missionPages = {};
   await loadBookmarks();
   S.wpNames = (await kb.storeGet('wpnames')) || {};
   const vs = (S.config.views[kb.view] || {}).state || {};
@@ -714,7 +791,9 @@ async function main() {
   window.addEventListener('pointerup', () => { if (drag && drag.moved) bar.addEventListener('click', (e) => e.stopPropagation(), { capture: true, once: true }); drag = null; });
   bar.addEventListener('scroll', updateTabArrows);
 
-  document.addEventListener('pointerdown', () => kb.activate(), true);
+  // Solo un clic de verdad activa la ventana: el lápiz de la tableta (eventos sintéticos) no le quita el foco a DCS.
+  document.addEventListener('pointerdown', (e) => { if (e.isTrusted) kb.activate(); }, true);
+  kb.on('tablet', onTabletPen);
   window.addEventListener('focus', renderChrome);
   window.addEventListener('blur', renderChrome);
   document.addEventListener('visibilitychange', updateCoordsFlag);
@@ -754,6 +833,7 @@ async function main() {
   });
   kb.on('store-changed', (name, data) => {
     if (name === 'wpnames') { S.wpNames = data || {}; each((i) => i.onConfig && i.onConfig(S.config)); return; }
+    if (name === mpStoreOf(ctx.aircraft())) { S.missionPages = data || {}; each((i) => i.onBookmarks && i.onBookmarks()); renderChrome(); return; }
     if (name !== S.bmStore) return;
     S.bookmarks = data || {};
     each((i) => i.onBookmarks && i.onBookmarks());
@@ -778,6 +858,7 @@ async function main() {
   kb.on('connected', (c) => { S.connected = c; renderChrome(); });
   kb.on('dcs-state', (s) => { S.dcsState = s; renderChrome(); });
   kb.on('dcs-message', (m) => { S.messages.push(m); each((i) => i.onMessage && i.onMessage(m)); });
+  kb.on('messages-cleared', () => { S.messages.length = 0; each((i) => i.onMessage && i.onMessage(null)); });
   kb.on('inbox', (list) => { S.inbox = list; each((i) => i.onInbox && i.onInbox(list)); renderChrome(); });
   kb.on('timers', (t) => { S.timers = t; each((i) => i.onTimers && i.onTimers(t)); });
   kb.on('action', onAction);

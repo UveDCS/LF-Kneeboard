@@ -83,7 +83,7 @@ class DcsLink extends EventEmitter {
   }
 
   handle(msg) {
-    if (msg.id != null && this.pending.has(msg.id) && (msg.t === 'coords' || msg.t === 'converted')) {
+    if (msg.id != null && this.pending.has(msg.id) && (msg.t === 'coords' || msg.t === 'converted' || msg.t === 'kbprobe')) {
       const cb = this.pending.get(msg.id);
       this.pending.delete(msg.id);
       cb(msg);

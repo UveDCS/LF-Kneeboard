@@ -294,7 +294,30 @@ R.controles = async () => {
   main.append(h('div.card', tbl));
   const devs = INIT.devices || [];
   main.append(h('h2', 'Mandos detectados'), h('div.card', devs.length ? devs.map((d) => h('div.row', icon('gamepad'), d.name, h('span.mono.muted', d.id))) : h('div.muted', 'No se detecta ningún mando DirectInput. Los atajos de teclado funcionan igualmente.')));
+
+  // Tableta gráfica (Wacom, Huion, Gaomon…), igual que en OpenKneeboard: por OpenTabletDriver con el plugin OTD-IPC,
+  // o por wintab-adapter con el driver del fabricante.
+  const T = C.tablet || {};
+  const ts = INIT.tablet || { state: 'no-server', tablets: [] };
+  const STATE = {
+    connected: ts.tablets && ts.tablets.length ? `Conectada: ${ts.tablets.map((t) => `${t.name} (${Math.round(t.mx)}×${Math.round(t.my)})`).join(', ')}` : `Conectado a ${ts.server || 'OTD-IPC'}; mueve el lápiz para que aparezca la tableta`,
+    disconnected: 'Se ha desconectado: ¿has cerrado OpenTabletDriver?',
+    'no-server': 'No se encuentra OpenTabletDriver con OTD-IPC (ni wintab-adapter)',
+  };
+  const orient = h('select.f', { style: { width: 'auto' }, onchange: (e) => patch({ tablet: { orientation: Number(e.target.value) } }) },
+    [[0, 'Normal (horizontal)'], [90, 'Girada 90° (vertical, como OpenKneeboard)'], [180, 'Girada 180°'], [270, 'Girada 270°']]
+      .map(([v, l]) => h('option', { value: v, selected: Number(T.orientation != null ? T.orientation : 90) === v }, l)));
+  const which = h('select.f', { style: { width: 'auto' }, onchange: (e) => patch({ tablet: { view: e.target.value === 'a' ? null : Number(e.target.value) } }) },
+    [['a', 'El activo'], ['0', 'Kneeboard 1'], ['1', 'Kneeboard 2']]
+      .map(([v, l]) => h('option', { value: v, selected: (T.view == null ? 'a' : String(T.view)) === v }, l)));
+  main.append(h('h2', 'Tableta gráfica'), h('div.card',
+    h('div.row', h('b', 'Estado'), h('span', { className: `pillst ${ts.state === 'connected' ? 'ok ok' : ''}` }, STATE[ts.state] || ts.state)),
+    chk('Usar la tableta', 'Toda la superficie de la tableta es el kneeboard: con el lápiz cerca ves un cursor (también en el visor), al apoyarlo escribes o pulsas, y con el botón del lápiz borras. No le quita el foco a DCS.', T.enabled !== false, (v) => patch({ tablet: { enabled: v } })),
+    h('div.row', h('span', { style: { width: '160px' } }, 'Orientación'), orient),
+    h('div.row', h('span', { style: { width: '160px' } }, 'Controla'), which),
+    h('p.small.muted', { style: { marginBottom: 0 } }, 'Cómo prepararla (igual que para OpenKneeboard): instala OpenTabletDriver (opentabletdriver.net) y su plugin OTD-IPC (go.openkneeboard.com/otd-ipc), después de quitar el driver del fabricante. Si prefieres el driver de Wacom o Huion, usa wintab-adapter. Solo un programa a la vez puede leer la tableta: cierra OpenKneeboard si lo tienes abierto. Los botones de la tableta aparecen como un mando más y se asignan arriba, en esta misma página.')));
 };
+kb.on('tablet-status', (s) => { INIT.tablet = s; if (section === 'controles') render(); });
 
 function startCapture(action) {
   const box = document.getElementById('capture');
@@ -607,9 +630,22 @@ R.dcs = async () => {
       ? `herramienta de ruta del F10 ${rs.routeTool ? 'sí' : 'no'} · editor de DTC del juego ${rs.dtcEditor ? 'sí' : `no (ábrelo una vez${rs.dtcProbe ? ` · ${rs.dtcProbe}` : ''})`}`
       : 'puente con la interfaz de DCS sin conexión (reinicia DCS tras instalar)'}`
     : 'Ruta: sin datos (entra en una misión)');
+  // Prueba: kneeboards dinámicos de los módulos (los que el propio módulo rellena, como los del Viggen).
+  const probeOut = h('div.small.muted', 'Entra en la cabina del avión (por ejemplo, el Viggen) y pulsa «Probar».');
+  const probeCard = h('div.card',
+    h('div.row', h('b', 'Kneeboards de los módulos (prueba)'), h('span.grow'),
+      h('button.btn.small', { onclick: async () => {
+        probeOut.textContent = 'Probando…';
+        const r = await kb.kneeboardProbe();
+        probeOut.textContent = !r ? 'DCS no ha respondido: entra en una misión (el script de DCS tiene que estar actualizado, reinicia DCS si acabas de instalar).'
+          : `list_indication: ${r.where} · ${r.found} indicadores con texto. Resultado en ${r.path}`;
+      } }, 'Probar')),
+    h('div.small.muted', 'Algunos módulos dibujan páginas de kneeboard que cambian con el mapa (aeródromos, waypoints, radios del Viggen…). No son imágenes: las rellena el módulo. Esta prueba mira si DCS deja leer ese texto para traerlo aquí.'),
+    probeOut);
   main.append(card,
     h('div.card', h('div.row', h('b', 'Estado'), st.dcsConnected ? h('span.pillst.ok.ok', 'DCS conectado') : h('span.pillst', 'Sin conexión: entra en una misión')), camInfo, srcInfo,
-      h('div.small.muted', `Puertos UDP locales ${C.dcs.appPort} (app) y ${C.dcs.hookPort} (DCS). Solo se usan dentro de tu PC.`)));
+      h('div.small.muted', `Puertos UDP locales ${C.dcs.appPort} (app) y ${C.dcs.hookPort} (DCS). Solo se usan dentro de tu PC.`)),
+    probeCard);
 };
 
 R.actualizar = async () => {

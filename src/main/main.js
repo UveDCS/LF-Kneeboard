@@ -626,6 +626,33 @@ function timerCmd({ cmd, value }) {
   broadcast('timers', timers);
 }
 
+// Lápiz de la tableta gráfica, como en OpenKneeboard: toda la tableta es el kneeboard (el activo, o el elegido en
+// Ajustes), girada según la orientación elegida y ajustada para que la página quepa entera. La página recibe
+// la posición en 0..1, dibuja el cursor y convierte el lápiz en eventos de lápiz normales.
+function onTablet(pen) {
+  const t = cfg.get().tablet || {};
+  if (t.enabled === false) return;
+  const i = t.view === 0 || t.view === 1 ? t.view : activeView;
+  const win = views[i] || views[0];
+  if (!win || win.isDestroyed()) return;
+  if (!pen.active || cfg.get().hidden) {
+    win.webContents.send('tablet', { active: false });
+    return;
+  }
+  let { x, y, mx, my } = pen;
+  const rot = Number(t.orientation != null ? t.orientation : 90);
+  if (rot === 90) [x, y, mx, my] = [my - y, x, my, mx];
+  else if (rot === 180) [x, y] = [mx - x, my - y];
+  else if (rot === 270) [x, y, mx, my] = [y, mx - x, my, mx];
+  const { width: W, height: H } = win.getContentBounds();
+  const scale = Math.max(W / mx, H / my);
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  win.webContents.send('tablet', {
+    active: true, x: clamp((x * scale) / W), y: clamp((y * scale) / H), p: pen.p,
+    touch: !!(pen.pb & 1), erase: !!(pen.pb & ~1 >>> 0),
+  });
+}
+
 function pushInbox(item) {
   inbox.unshift(item);
   if (inbox.length > 60) inbox.length = 60;
@@ -650,6 +677,7 @@ function registerIpc() {
     vrActive: vr ? vr.active : false,
     share: { status: share.status, members: share.members },
     devices: input.listDevices(),
+    tablet: input.tabletInfo(),
     course,
     blocks: dcs.blocks,
     voice: voice ? voice.status : 'apagado',
@@ -933,6 +961,8 @@ function registerIpc() {
   ipcMain.handle('dtc:auto', (e, type) => resolveDtc(type, dcs.missionSrc && dcs.missionSrc.miz, dcs.dtcContext()));
   ipcMain.handle('voice:status', () => voice.status);
   ipcMain.handle('timer', (e, cmd) => timerCmd(cmd));
+  ipcMain.handle('messages:clear', () => { dcs.messages.length = 0; broadcast('messages-cleared'); });
+  ipcMain.handle('dcs:kbprobe', () => dcs.request({ cmd: 'kbprobe' }, 4000));
   ipcMain.handle('store:get', (e, name) => loadStore(name));
   ipcMain.on('store:set', (e, name, data) => {
     saveStore(name, data);
@@ -1105,7 +1135,10 @@ app.whenReady().then(() => {
   input.on('capture-progress', (names) => broadcast('bind:progress', names));
   input.on('devices', (d) => broadcast('devices', d));
   input.on('log', (m) => console.log('Input', m));
+  input.on('tablet', onTablet);
+  input.on('tablet-status', (s) => broadcast('tablet-status', s));
   if (!TEST_OFFSCREEN) input.start();
+  else if (process.env.LFKB_TABLET_GO) input.start(['--solo-tableta']); // pruebas de la tableta: sin teclado ni mandos
 
   vr = new VrBridge();
   vr.on('log', (m) => console.log('VR', m));

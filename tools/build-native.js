@@ -19,8 +19,8 @@ zig(['c++', ...target, '-O2', '-shared', '-std=c++17', '-fno-exceptions', '-Wno-
   '-Inative/openxr-layer/include', 'native/openxr-layer/layer.cpp',
   '-o', 'native/bin/lfkb_openxr_layer.dll', '-lkernel32']);
 
-zig(['cc', ...target, '-O2', 'native/input-helper/input.c',
-  '-o', 'native/bin/lfkb-input.exe', '-luser32', '-lwinmm', '-Wl,--subsystem,windows']);
+zig(['cc', ...target, '-O2', 'native/input-helper/input.c', 'native/input-helper/tablet.c',
+  '-o', 'native/bin/lfkb-input.exe', '-luser32', '-lwinmm', '-lws2_32', '-Wl,--subsystem,windows']);
 
 // Manifiesto de la capa implícita (la ruta de la DLL es relativa al propio JSON).
 fs.writeFileSync(path.join(bin, 'lfkb_openxr_layer.json'), JSON.stringify({

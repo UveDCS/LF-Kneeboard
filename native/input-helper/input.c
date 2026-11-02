@@ -5,6 +5,7 @@
 //   {"t":"gone","id":"{GUID}"}                   mando desconectado
 //   {"t":"btn","id":"{GUID}","b":3,"v":1}        botón (las setas son b = 1000 + seta*4 + dirección U/R/D/L)
 //   {"t":"key","k":75,"v":1}                     tecla (código virtual de Windows)
+// Las tabletas gráficas (OTD-IPC) se leen en tablet.c y salen por aquí también.
 // Termina cuando se cierra su entrada estándar (la app se ha cerrado).
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x0800
@@ -46,10 +47,10 @@ static HWND gWnd = NULL;
 static Device gDevs[MAX_DEV];
 static DIOBJECTDATAFORMAT gObjs[NPOV + NBTN];
 static DIDATAFORMAT gFmt;
-static volatile LONG gQuit = 0;
+volatile LONG gQuit = 0;  // compartido con tablet.c
 static CRITICAL_SECTION gOut;
 
-static void emit(const char* line) {
+void emit(const char* line) {
   EnterCriticalSection(&gOut);
   fputs(line, stdout);
   fputc('\n', stdout);
@@ -232,11 +233,16 @@ static DWORD WINAPI stdinWatch(LPVOID arg) {
   return 0;
 }
 
-int main(void) {
+DWORD WINAPI tabletThread(LPVOID arg);  // tablet.c: tabletas gráficas por OTD-IPC
+
+int main(int argc, char** argv) {
+  // --solo-tableta: solo la tableta (pruebas): ni mandos ni teclado.
+  int tabletOnly = argc > 1 && strcmp(argv[1], "--solo-tableta") == 0;
   InitializeCriticalSection(&gOut);
   timeBeginPeriod(1);
   HMODULE di = LoadLibraryW(L"dinput8.dll");
   PFN_DirectInput8Create create = di ? (PFN_DirectInput8Create)(void*)GetProcAddress(di, "DirectInput8Create") : NULL;
+  if (tabletOnly) create = NULL;
   if (!create || FAILED(create(GetModuleHandleW(NULL), DIRECTINPUT_VERSION, &MY_IID_IDirectInput8W, (LPVOID*)&gDI, NULL))) {
     emit("{\"t\":\"error\",\"msg\":\"DirectInput no disponible\"}");
     gDI = NULL;
@@ -244,6 +250,7 @@ int main(void) {
   gWnd = CreateWindowExW(0, L"STATIC", L"LFKneeboardInput", WS_OVERLAPPED, 0, 0, 1, 1, NULL, NULL, GetModuleHandleW(NULL), NULL);
   buildFormat();
   CreateThread(NULL, 0, stdinWatch, NULL, 0, NULL);
+  CreateThread(NULL, 0, tabletThread, NULL, 0, NULL);
   emit("{\"t\":\"ready\"}");
   if (gDI) rescan();
   DWORD lastScan = GetTickCount();
@@ -258,7 +265,7 @@ int main(void) {
         lastScan = GetTickCount();
       }
     }
-    pollKeys();
+    if (!tabletOnly) pollKeys();
     Sleep(10);
   }
   for (int i = 0; i < MAX_DEV; i++)

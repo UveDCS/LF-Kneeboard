@@ -88,7 +88,9 @@ export class Ink {
       this.eraseAt(this.pos(e));
       return;
     }
-    const pts = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    // Los eventos de la tableta (OTD-IPC) llegan sin puntos intermedios: entonces vale el propio evento.
+    const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    const pts = co.length ? co : [e];
     for (const p of pts) this.cur.s.p.push(this.pos(p));
     this.redraw();
   }

@@ -132,6 +132,9 @@ if arg[6] then
   if openEditor then openEditor() end
 end
 
+-- Indicadores de cabina: el 3 hace de kneeboard del módulo (para la prueba de list_indication).
+list_indication = function(i) if i == 3 then return '-----\nkneeboardairfieldstxt\nES-SE 1 KUTAISI 08/26' end return '' end
+
 dofile(hookPath)
 assert(callbacks, 'el hook no registró callbacks')
 callbacks.onMissionLoadEnd()

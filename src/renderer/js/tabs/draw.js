@@ -54,7 +54,7 @@ export const draw = {
     }
 
     canvas.addEventListener('pointerdown', (e) => {
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch { /* lápiz de la tableta (OTD-IPC): sin captura */ }
       if (eraser || (e.buttons & 32)) {
         cur = { erase: true, id: e.pointerId };
         eraseAt(pos(e));
@@ -67,7 +67,8 @@ export const draw = {
     canvas.addEventListener('pointermove', (e) => {
       if (!cur || e.pointerId !== cur.id) return;
       if (cur.erase) return eraseAt(pos(e));
-      for (const p of e.getCoalescedEvents ? e.getCoalescedEvents() : [e]) cur.s.p.push(pos(p));
+      const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+      for (const p of co.length ? co : [e]) cur.s.p.push(pos(p));
       redraw();
     });
     const end = (e) => {
