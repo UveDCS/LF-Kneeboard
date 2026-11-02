@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-build/
+*.log
+tools/geo_vectors.json
+# Binarios compilados (se generan con «npm run native»)
+native/bin/
+# Borradores de anuncios para Discord
+discord/

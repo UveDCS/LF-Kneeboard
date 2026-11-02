@@ -1,0 +1,324 @@
+/* Temas del kneeboard. Todo es CSS (sin imágenes), así que escala igual en VR y en el monitor. */
+.screen { z-index: 1; }
+
+/* =====================================================================
+   TABLET — tableta táctica con bisel de aluminio oscuro
+   ===================================================================== */
+body[data-theme='tablet'] {
+  --frame-bg: linear-gradient(145deg, #2c3138 0%, #0c0e11 48%, #1b1f24 100%);
+  --frame-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 .12rem .25rem rgba(255,255,255,.07), 0 .8rem 2rem rgba(0,0,0,.55);
+  --frame-pad: 1.7rem 1.15rem 1.5rem;
+  --frame-radius: 2.5rem;
+  --screen-radius: 1rem;
+  --screen-bg: radial-gradient(130% 90% at 0% 0%, #19283a 0%, #0d141d 55%, #0a1017 100%);
+  --screen-overlay: linear-gradient(118deg, rgba(255,255,255,.055) 0%, transparent 28%);
+  --ink: #e6edf5;
+  --muted: #8797ab;
+  --line: rgba(148,170,196,.2);
+  --line-soft: rgba(148,170,196,.1);
+  --accent: #38bdf8;
+  --accent-ink: #032130;
+  --card: rgba(255,255,255,.045);
+  --bar-bg: rgba(6,10,16,.55);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --hl: rgba(56,189,248,.15);
+  --doc-bg: #080d13;
+  --map-bg: #111b25;
+}
+body[data-theme='tablet'] .deco-a { top: .62rem; left: 50%; width: .62rem; height: .62rem; margin-left: -.31rem; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #4a6178, #0b0e12 60%); box-shadow: 0 0 0 .14rem #191d22; }
+body[data-theme='tablet'] .deco-b { bottom: .6rem; left: 50%; width: 4rem; height: .26rem; margin-left: -2rem; border-radius: 1rem; background: rgba(255,255,255,.16); }
+body[data-theme='tablet'] .deco-c { right: .18rem; top: 16%; width: .26rem; height: 3.2rem; border-radius: .2rem; background: linear-gradient(90deg, #3a4149, #20252b); }
+
+/* =====================================================================
+   LIBRETA — cuaderno de espiral, papel rayado y boli azul
+   ===================================================================== */
+body[data-theme='libreta'] {
+  --frame-bg: transparent;
+  --frame-pad: 1.9rem .35rem .4rem;
+  --frame-radius: 0;
+  --screen-radius: .35rem .35rem .9rem .9rem;
+  --screen-bg:
+    linear-gradient(90deg, transparent 2.7rem, rgba(220,38,38,.5) 2.7rem, rgba(220,38,38,.5) calc(2.7rem + 2px), transparent calc(2.7rem + 2px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent calc(1.65rem - 1px), rgba(59,130,246,.26) calc(1.65rem - 1px), rgba(59,130,246,.26) 1.65rem),
+    radial-gradient(120% 90% at 50% 0%, #fffdf6, #f6f0dc);
+  --screen-shadow: 0 .5rem 1.4rem rgba(0,0,0,.38), inset 0 0 3rem rgba(160,120,40,.14);
+  --ink: #1e3a8a;
+  --muted: #6b7280;
+  --line: rgba(30,58,138,.22);
+  --line-soft: rgba(30,58,138,.12);
+  --accent: #dc2626;
+  --accent-ink: #fff;
+  --accent-text: #b91c1c;
+  --card: rgba(255,255,255,.5);
+  --card-border: 1.5px dashed rgba(30,58,138,.28);
+  --bar-bg: transparent;
+  --bar-border: 2px solid rgba(220,38,38,.3);
+  --hl: rgba(250,204,21,.42);
+  --tab-sel-bg: rgba(250,204,21,.65);
+  --tab-sel-ink: #1e3a8a;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --font-ui: 'Patrick Hand', 'Inter', sans-serif;
+  --font-head: 'Caveat', cursive;
+  --font-field: 'Patrick Hand', sans-serif;
+  --head-size: 1.6rem;
+  --head-weight: 600;
+  --doc-bg: transparent;
+  --doc-shadow: 0 .2rem .8rem rgba(0,0,0,.25);
+  --field-bg: rgba(255,255,255,.35);
+  --field-border: none;
+  --toast-bg: #1e3a8a;
+  --map-bg: #e9e4d2;
+}
+body[data-theme='libreta'] .h1 { font-size: 2rem; }
+body[data-theme='libreta'] .h2 { font-family: 'Caveat', cursive; font-size: 1.45rem; }
+body[data-theme='libreta'] .view { padding-left: 3.2rem; }
+body[data-theme='libreta'] .view.flush { padding-left: 0; }
+body[data-theme='libreta'] input.f, body[data-theme='libreta'] textarea.f { border-bottom: 1.5px solid rgba(30,58,138,.35); border-radius: 0; font-size: 1.05rem; }
+body[data-theme='libreta'] .deco-a {
+  top: .05rem; left: 1rem; right: 1rem; height: 2.55rem;
+  background: radial-gradient(ellipse .42rem 1.15rem at 50% 50%, transparent 52%, #6b7280 56%, #f3f4f6 66%, #9ca3af 74%, #4b5563 80%, transparent 84%);
+  background-size: 1.4rem 100%;
+  background-repeat: repeat-x;
+  filter: drop-shadow(0 .12rem .1rem rgba(0,0,0,.35));
+}
+body[data-theme='libreta'] .deco-b {
+  top: 1.95rem; left: 1rem; right: 1rem; height: .8rem; z-index: 2;
+  background: radial-gradient(circle .27rem at 50% 50%, #2a2a2a 62%, transparent 70%);
+  background-size: 1.4rem 100%;
+  background-repeat: repeat-x;
+}
+
+/* =====================================================================
+   PORTAPAPELES — tablero de madera prensada con pinza metálica
+   ===================================================================== */
+body[data-theme='portapapeles'] {
+  --frame-bg:
+    repeating-linear-gradient(7deg, rgba(0,0,0,.045) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-3deg, rgba(255,255,255,.035) 0 1px, transparent 1px 7px),
+    radial-gradient(ellipse at 28% 18%, #b0804e, #7c5431 58%, #5d3c21);
+  --frame-shadow: inset 0 0 0 2px rgba(0,0,0,.28), inset 0 .2rem .4rem rgba(255,255,255,.16), 0 .8rem 2rem rgba(0,0,0,.5);
+  --frame-pad: 3.5rem 1.05rem 1.35rem;
+  --frame-radius: 1.4rem;
+  --screen-radius: .2rem;
+  --screen-bg: linear-gradient(180deg, #fdfdfb, #f6f6f1);
+  --screen-shadow: 0 .25rem .8rem rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.06);
+  --ink: #111827;
+  --muted: #6b7280;
+  --line: #e2e4e8;
+  --accent: #1d4ed8;
+  --accent-ink: #fff;
+  --card: #fff;
+  --card-shadow: 0 .05rem .2rem rgba(0,0,0,.06);
+  --bar-bg: #fff;
+  --hl: #dbeafe;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --doc-bg: #f1f1ec;
+  --map-bg: #dde3e8;
+}
+body[data-theme='portapapeles'] .deco-a {
+  top: .45rem; left: 50%; width: 42%; height: 3.6rem; transform: translateX(-50%);
+  border-radius: .7rem .7rem 1.4rem 1.4rem;
+  background: linear-gradient(180deg, #fafafa 0%, #c4c8ce 30%, #8a9099 52%, #d5d8dc 78%, #9aa0a8 100%);
+  box-shadow: 0 .35rem .7rem rgba(0,0,0,.45), inset 0 1px 0 #fff, inset 0 -.2rem .3rem rgba(0,0,0,.2);
+}
+body[data-theme='portapapeles'] .deco-b {
+  top: 1.05rem; left: 50%; width: 5rem; height: 1rem; transform: translateX(-50%); border-radius: 1rem;
+  background: #5d3c21; box-shadow: inset 0 .2rem .35rem rgba(0,0,0,.6);
+}
+body[data-theme='portapapeles'] .deco-c {
+  z-index: 0; bottom: .75rem; left: 1.3rem; right: 1.3rem; height: .9rem; border-radius: 0 0 .25rem .25rem;
+  background: repeating-linear-gradient(180deg, #f4f4ef 0 .18rem, #d6d6cf .18rem .25rem);
+  box-shadow: 0 .2rem .4rem rgba(0,0,0,.3);
+}
+
+/* =====================================================================
+   TÁCTICO — kneeboard de nailon con velcro y ficha plastificada
+   ===================================================================== */
+body[data-theme='tactico'] {
+  --frame-bg:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.1) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.045) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg, #5c6538 0%, #434a27 60%, #383e20 100%);
+  --frame-shadow: inset 0 0 0 .3rem rgba(0,0,0,.18), 0 .8rem 2rem rgba(0,0,0,.5);
+  --frame-pad: 2.75rem 1.15rem 1.15rem;
+  --frame-radius: 1.3rem;
+  --screen-radius: .5rem;
+  --screen-bg: linear-gradient(180deg, #f1eee2, #e8e4d4);
+  --screen-overlay: linear-gradient(118deg, rgba(255,255,255,.32) 0%, transparent 22%, transparent 72%, rgba(255,255,255,.14) 100%);
+  --screen-shadow: 0 0 0 .2rem rgba(255,255,255,.35), 0 .2rem .6rem rgba(0,0,0,.4);
+  --ink: #1f2416;
+  --muted: #676b53;
+  --line: rgba(31,36,22,.2);
+  --accent: #b45309;
+  --accent-ink: #fff7ed;
+  --card: rgba(255,255,255,.45);
+  --bar-bg: #2f3420;
+  --bar-ink: #e9e5c7;
+  --bar-border: none;
+  --hl: rgba(180,83,9,.16);
+  --ok: #65a30d;
+  --warn: #ea580c;
+  --font-head: 'Share Tech Mono', monospace;
+  --head-transform: uppercase;
+  --head-spacing: .08em;
+  --head-weight: 400;
+  --doc-bg: #e3dfcf;
+  --map-bg: #c9c6b2;
+}
+body[data-theme='tactico'] .bar, body[data-theme='tactico'] .tabsbar {
+  --muted: rgba(233,229,199,.62); --ink: #e9e5c7; --card: rgba(255,255,255,.07); --line: rgba(233,229,199,.22);
+  color: #e9e5c7;
+}
+body[data-theme='tactico'] .deco-a { inset: .55rem; border: 2px dashed rgba(230,226,192,.42); border-radius: .9rem; }
+body[data-theme='tactico'] .deco-b {
+  top: .45rem; left: 1.1rem; right: 1.1rem; height: 1.95rem; border-radius: .35rem;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,.35) 0 1px, transparent 1.6px) 0 0 / .28rem .28rem,
+    linear-gradient(180deg, #3e4523, #2f3419);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 0 .1rem .2rem rgba(0,0,0,.35);
+}
+body[data-theme='tactico'] .deco-c {
+  top: .78rem; left: 50%; transform: translateX(-50%); padding: .1rem .7rem; border-radius: .2rem;
+  background: #2a2e18; border: 1px dashed rgba(233,229,199,.4);
+  font: .78rem 'Share Tech Mono', monospace; letter-spacing: .3em; color: #d8d3ad;
+}
+body[data-theme='tactico'] .deco-c::after { content: 'KNEEBOARD'; }
+
+/* =====================================================================
+   MFD — pantalla multifunción de fósforo verde con botones OSB
+   ===================================================================== */
+body[data-theme='mfd'] {
+  --frame-bg: linear-gradient(160deg, #3b3f43 0%, #18191b 42%, #2b2e31 100%);
+  --frame-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 1.6rem rgba(0,0,0,.65), 0 .8rem 2rem rgba(0,0,0,.6);
+  --frame-pad: 2.3rem 2.5rem;
+  --frame-radius: 1.3rem;
+  --screen-radius: .45rem;
+  --screen-bg: radial-gradient(ellipse at center, #04210f 0%, #010a04 72%, #000 100%);
+  --screen-overlay: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.5));
+  --screen-shadow: inset 0 0 0 .18rem #000, inset 0 0 1.4rem rgba(0,0,0,.9);
+  --ink: #45ff92;
+  --muted: #22a85a;
+  --line: rgba(69,255,146,.26);
+  --line-soft: rgba(69,255,146,.12);
+  --accent: #45ff92;
+  --accent-ink: #00170a;
+  --accent-text: #ffd84a;
+  --card: rgba(69,255,146,.05);
+  --bar-bg: rgba(0,0,0,.35);
+  --hl: rgba(69,255,146,.15);
+  --ok: #45ff92;
+  --warn: #ffd84a;
+  --font-ui: 'Share Tech Mono', monospace;
+  --font-head: 'Share Tech Mono', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --head-transform: uppercase;
+  --head-weight: 400;
+  --head-spacing: .1em;
+  --emoji-filter: grayscale(1) brightness(1.3) sepia(1) hue-rotate(75deg) saturate(5);
+  --toast-bg: #00230f;
+  --toast-ink: #45ff92;
+  --doc-bg: #000;
+  --map-bg: #021208;
+}
+body[data-theme='mfd'] .screen { text-shadow: 0 0 .35rem rgba(69,255,146,.5); }
+body[data-theme='mfd'] .deco-a, body[data-theme='mfd'] .deco-b {
+  top: 20%; bottom: 20%; width: 1.35rem;
+  background: repeating-linear-gradient(180deg, #4d5156 0 1.4rem, transparent 1.4rem 3.1rem);
+  border-radius: .2rem; filter: drop-shadow(0 .1rem .1rem rgba(0,0,0,.6));
+}
+body[data-theme='mfd'] .deco-a { left: .55rem; }
+body[data-theme='mfd'] .deco-b { right: .55rem; }
+body[data-theme='mfd'] .deco-c {
+  top: .5rem; left: 24%; right: 24%; height: 1.25rem;
+  background: repeating-linear-gradient(90deg, #4d5156 0 1.6rem, transparent 1.6rem 3.3rem);
+  background-position: center;
+  filter: drop-shadow(0 .1rem .1rem rgba(0,0,0,.6));
+}
+
+/* =====================================================================
+   DOSSIER — carpeta de cartulina, máquina de escribir y sello
+   ===================================================================== */
+body[data-theme='dossier'] {
+  --frame-bg:
+    repeating-linear-gradient(93deg, rgba(120,80,20,.05) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #e6c994, #d3ae6e);
+  --frame-shadow: inset 0 0 0 1px rgba(120,80,20,.35), 0 .8rem 2rem rgba(0,0,0,.45);
+  --frame-pad: 2.6rem 1rem 1rem;
+  --frame-radius: .6rem 1.5rem .6rem .6rem;
+  --screen-radius: .15rem;
+  --screen-bg: radial-gradient(130% 100% at 50% 0%, #fbf6ea, #efe5cd);
+  --screen-shadow: 0 .2rem .6rem rgba(0,0,0,.3), inset 0 0 2.2rem rgba(140,100,40,.18);
+  --ink: #262420;
+  --muted: #6f6656;
+  --line: rgba(70,55,30,.22);
+  --accent: #9f1c1c;
+  --accent-ink: #fff;
+  --card: rgba(255,255,255,.4);
+  --bar-bg: transparent;
+  --bar-border: 1px solid rgba(70,55,30,.35);
+  --hl: rgba(159,28,28,.1);
+  --ok: #3f6212;
+  --warn: #b45309;
+  --font-ui: 'Special Elite', monospace;
+  --font-head: 'Special Elite', monospace;
+  --head-transform: uppercase;
+  --head-weight: 400;
+  --head-spacing: .06em;
+  --doc-bg: #e9dfc6;
+  --doc-shadow: 0 .15rem .5rem rgba(0,0,0,.3);
+  --map-bg: #ddd3ba;
+}
+body[data-theme='dossier'] .deco-a {
+  top: .55rem; left: 1.3rem; padding: .25rem .9rem; background: #f7efd9; border: 1px solid rgba(70,55,30,.35);
+  font: .78rem 'Special Elite', monospace; letter-spacing: .14em; color: #3a3328; box-shadow: 0 .1rem .2rem rgba(0,0,0,.15);
+}
+body[data-theme='dossier'] .deco-a::after { content: 'EXPEDIENTE · PLAN DE VUELO'; }
+body[data-theme='dossier'] .deco-b {
+  bottom: 4.4rem; right: 1.8rem; padding: .25rem .7rem; transform: rotate(-11deg);
+  border: .22rem double rgba(159,28,28,.55); border-radius: .3rem;
+  font: 1.25rem 'Special Elite', monospace; letter-spacing: .12em; color: rgba(159,28,28,.55); mix-blend-mode: multiply; opacity: .55;
+}
+body[data-theme='dossier'] .deco-b::after { content: 'CONFIDENCIAL'; }
+body[data-theme='dossier'] .deco-c {
+  top: .6rem; right: 38%; width: 1.15rem; height: 3.6rem; border: .2rem solid #a3a8b0; border-radius: 1rem;
+  box-shadow: 0 .1rem .15rem rgba(0,0,0,.35);
+}
+body[data-theme='dossier'] .deco-c::after {
+  content: ''; position: absolute; left: .15rem; right: .15rem; top: .45rem; bottom: .9rem; border: .18rem solid #b9bec5; border-radius: 1rem;
+}
+
+/* =====================================================================
+   NOCHE — rojo tenue sobre negro, para no perder la adaptación a la oscuridad
+   ===================================================================== */
+body[data-theme='noche'] {
+  --frame-bg: #050505;
+  --frame-shadow: inset 0 0 0 1px #2a0505;
+  --frame-pad: 1rem;
+  --frame-radius: 1.6rem;
+  --screen-radius: 1rem;
+  --screen-bg: #000;
+  --ink: #c42020;
+  --muted: #761313;
+  --line: rgba(196,32,32,.24);
+  --accent: #a51b1b;
+  --accent-ink: #000;
+  --card: rgba(165,27,27,.06);
+  --bar-bg: #000;
+  --hl: rgba(165,27,27,.2);
+  --ok: #a51b1b;
+  --warn: #c2410c;
+  --emoji-filter: grayscale(1) brightness(.55) sepia(1) hue-rotate(-50deg) saturate(6);
+  --toast-bg: #1a0000;
+  --toast-ink: #e03030;
+  --doc-bg: #000;
+  --map-bg: #0a0000;
+}
+body[data-theme='noche'] .doc img, body[data-theme='noche'] .doc canvas.page {
+  filter: grayscale(1) invert(1) brightness(.55) sepia(1) hue-rotate(-50deg) saturate(5);
+}
+body[data-theme='noche'] .mapwrap .leaflet-tile-pane { filter: grayscale(1) brightness(.45) sepia(1) hue-rotate(-50deg) saturate(4); }
+body[data-theme='mfd'] .mapwrap .leaflet-tile-pane { filter: grayscale(1) brightness(.6) sepia(1) hue-rotate(80deg) saturate(3); }

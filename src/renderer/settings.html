@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LF Kneeboard — Ajustes</title>
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/600.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/800.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/400.css">
+  <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+  <aside class="side">
+    <div class="brand"><img src="assets/icon.png" alt=""><div><b>LF Kneeboard</b><span id="ver"></span></div></div>
+    <nav id="nav"></nav>
+    <div class="side-foot" id="sideStatus"></div>
+  </aside>
+  <main id="main"></main>
+  <div class="capture" id="capture" hidden>
+    <div class="capture-box">
+      <div class="capture-title">Pulsa el botón o la combinación</div>
+      <div class="capture-sub" id="captureAction"></div>
+      <div class="capture-keys" id="captureKeys">Esperando…</div>
+      <div class="capture-hint">Para una combinación, mantén el modificador (p. ej. un botón de cambio del HOTAS o AltGr) y pulsa el otro. Se guarda al soltar.</div>
+      <button class="btn" id="captureCancel">Cancelar</button>
+    </div>
+  </div>
+  <script src="app://kb/src/shared/geo.js"></script>
+  <script type="module" src="js/settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Compartir con el vuelo</title><link rel="stylesheet" href="anuncio.css">
+<style>
+  .copy { width: 590px; }
+  .copy h1 { font-size: 58px; }
+  .items { list-style: none; padding: 0; margin: 0 0 26px; }
+  .items li { display: flex; gap: 16px; align-items: flex-start; font-size: 20px; line-height: 1.4; color: #d4dfeb; margin-bottom: 13px; }
+  .items li i { flex: none; font: 700 13px var(--mono); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.4); border-radius: 7px; padding: 6px 9px; width: 96px; text-align: center; margin-top: 1px; }
+  .items b { color: #fff; }
+  .toast { position: absolute; z-index: 6; display: flex; align-items: center; gap: 12px; font-size: 18px; color: #fff; background: rgba(8, 14, 22, .9); border: 1px solid rgba(56, 189, 248, .5); border-left: 5px solid var(--accent); border-radius: 10px; padding: 11px 16px; box-shadow: 0 12px 28px rgba(0, 0, 0, .5); }
+  .toast b { color: var(--accent); }
+</style></head>
+<body>
+  <div class="copy">
+    <div class="brand"><img src="../img/logo.svg" alt=""><div><div class="name">LF Kneeboard</div><div class="by">Compartir con el vuelo</div></div></div>
+    <h1>Lo que ves tú,<br><em>lo ve tu vuelo</em>.</h1>
+    <ul class="items">
+      <li><i>Páginas</i><span>Envía la página que tienes delante con un botón. Si es la tarjeta, tu punto la <b>copia en su kneeboard</b>.</span></li>
+      <li><i>Mapa</i><span>Dibuja la entrada al objetivo y la ve todo el vuelo, <b>cada piloto con su color</b>.</span></li>
+      <li><i>Puntos</i><span>Pasa un punto del F10: le llega en el formato de <b>su</b> cabina, listo para el bloc.</span></li>
+      <li><i>DTC</i><span>Comparte tu cartucho y cada uno decide si lo carga.</span></li>
+    </ul>
+    <div class="pills"><span>Notas</span><span>Pizarra en directo</span><span>Sala propia o del escuadrón</span></div>
+  </div>
+  <div class="tablet" style="left:745px; top:200px; width:330px; transform:rotate(-7deg);"><img src="../img/compartido-pagina.jpg" alt=""></div>
+  <div class="tablet" style="left:1215px; top:190px; width:330px; transform:rotate(7deg);"><img src="../img/compartido-punto.jpg" alt=""></div>
+  <div class="tablet" style="left:965px; top:118px; width:375px; z-index:3;"><img src="../img/mapa-compartido.jpg" alt=""></div>
+  <div class="toast" style="left:800px; top:62px;"><b>Dagger 1-2</b> ha dibujado en el mapa</div>
+  <div class="toast" style="left:1150px; top:780px;"><b>Dagger 1-1</b> te ha enviado la tarjeta de vuelo</div>
+</body></html>

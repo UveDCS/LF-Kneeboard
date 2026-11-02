@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LF Kneeboard</title>
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/600.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/800.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/700.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/caveat/600.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/patrick-hand/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/share-tech-mono/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/special-elite/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <script src="app://kb/src/shared/geo.js"></script>
+  <script src="app://kb/node_modules/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+  <div id="kb">
+    <div class="frame">
+      <div class="deco deco-a"></div>
+      <div class="deco deco-b"></div>
+      <div class="deco deco-c"></div>
+      <div class="screen">
+        <header class="bar" id="bar">
+          <div class="bar-title"><span class="bar-icon" id="tabIcon"></span><span id="tabTitle"></span></div>
+          <button class="bar-page" id="pageInd" title="Ir a una página: pulsa y escribe el número"></button>
+          <button class="bar-btn" id="bmBtn" title="Marcar esta página"></button>
+          <button class="bar-btn" id="idxBtn" title="Índice de páginas"></button>
+          <button class="bar-btn" id="bmListBtn" title="Marcadores"></button>
+          <div class="bar-spacer"></div>
+          <button class="bar-btn" id="nightBtn" title="Modo noche"></button>
+          <button class="bar-btn" id="dualBtn" title="Dos kneeboards (abrir / cerrar el segundo)"></button>
+          <button class="pill" id="autoPill" title="Modo automático: va a tus marcadores (y pestañas) de cada fase del vuelo"></button>
+          <div class="bar-status" id="status"></div>
+          <div class="bar-clock" id="clock"></div>
+        </header>
+        <main id="content"></main>
+        <footer class="tabsbar">
+          <button class="nav" id="allTabs" title="Todas las pestañas"></button>
+          <button class="nav" id="prevPage" title="Página anterior"></button>
+          <div class="tabs" id="tabs"></div>
+          <button class="nav" id="nextPage" title="Página siguiente"></button>
+          <div class="tools">
+            <button class="tool" id="inkBtn" title="Lápiz (dibujar sobre la página)"></button>
+            <button class="tool" id="shareBtn" title="Enviar esta página al vuelo"></button>
+            <button class="tool" id="settingsBtn" title="Ajustes"></button>
+          </div>
+        </footer>
+        <div class="overlay" id="overlay" hidden></div>
+        <div class="toasts" id="toasts"></div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="js/kneeboard.js"></script>
+</body>
+</html>

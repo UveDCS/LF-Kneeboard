@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>LF Kneeboard — Cómo funciona por dentro</title>
+<link rel="stylesheet" href="docs.css">
+<style>
+  .cover { padding: 0; background:
+      radial-gradient(80% 55% at 85% 15%, rgba(56, 189, 248, .22) 0%, transparent 60%),
+      linear-gradient(165deg, #132438 0%, #0b1320 50%, #060a11 100%); }
+  .cover::before { content: ''; position: absolute; inset: 0; opacity: .7;
+    background-image: linear-gradient(rgba(148,170,196,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,170,196,.07) 1px, transparent 1px);
+    background-size: 6mm 6mm; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+  .cover .in { position: absolute; left: 18mm; right: 18mm; top: 24mm; z-index: 2; }
+  .cover .logo { display: flex; align-items: center; gap: 5mm; }
+  .cover .logo img { width: 20mm; height: 20mm; }
+  .cover .logo .by { font: 700 8.5pt var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--accent); }
+  .cover h1 { font-size: 44pt; line-height: .98; margin: 14mm 0 5mm; }
+  .cover h1 em { font-style: normal; color: var(--accent); }
+  .cover .sub { font-size: 13pt; line-height: 1.45; color: var(--muted); max-width: 140mm; margin: 0 0 10mm; }
+  .cover .bp { position: absolute; left: 18mm; right: 18mm; top: 138mm; z-index: 2; }
+  .cover .bottom { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; display: flex; justify-content: space-between; font: 400 8pt var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; z-index: 2; }
+  .cover .bottom b { color: var(--ink); }
+  .q { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .q .card h3 { font-size: 10pt; }
+  .q .card p { font-size: 8.8pt; margin: 0; }
+
+  .yn { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .yn .card { padding: 4.5mm 5mm; }
+  .yn h3 { display: flex; align-items: center; gap: 2.5mm; font-size: 11pt; margin-bottom: 3mm; }
+  .yn h3 i { font-style: normal; width: 6mm; height: 6mm; border-radius: 50%; display: grid; place-items: center; font: 800 9pt var(--mono); }
+  .yn .yes h3 i { background: rgba(56,189,248,.18); color: var(--accent); }
+  .yn .no h3 i { background: rgba(52,211,153,.16); color: var(--ok); }
+  .yn .no .feat li::before { background: var(--ok); }
+  .net-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.5mm; }
+  .net-sum .card { padding: 3.2mm 3.6mm; }
+  .net-sum h3 { font-size: 9pt; }
+  .net-sum p { font-size: 8.2pt; margin: 0; }
+
+  .diagram { margin: 2mm 0 0; }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 6mm; font: 400 7.6pt var(--mono); color: var(--muted); margin-top: 3mm; }
+  .legend span::before { content: ''; display: inline-block; width: 7mm; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 2mm; }
+  .legend span.d::before { border-top: 2px dashed var(--warn); }
+  .legend span.e::before { border-top: 2px dotted #a78bfa; }
+
+  .comp { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .facts { display: grid; grid-template-columns: 30mm 1fr; gap: 1.6mm 4mm; font-size: 8.8pt; line-height: 1.4; }
+  .facts dt { font: 700 7.4pt var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding-top: .5mm; }
+  .facts dd { margin: 0; color: #cdd7e3; }
+  .states { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3.5mm; }
+  .states .card { padding: 3.4mm 3.8mm; }
+  .states h3 { font-size: 9.4pt; }
+  .states p { font-size: 8.4pt; margin: 0; }
+  .states .hi { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.08); }
+  .flow { list-style: none; margin: 0; padding: 0; counter-reset: f; }
+  .flow li { counter-increment: f; position: relative; padding: 0 0 3.4mm 12mm; font-size: 9.2pt; line-height: 1.45; color: #cdd7e3; }
+  .flow li::before { content: counter(f); position: absolute; left: 0; top: -.3mm; width: 7.5mm; height: 7.5mm; border-radius: 1.8mm; background: var(--accent-soft); border: 1px solid rgba(56,189,248,.4); color: var(--accent); font: 800 9pt var(--mono); display: grid; place-items: center; }
+  .flow li::after { content: ''; position: absolute; left: 3.6mm; top: 8mm; bottom: .6mm; border-left: 1px dashed rgba(56,189,248,.35); }
+  .flow li:last-child::after { display: none; }
+  .faq .card { margin-bottom: 3.5mm; padding: 3.6mm 4.2mm; }
+  .faq h3 { font-size: 9.8pt; }
+  .faq p { font-size: 8.8pt; margin: 0; }
+  td code { white-space: nowrap; }
+  .small td { font-size: 8.2pt; padding: 1.7mm 2.2mm; }
+</style>
+</head>
+<body>
+
+<!-- ============================== PORTADA ============================== -->
+<section class="page cover">
+  <div class="in">
+    <div class="logo"><img src="../img/logo.svg" alt=""><div class="by">La Fundación · DCS World</div></div>
+    <h1>Cómo funciona<br><em>por dentro</em></h1>
+    <p class="sub">Qué instala LF Kneeboard en tu PC y en DCS, qué lee, qué toca y qué no, y con quién se conecta. Para que decidas con toda la información si lo instalas.</p>
+  </div>
+  <div class="bp">
+    <div class="q">
+      <div class="card"><h3>Solo en tu usuario</h3><p>Se instala sin permisos de administrador. Todo lo que escribe está en tu carpeta de usuario y en <code>Saved Games</code>.</p></div>
+      <div class="card"><h3>Sin tocar DCS</h3><p>No modifica la instalación de DCS ni tu <code>Export.lua</code>. Sus piezas en DCS son un script y un mod que se quitan solos al desinstalar.</p></div>
+      <div class="card"><h3>Sin telemetría</h3><p>No envía nada a ningún servidor nuestro. Solo se conecta a internet para las capas del mapa, las actualizaciones y, si lo usas, el vuelo compartido.</p></div>
+    </div>
+    <div style="height:8mm"></div>
+    <div class="kicker">En este documento</div>
+    <table class="small">
+      <tr><td style="width:10mm"><span class="mono">02</span></td><td>Resumen: qué toca y qué no</td><td style="width:10mm"><span class="mono">07</span></td><td>Controles y órdenes de voz</td></tr>
+      <tr><td><span class="mono">03</span></td><td>Las piezas y cómo se hablan</td><td><span class="mono">08</span></td><td>Red: todas las conexiones</td></tr>
+      <tr><td><span class="mono">04</span></td><td>La aplicación (Electron)</td><td><span class="mono">09</span></td><td>Archivos y registro de Windows</td></tr>
+      <tr><td><span class="mono">05</span></td><td>El script de DCS y el mod puente</td><td><span class="mono">10</span></td><td>De la misión a la página</td></tr>
+      <tr><td><span class="mono">06</span></td><td>La capa de VR (OpenXR)</td><td><span class="mono">11</span></td><td>Desinstalar y preguntas frecuentes</td></tr>
+    </table>
+  </div>
+  <div class="bottom"><div>LF Kneeboard <b>0.3.6</b> · noviembre de 2026</div><div>Licencia <b>MIT</b></div></div>
+</section>
+
+<!-- ============================== RESUMEN ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">02</span>En una página</div>
+  <h2>Qué toca y qué no</h2>
+  <p class="lead">LF Kneeboard tiene cinco piezas: la aplicación, un script y un mod en DCS, una capa de VR y un lector de mandos. Este es el resumen; las páginas siguientes lo explican pieza a pieza.</p>
+  <div class="yn">
+    <div class="card yes">
+      <h3><i>+</i>Lo que instala y escribe</h3>
+      <ul class="feat">
+        <li><b>El programa</b> en <code>%LOCALAPPDATA%\Programs\LF Kneeboard</code>, solo para tu usuario.</li>
+        <li><b>Tus ajustes y datos</b> en <code>%APPDATA%\LF Kneeboard</code>.</li>
+        <li><b>Un script de DCS</b>: <code>Saved Games\DCS\Scripts\Hooks\LFKneeboard-hook.lua</code>.</li>
+        <li><b>Un mod mínimo</b>: <code>Saved Games\DCS\Mods\Services\LFKneeboard\</code> (5 archivos de texto).</li>
+        <li><b>Archivos temporales</b> en <code>Saved Games\DCS\Temp\LFKneeboard\</code>: la misión y el DTC del editor, en JSON.</li>
+        <li><b>Una entrada del registro</b> (tu usuario) que activa la capa de VR de OpenXR.</li>
+        <li><b>Solo si se lo pides</b>: copiar un DTC a <code>Saved Games\DCS\DTC</code>, páginas «LFK …» al kneeboard de DCS o páginas dentro de un <code>.miz</code> (con copia de seguridad).</li>
+      </ul>
+    </div>
+    <div class="card no">
+      <h3><i>✓</i>Lo que no toca</h3>
+      <ul class="feat">
+        <li><b>La instalación de DCS</b> (la carpeta del juego): no cambia ningún archivo.</li>
+        <li><b>Tu <code>Export.lua</code></b>: no lo modifica. Convive con DCS-BIOS, Tacview, SRS, DKS y OpenKneeboard.</li>
+        <li><b>Los archivos de otros mods</b>, tus DTC (nunca pisa uno existente) ni las páginas de kneeboard que no sean suyas.</li>
+        <li><b>El resto de aviones de la misión</b>: solo lee tu propio avión. La misión se lee entera, pero solo se muestra tu bando.</li>
+        <li><b>El comportamiento de DCS</b>: el script y el mod solo leen. Donde el mod escucha llamadas del editor de DTC, llama siempre a la función original.</li>
+        <li><b>Permisos de administrador, servicios ni drivers.</b></li>
+      </ul>
+    </div>
+  </div>
+  <div style="height:6mm"></div>
+  <div class="kicker">Lo que sale de tu PC</div>
+  <div class="net-sum">
+    <div class="card"><h3>Mapa</h3><p>Pide las teselas de satélite o topográficas a Esri, OpenTopoMap o CARTO.</p></div>
+    <div class="card"><h3>Actualizaciones</h3><p>Consulta GitHub al arrancar y cada 6 horas. Se puede desactivar.</p></div>
+    <div class="card"><h3>Vuelo compartido</h3><p>Solo si te unes a una sala: lo que tú envías al resto del vuelo.</p></div>
+    <div class="card"><h3>IP pública</h3><p>Al abrir Ajustes › Vuelo compartido, la consulta en ipify.org.</p></div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip"><b>Nada más.</b> No hay estadísticas de uso, informes de errores automáticos ni cuentas. Los errores se apuntan en archivos de texto de tu PC (<code>errores.log</code> y <code>openxr-layer.log</code>) que nadie recibe salvo que tú los envíes.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>2</span></div>
+</section>
+
+<!-- ============================== ARQUITECTURA ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">03</span>Arquitectura</div>
+  <h2>Las piezas y cómo se hablan</h2>
+  <p class="lead">Dentro de DCS solo corren piezas pequeñas que leen datos. Todo el trabajo (leer la misión, calcular el plan, dibujar las páginas) lo hace la aplicación, en su propio proceso.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#38bdf8"/></marker>
+        <marker id="w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker>
+        <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/></marker>
+      </defs>
+      <!-- PC -->
+      <rect x="6" y="6" width="888" height="470" rx="18" fill="none" stroke="rgba(148,170,196,.35)" stroke-dasharray="6 6"/>
+      <text x="26" y="34" fill="#93a3b8" font-family="JetBrains Mono" font-size="13" letter-spacing="2">TU PC</text>
+      <!-- DCS -->
+      <rect x="26" y="50" width="380" height="404" rx="14" fill="rgba(255,255,255,.035)" stroke="rgba(148,170,196,.3)"/>
+      <text x="44" y="78" fill="#e6edf5" font-weight="800" font-size="17">DCS World</text>
+      <text x="44" y="97" fill="#93a3b8" font-size="12">un solo proceso, varios «Lua» separados</text>
+      <rect x="44" y="114" width="344" height="88" rx="10" fill="rgba(56,189,248,.10)" stroke="#38bdf8"/>
+      <text x="58" y="138" fill="#e6edf5" font-weight="800" font-size="14">Mod puente</text>
+      <text x="58" y="156" fill="#bfe7fb" font-family="JetBrains Mono" font-size="11">Mods\Services\LFKneeboard</text>
+      <text x="58" y="176" fill="#cdd7e3" font-size="11.5">Lua de la interfaz: herramienta de ruta</text>
+      <text x="58" y="192" fill="#cdd7e3" font-size="11.5">del F10 y editor de DTC</text>
+      <rect x="44" y="216" width="344" height="88" rx="10" fill="rgba(56,189,248,.10)" stroke="#38bdf8"/>
+      <text x="58" y="240" fill="#e6edf5" font-weight="800" font-size="14">Script de DCS (hook)</text>
+      <text x="58" y="258" fill="#bfe7fb" font-family="JetBrains Mono" font-size="11">Scripts\Hooks\LFKneeboard-hook.lua</text>
+      <text x="58" y="278" fill="#cdd7e3" font-size="11.5">Lua de los hooks: tu avión, la misión,</text>
+      <text x="58" y="294" fill="#cdd7e3" font-size="11.5">los mensajes y la cámara del F10</text>
+      <rect x="44" y="318" width="344" height="118" rx="10" fill="rgba(167,139,250,.10)" stroke="#a78bfa"/>
+      <text x="58" y="342" fill="#e6edf5" font-weight="800" font-size="14">Capa de VR (OpenXR)</text>
+      <text x="58" y="360" fill="#ddd6fe" font-family="JetBrains Mono" font-size="11">lfkb_openxr_layer.dll</text>
+      <text x="58" y="380" fill="#cdd7e3" font-size="11.5">La carga el runtime de OpenXR dentro de</text>
+      <text x="58" y="396" fill="#cdd7e3" font-size="11.5">DCS y añade el kneeboard a cada fotograma</text>
+      <text x="58" y="412" fill="#cdd7e3" font-size="11.5">del visor.</text>
+      <!-- APP -->
+      <rect x="494" y="50" width="380" height="404" rx="14" fill="rgba(255,255,255,.035)" stroke="rgba(148,170,196,.3)"/>
+      <text x="512" y="78" fill="#e6edf5" font-weight="800" font-size="17">LF Kneeboard</text>
+      <text x="512" y="97" fill="#93a3b8" font-size="12">aplicación Electron, procesos propios</text>
+      <rect x="512" y="114" width="344" height="88" rx="10" fill="rgba(52,211,153,.08)" stroke="#34d399"/>
+      <text x="526" y="138" fill="#e6edf5" font-weight="800" font-size="14">Proceso principal (Node.js)</text>
+      <text x="526" y="158" fill="#cdd7e3" font-size="11.5">Lee la misión y el DTC, calcula el plan,</text>
+      <text x="526" y="174" fill="#cdd7e3" font-size="11.5">fases, controles, sala compartida,</text>
+      <text x="526" y="190" fill="#cdd7e3" font-size="11.5">actualizaciones.</text>
+      <rect x="512" y="216" width="344" height="88" rx="10" fill="rgba(52,211,153,.08)" stroke="#34d399"/>
+      <text x="526" y="240" fill="#e6edf5" font-weight="800" font-size="14">Ventanas (Chromium)</text>
+      <text x="526" y="260" fill="#cdd7e3" font-size="11.5">Kneeboard, segundo kneeboard y Ajustes.</text>
+      <text x="526" y="276" fill="#cdd7e3" font-size="11.5">HTML/CSS/JS, mapa Leaflet, PDF con</text>
+      <text x="526" y="292" fill="#cdd7e3" font-size="11.5">pdf.js. Dibujan las páginas.</text>
+      <rect x="512" y="318" width="166" height="118" rx="10" fill="rgba(52,211,153,.08)" stroke="#34d399"/>
+      <text x="524" y="342" fill="#e6edf5" font-weight="800" font-size="13.5">Lector de mandos</text>
+      <text x="524" y="360" fill="#bfe7fb" font-family="JetBrains Mono" font-size="10.5">lfkb-input.exe</text>
+      <text x="524" y="380" fill="#cdd7e3" font-size="11">Botones, setas y</text>
+      <text x="524" y="396" fill="#cdd7e3" font-size="11">teclado, aunque DCS</text>
+      <text x="524" y="412" fill="#cdd7e3" font-size="11">tenga el foco.</text>
+      <rect x="690" y="318" width="166" height="118" rx="10" fill="rgba(52,211,153,.08)" stroke="#34d399"/>
+      <text x="702" y="342" fill="#e6edf5" font-weight="800" font-size="13.5">Voz (opcional)</text>
+      <text x="702" y="360" fill="#bfe7fb" font-family="JetBrains Mono" font-size="10.5">PowerShell</text>
+      <text x="702" y="380" fill="#cdd7e3" font-size="11">Reconocedor de voz</text>
+      <text x="702" y="396" fill="#cdd7e3" font-size="11">de Windows, sin</text>
+      <text x="702" y="412" fill="#cdd7e3" font-size="11">conexión.</text>
+      <!-- flechas internas -->
+      <path d="M388 158 L512 158" stroke="#38bdf8" stroke-width="2.2" marker-end="url(#a)"/>
+      <text x="398" y="150" fill="#bfe7fb" font-family="JetBrains Mono" font-size="10">UDP 7788</text>
+      <path d="M388 252 L512 252" stroke="#38bdf8" stroke-width="2.2" marker-end="url(#a)"/>
+      <path d="M512 270 L388 270" stroke="#38bdf8" stroke-width="2.2" marker-end="url(#a)"/>
+      <text x="398" y="244" fill="#bfe7fb" font-family="JetBrains Mono" font-size="10">UDP 7788</text>
+      <text x="398" y="288" fill="#bfe7fb" font-family="JetBrains Mono" font-size="10">UDP 7789</text>
+      <path d="M512 380 L388 380" stroke="#a78bfa" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#v)"/>
+      <text x="400" y="372" fill="#ddd6fe" font-family="JetBrains Mono" font-size="10">memoria</text>
+      <text x="400" y="400" fill="#ddd6fe" font-family="JetBrains Mono" font-size="10">compartida</text>
+      <!-- Internet -->
+      <rect x="26" y="508" width="848" height="118" rx="14" fill="rgba(251,191,36,.06)" stroke="rgba(251,191,36,.45)"/>
+      <text x="44" y="536" fill="#fde68a" font-weight="800" font-size="15">Internet (solo estas conexiones)</text>
+      <g font-size="12" fill="#e6edf5">
+        <rect x="44" y="550" width="190" height="60" rx="8" fill="rgba(255,255,255,.04)" stroke="rgba(251,191,36,.35)"/>
+        <text x="56" y="574" font-weight="700">Teselas del mapa</text><text x="56" y="594" fill="#cdd7e3" font-size="11">Esri · OpenTopoMap · CARTO</text>
+        <rect x="248" y="550" width="190" height="60" rx="8" fill="rgba(255,255,255,.04)" stroke="rgba(251,191,36,.35)"/>
+        <text x="260" y="574" font-weight="700">Actualizaciones</text><text x="260" y="594" fill="#cdd7e3" font-size="11">GitHub Releases</text>
+        <rect x="452" y="550" width="190" height="60" rx="8" fill="rgba(255,255,255,.04)" stroke="rgba(251,191,36,.35)"/>
+        <text x="464" y="574" font-weight="700">Vuelo compartido</text><text x="464" y="594" fill="#cdd7e3" font-size="11">WebSocket · TCP 7790</text>
+        <rect x="656" y="550" width="200" height="60" rx="8" fill="rgba(255,255,255,.04)" stroke="rgba(251,191,36,.35)"/>
+        <text x="668" y="574" font-weight="700">Tu IP pública</text><text x="668" y="594" fill="#cdd7e3" font-size="11">ipify.org (Ajustes)</text>
+      </g>
+      <path d="M684 454 L684 506" stroke="#fbbf24" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#w)"/>
+    </svg>
+  </figure>
+  <div class="legend"><span>Dentro de tu PC (127.0.0.1)</span><span class="e">Memoria compartida (imagen del kneeboard)</span><span class="d">Sale a internet</span></div>
+  <div style="height:5mm"></div>
+  <div class="tip">Los puertos UDP <b>7788</b> y <b>7789</b> solo escuchan en <code>127.0.0.1</code>: ningún otro equipo puede hablar con el script ni con la aplicación por ahí.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>3</span></div>
+</section>
+
+<!-- ============================== APLICACIÓN ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">04</span>El motor</div>
+  <h2>La aplicación</h2>
+  <p class="lead">Está hecha con <b>Electron 44</b>, la misma base que Discord o VS Code: un <b>proceso principal</b> en Node.js que hace el trabajo y unas <b>ventanas</b> en Chromium que dibujan las páginas. Sin frameworks: HTML, CSS y JavaScript.</p>
+  <table class="small">
+    <tr><th style="width:40mm">Módulo</th><th>Qué hace</th></tr>
+    <tr><td><code>dcs.js</code></td><td>Recibe por UDP lo que mandan el script y el mod de DCS, carga la misión, elige la ruta (misión, DTC, editor, herramienta de ruta) y calcula la fase del vuelo.</td></tr>
+    <tr><td><code>miz.js</code> · <code>mission-model.js</code></td><td>Abre el <code>.miz</code> (es un zip), lee sus tablas de Lua, el diccionario, las imágenes de kneeboard y los DTC que lleva dentro, y monta el modelo: tu grupo, tu ruta, tus radios, el apoyo de tu bando.</td></tr>
+    <tr><td><code>dtc.js</code></td><td>Lee los archivos DTC (JSON) del F/A-18, F-16 y F-14: rutas con horas, contramedidas, RWR, HARM, JDAM, MEZ/CAP/FLOT. Los revisa y los copia a <code>Saved Games\DCS\DTC</code> cuando lo pides.</td></tr>
+    <tr><td><code>input.js</code></td><td>Lanza el lector de mandos y compara lo que se pulsa con tus combinaciones.</td></tr>
+    <tr><td><code>vr.js</code></td><td>Escribe la imagen del kneeboard en una zona de memoria compartida (<code>Local\LFKneeboard.Frames.v1</code>) de la que la lee la capa de VR.</td></tr>
+    <tr><td><code>share.js</code></td><td>Vuelo compartido: se conecta a una sala por WebSocket o, si eres anfitrión, la abre en tu PC.</td></tr>
+    <tr><td><code>library.js</code> · <code>profile.js</code></td><td>El Piernógrafo (formato KneeboardManager) y exportar/importar tu perfil en un <code>.zip</code>.</td></tr>
+    <tr><td><code>integration.js</code></td><td>Instala, actualiza y quita el script y el mod de DCS, y registra o quita la capa de VR.</td></tr>
+    <tr><td><code>updater.js</code> · <code>voice.js</code> · <code>focus.js</code></td><td>Actualizaciones desde GitHub, órdenes de voz y detección de la ventana de DCS (para colocar la cruz del F10).</td></tr>
+  </table>
+  <div style="height:5mm"></div>
+  <div class="comp">
+    <div class="card"><h3>Lo que lleva dentro</h3><p>Leaflet (mapa), pdf.js (PDF), ws (WebSocket), koffi (llamadas a Windows desde Node), adm-zip (.miz y perfiles) y electron-updater. Todo va dentro del instalador: no descarga código al ejecutarse.</p></div>
+    <div class="card"><h3>Seguridad de las ventanas</h3><p>Las ventanas no tienen acceso directo a Node ni al disco: solo pueden pedir al proceso principal las acciones que este expone (aislamiento de contexto de Electron).</p></div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip">Si arrancas con DCS ya en vuelo, la aplicación pide la misión al script y se pone al día sola. Si cierras la aplicación, DCS sigue igual: el script y el mod solo envían datos a un puerto local y nadie los recibe.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>4</span></div>
+</section>
+
+<!-- ============================== SCRIPT Y MOD ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">05</span>Lo que corre dentro de DCS</div>
+  <h2>El script de DCS y el mod puente</h2>
+  <p class="lead">DCS ejecuta los scripts en varios «Lua» separados. Cada pieza de LF Kneeboard va donde están los datos que necesita.</p>
+  <div class="states">
+    <div class="card"><h3>Lua de los hooks</h3><p>Donde corren los scripts de <code>Scripts\Hooks</code> (SRS, Tacview, DKS…). Aquí va <b>el script</b>.</p></div>
+    <div class="card hi"><h3>Lua de la interfaz</h3><p>El del editor, el briefing y el mapa F10. Aquí viven la herramienta de ruta y el editor de DTC. Aquí va <b>el mod</b>.</p></div>
+    <div class="card"><h3>Lua de la misión</h3><p>Los scripts de la propia misión (MOOSE, etc.). LF Kneeboard <b>no ejecuta nada aquí</b>.</p></div>
+  </div>
+  <div style="height:5mm"></div>
+  <div class="stack">
+    <div class="card">
+      <h3>Script · <span class="mono">LFKneeboard-hook.lua</span></h3>
+      <dl class="facts">
+        <dt>Lee</dt><dd>Tu avión: posición, rumbo, altitud, velocidad, tren, combustible (<code>LoGetSelfData</code> y similares). La hora de la misión. La ruta del avión si DCS la da (<code>LoGetRoute</code>). La cámara, para saber si miras el F10. Los mensajes de radio, de la misión y del chat. La misión cargada.</dd>
+        <dt>Escribe</dt><dd>La misión en <code>Temp\LFKneeboard\mission.json</code>, al cargarla.</dd>
+        <dt>Envía</dt><dd>Estado cada 0,2 s y ruta cada 2 s, por UDP a <code>127.0.0.1:7788</code>.</dd>
+        <dt>Responde</dt><dd>Solo a cuatro órdenes de la app: capturar el punto del F10, convertir coordenadas, «ping» y reenviar la misión.</dd>
+        <dt>No hace</dt><dd>No toca <code>Export.lua</code>, no ejecuta código en la misión ni cambia nada del juego.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Mod · <span class="mono">Mods\Services\LFKneeboard</span></h3>
+      <dl class="facts">
+        <dt>Cómo carga</dt><dd>Como un mod de opciones (igual que SRS o DKS-Recorder): DCS lee su <code>optionsDb.lua</code> al arrancar y este pone en marcha <code>LFKneeboard-bridge.lua</code>. Sale en Opciones › Especial, sin nada que ajustar.</dd>
+        <dt>Herramienta de ruta</dt><dd>Lee la ruta activada en el F10 cuando la cambias.</dd>
+        <dt>Editor de DTC</dt><dd>Escucha dos llamadas que el editor hace al abrirse y, al cerrarlo, le pide el DTC que tienes en pantalla. Siempre deja pasar la llamada original.</dd>
+        <dt>Escribe</dt><dd><code>Temp\LFKneeboard\dtc-editor.json</code> al cerrar el editor.</dd>
+        <dt>Envía</dt><dd>Por UDP a <code>127.0.0.1:7788</code>, y una señal de vida cada 5 s.</dd>
+      </dl>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip"><b>Compruébalo tú.</b> Los dos dejan líneas en <code>Saved Games\DCS\Logs\dcs.log</code>: busca «LF Kneeboard». Verás «puente cargado», «editor de DTC: ok» o «ruta del avión (LoGetRoute)». Los cinco archivos del mod y el script son Lua en texto plano: se pueden leer con el Bloc de notas.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>5</span></div>
+</section>
+
+<!-- ============================== VR ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">06</span>En el visor</div>
+  <h2>La capa de VR (OpenXR)</h2>
+  <p class="lead">Para verse en el visor, LF Kneeboard usa una <b>capa implícita de OpenXR</b>: una DLL que el propio runtime de OpenXR (SteamVR, Oculus, Virtual Desktop, WMR…) carga dentro de los programas de VR. Es el mismo método que usan OpenKneeboard u OpenXR Toolkit.</p>
+  <div class="comp" style="grid-template-columns: 1.45fr 1fr;">
+    <div class="stack">
+      <div class="card">
+        <dl class="facts">
+          <dt>Archivo</dt><dd><code>lfkb_openxr_layer.dll</code> y su manifiesto <code>.json</code>, en la carpeta del programa.</dd>
+          <dt>Registro</dt><dd>Una entrada en <code>HKCU\SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit</code> (solo tu usuario) con la ruta del manifiesto.</dd>
+          <dt>Dónde actúa</dt><dd>El runtime la carga en cualquier programa OpenXR, pero solo hace algo en sesiones Direct3D 11 (las de DCS) y cuando LF Kneeboard está abierto. Si no, deja pasar cada fotograma sin tocarlo.</dd>
+          <dt>Qué hace</dt><dd>Lee la imagen del kneeboard de la memoria compartida y la añade como un panel más («quad») en cada fotograma: delante de ti, con el zoom al mirarlo y la opacidad que elijas. No cambia el render de DCS.</dd>
+          <dt>Registro de errores</dt><dd><code>%LOCALAPPDATA%\LF Kneeboard\openxr-layer.log</code>.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>¿Choca con otras capas?</h3><p>OpenXR encadena las capas implícitas: OpenKneeboard, OpenXR Toolkit o el de Quad Views pueden estar activas a la vez. Cada una añade lo suyo.</p></div>
+      <div class="card"><h3>¿Y si no uso VR?</h3><p>Puedes no activarla: en Ajustes › Realidad virtual se registra o se quita con un botón. En el monitor el kneeboard es una ventana normal encima de DCS.</p></div>
+      <div class="card"><h3>¿Afecta al rendimiento?</h3><p>Un panel más por fotograma, como cualquier kneeboard en VR. La imagen la dibuja la aplicación, fuera de DCS.</p></div>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip">La capa se compila desde el código del proyecto (<code>native/openxr-layer/layer.cpp</code>) y se prueba sin visor con un runtime simulado (<code>native/test/layer_test.cpp</code>).</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>6</span></div>
+</section>
+
+<!-- ============================== CONTROLES Y VOZ ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">07</span>Manos y voz</div>
+  <h2>Controles y órdenes de voz</h2>
+  <p class="lead">Para que tus botones funcionen aunque DCS tenga el foco, LF Kneeboard tiene un pequeño lector aparte. Así se maneja cualquier programa de atajos globales (VoiceAttack, OpenKneeboard, SRS).</p>
+  <div class="stack">
+    <div class="card">
+      <h3>Lector de mandos · <span class="mono">lfkb-input.exe</span></h3>
+      <dl class="facts">
+        <dt>Mandos</dt><dd>Lee botones y setas de todos los mandos por DirectInput 8. No lee los ejes.</dd>
+        <dt>Teclado</dt><dd>Consulta qué teclas están pulsadas (<code>GetAsyncKeyState</code>). Ve el estado de todas las teclas, porque no sabe de antemano cuáles has asignado.</dd>
+        <dt>A dónde va</dt><dd>Por una tubería interna, solo a la aplicación, que compara lo pulsado con tus combinaciones y lo olvida. No se guarda en ningún archivo ni sale de tu PC.</dd>
+        <dt>Cuándo</dt><dd>Mientras la aplicación está abierta. Se cierra con ella.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Órdenes de voz · opcionales</h3>
+      <dl class="facts">
+        <dt>Motor</dt><dd>El reconocedor de voz de Windows en español (<code>System.Speech</code>), desde un script de PowerShell que va en el instalador.</dd>
+        <dt>Sin conexión</dt><dd>Todo ocurre en tu PC. No se graba ni se envía audio.</dd>
+        <dt>Qué entiende</dt><dd>Solo una lista cerrada de órdenes («radios», «página tres», «modo noche»…), no dictado libre.</dd>
+        <dt>Micrófono</dt><dd>Solo si activas la voz. Con «mantener un botón», escucha mientras lo pulsas.</dd>
+      </dl>
+    </div>
+  </div>
+  <div style="height:6mm"></div>
+  <div class="tip warn"><b>Modo escritura.</b> Con <kbd>AltGr</kbd> + <kbd>W</kbd> el teclado escribe en el bloc del kneeboard en vez de en DCS. Es la única vez que el kneeboard «se queda» con tus teclas, y siempre lo ves en la barra.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>7</span></div>
+</section>
+
+<!-- ============================== RED ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">08</span>Red</div>
+  <h2>Todas las conexiones</h2>
+  <p class="lead">Esta es la lista completa. No hay ninguna otra.</p>
+  <table class="small">
+    <tr><th style="width:36mm">Conexión</th><th style="width:30mm">A dónde</th><th style="width:30mm">Cuándo</th><th>Qué viaja</th></tr>
+    <tr><td>Script y mod de DCS</td><td><code>127.0.0.1</code> UDP 7788 / 7789</td><td>Con DCS abierto</td><td>Estado de tu avión, misión, mensajes, ruta, DTC del editor. No sale de tu PC.</td></tr>
+    <tr><td>Lector de mandos</td><td>Tubería interna</td><td>Con la app abierta</td><td>Botones y teclas pulsados. No sale de tu PC.</td></tr>
+    <tr><td>Teselas del mapa</td><td>Esri, OpenTopoMap, CARTO</td><td>Al abrir el Mapa o la Carta</td><td>Las coordenadas de la zona que miras, como cualquier mapa web.</td></tr>
+    <tr><td>Actualizaciones</td><td>GitHub Releases</td><td>Al arrancar y cada 6 h</td><td>La consulta de la última versión y, si hay una nueva, su descarga. Se desactiva en Ajustes.</td></tr>
+    <tr><td>Vuelo compartido</td><td>La sala (un compañero o un servidor de salas)</td><td>Solo si te unes</td><td>Tu indicativo y lo que tú envíes: páginas, notas, puntos, dibujos, pizarra, DTC.</td></tr>
+    <tr><td>Anfitrión de la sala</td><td>Tu PC, TCP 7790</td><td>Solo si marcas «Soy el anfitrión»</td><td>Abre una sala WebSocket en tu PC para tu vuelo.</td></tr>
+    <tr><td>IP pública</td><td>api.ipify.org</td><td>Al abrir Ajustes › Vuelo compartido</td><td>Una consulta para enseñarte tu IP pública. Las IP de tu red local nunca se muestran.</td></tr>
+    <tr><td>Pestaña web</td><td>La dirección que tú pongas</td><td>Si creas una pestaña web</td><td>Lo que cargue esa página, como en un navegador.</td></tr>
+  </table>
+  <div style="height:6mm"></div>
+  <div class="comp">
+    <div class="card"><h3>En el vuelo compartido</h3><p>Lo que envías llega a todos los de la sala, y nada más: no se guarda en ningún servidor nuestro. Si no pones indicativo en Ajustes, se usa tu <b>nombre de usuario de Windows</b>: pon tu indicativo si no quieres que se vea.</p></div>
+    <div class="card"><h3>Ser anfitrión</h3><p>Para que te lleguen desde fuera de tu red, tendrías que abrir el puerto 7790 TCP en tu router. Con una VPN (Radmin, Tailscale, ZeroTier) o un servidor de salas del escuadrón no hace falta.</p></div>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>8</span></div>
+</section>
+
+<!-- ============================== ARCHIVOS ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">09</span>Disco y registro</div>
+  <h2>Archivos y registro de Windows</h2>
+  <p class="lead">Todo lo que LF Kneeboard escribe en tu PC, dónde y cuándo.</p>
+  <table class="small">
+    <tr><th style="width:74mm">Ruta</th><th style="width:32mm">Cuándo</th><th>Qué es</th></tr>
+    <tr><td><code>%LOCALAPPDATA%\Programs\LF Kneeboard\</code></td><td>Al instalar</td><td>El programa, la capa de VR, el lector de mandos y los scripts de voz.</td></tr>
+    <tr><td><code>%APPDATA%\LF Kneeboard\config.json</code></td><td>Al cambiar ajustes</td><td>Tus pestañas, controles, temas y ajustes.</td></tr>
+    <tr><td><code>%APPDATA%\LF Kneeboard\datos\</code></td><td>Al usarlo</td><td>Marcadores, nombres de puntos, presets de radio, tarjetas, bloc, libro de vuelo.</td></tr>
+    <tr><td><code>%APPDATA%\LF Kneeboard\miniaturas\</code></td><td>Al abrir el índice</td><td>Miniaturas de las páginas del Piernógrafo.</td></tr>
+    <tr><td><code>%APPDATA%\LF Kneeboard\dtc-recibidos\</code></td><td>Al recibir un DTC</td><td>DTC que te envía tu vuelo.</td></tr>
+    <tr><td><code>Saved Games\DCS\Scripts\Hooks\LFKneeboard-hook.lua</code></td><td>Al activar la integración</td><td>El script de DCS.</td></tr>
+    <tr><td><code>Saved Games\DCS\Mods\Services\LFKneeboard\</code></td><td>Al activar la integración</td><td><code>entry.lua</code>, <code>Options\</code> (3 archivos) y <code>Scripts\LFKneeboard-bridge.lua</code>.</td></tr>
+    <tr><td><code>Saved Games\DCS\Temp\LFKneeboard\</code></td><td>Con DCS abierto</td><td><code>mission.json</code> y <code>dtc-editor.json</code>. Se sobrescriben cada vez.</td></tr>
+    <tr><td><code>Saved Games\DCS\DTC\&lt;avión&gt;\</code></td><td>Solo al importar un DTC</td><td>Una copia de tu DTC. Nunca pisa otro con el mismo nombre: añade «(2)».</td></tr>
+    <tr><td><code>Saved Games\DCS\Kneeboard\&lt;avión&gt;\LFK …</code></td><td>Solo si aplicas páginas</td><td>Páginas del Piernógrafo. Al quitarlas se borran solo las «LFK …».</td></tr>
+    <tr><td>Un <code>.miz</code> que elijas</td><td>Solo si lo pides</td><td>Añade páginas de kneeboard, tras guardar una copia de seguridad.</td></tr>
+    <tr><td><code>%LOCALAPPDATA%\LF Kneeboard\openxr-layer.log</code></td><td>Con la VR activa</td><td>Registro de la capa de VR.</td></tr>
+  </table>
+  <div style="height:6mm"></div>
+  <table class="small">
+    <tr><th style="width:96mm">Registro de Windows (solo tu usuario, HKCU)</th><th>Para qué</th></tr>
+    <tr><td><code>SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit</code></td><td>Activa la capa de VR. Se quita al desinstalar o desde Ajustes › Realidad virtual.</td></tr>
+    <tr><td><code>Software\Microsoft\Windows\CurrentVersion\Run</code></td><td>Solo si activas «Arrancar con Windows».</td></tr>
+    <tr><td>Desinstalador (Agregar o quitar programas)</td><td>La entrada normal de cualquier programa instalado.</td></tr>
+  </table>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>9</span></div>
+</section>
+
+<!-- ============================== FLUJO ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">10</span>Paso a paso</div>
+  <h2>De la misión a la página</h2>
+  <p class="lead">Qué pasa entre que entras en una misión y ves tu plan de vuelo en la pierna.</p>
+  <div class="comp">
+    <ol class="flow">
+      <li><b>DCS carga la misión.</b> El script guarda la tabla de la misión en <code>mission.json</code> y avisa a la app con el nombre del <code>.miz</code> y tu plaza.</li>
+      <li><b>La app abre el .miz</b> (es un zip): imágenes de kneeboard, DTC que lleve dentro y el diccionario de textos.</li>
+      <li><b>Monta el modelo de tu vuelo:</b> tu grupo, tu ruta, tus radios, el apoyo y los aeródromos de tu bando, la hora de inicio.</li>
+      <li><b>Busca tu DTC</b> y elige la ruta: gana lo último que hayas tocado (herramienta de ruta del F10, editor de DTC, un DTC guardado o elegido) y, si no, el DTC o la ruta de la misión.</li>
+      <li><b>Dibuja las páginas</b>: plan de vuelo, radios, mapa, tarjeta, DTC. Cada pestaña es un módulo de JavaScript.</li>
+      <li><b>En vuelo</b>, cada 0,2 s llega tu posición: el plan marca el siguiente punto, el mapa mueve tu avión, la fase cambia sola y el modo AUTO abre tu marcador.</li>
+      <li><b>En VR</b>, la página se copia a la memoria compartida y la capa la pone en el visor en el siguiente fotograma.</li>
+    </ol>
+    <div class="stack">
+      <div class="card"><h3>¿Por qué un archivo y no UDP para la misión?</h3><p>Una misión puede ocupar varios MB y UDP no la cabe en un mensaje. El script la deja en un archivo local y manda por UDP solo dónde está.</p></div>
+      <div class="card"><h3>¿Y el DTC del editor?</h3><p>Igual: un DTC del Hornet ocupa unos 220 KB. El mod lo deja en <code>dtc-editor.json</code> y avisa a la app.</p></div>
+      <div class="card"><h3>¿Por qué lee la misión entera?</h3><p>DCS da la tabla de la misión completa. La app solo usa tu grupo, tu bando y los aeródromos neutrales; el resto ni se muestra ni se envía a nadie.</p></div>
+      <div class="card"><h3>Sin DCS</h3><p>En Ajustes › Misión puedes abrir un <code>.miz</code> a mano y elegir tu plaza para preparar el vuelo antes de entrar.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>10</span></div>
+</section>
+
+<!-- ============================== DESINSTALAR Y FAQ ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">11</span>Control total</div>
+  <h2>Desinstalar y preguntas frecuentes</h2>
+  <div class="comp">
+    <div class="stack">
+      <div class="card">
+        <h3>Desinstalar</h3>
+        <p>Desde <b>Agregar o quitar programas</b>. Quita el programa, el script y el mod de DCS (en <code>Saved Games\DCS</code>, <code>DCS.openbeta</code> y <code>DCS.release</code>), la capa de VR del registro y el arranque con Windows. Guarda tu configuración por si lo reinstalas: borra <code>%APPDATA%\LF Kneeboard</code> si no la quieres.</p>
+      </div>
+      <div class="card">
+        <h3>Quitar solo una parte</h3>
+        <p>Ajustes › Integración DCS › <b>Quitar de DCS</b> borra el script y el mod. Ajustes › Realidad virtual quita la capa de VR. El resto del programa sigue funcionando en el monitor.</p>
+      </div>
+      <div class="card">
+        <h3>Al actualizar</h3>
+        <p>La versión nueva se instala encima al cerrar el programa, sin tocar tus ajustes. Si el script o el mod de DCS cambian, la app los pone al día al arrancar; DCS los carga la próxima vez que se abra.</p>
+      </div>
+    </div>
+    <div class="faq">
+      <div class="card"><h3>¿Puede romper DCS o una partida multijugador?</h3><p>El script y el mod solo leen y están dentro de <code>pcall</code>: si algo falla, se apunta en <code>dcs.log</code> y DCS sigue. No cambian la instalación de DCS ni la misión.</p></div>
+      <div class="card"><h3>¿Ven algo los demás jugadores o el servidor?</h3><p>No. Todo corre en tu PC. Solo lo que envíes a una sala de vuelo compartido llega a tus compañeros.</p></div>
+      <div class="card"><h3>¿Consume rendimiento?</h3><p>El script manda unos pocos datos cada 0,2 s y el mod mira dos cosas una vez por segundo. La app va en su propio proceso, fuera de DCS.</p></div>
+      <div class="card"><h3>¿Convive con mis otros mods?</h3><p>Sí. No toca <code>Export.lua</code> ni otros hooks, y la capa de VR se encadena con OpenKneeboard u OpenXR Toolkit.</p></div>
+      <div class="card"><h3>¿Puedo ver el código?</h3><p>Sí. Es de licencia MIT. Los scripts de DCS son Lua en texto plano dentro de <code>Saved Games</code>.</p></div>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip"><b>¿Dudas?</b> Pregunta en el Discord de La Fundación. Si algo falla, adjunta <code>%APPDATA%\LF Kneeboard\errores.log</code> y las líneas «LF Kneeboard» de <code>dcs.log</code>.</div>
+  <div class="foot"><span>LF Kneeboard · Cómo funciona por dentro</span><span>11</span></div>
+</section>
+
+</body>
+</html>

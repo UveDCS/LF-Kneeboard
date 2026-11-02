@@ -1,0 +1,115 @@
+{
+  "name": "lf-kneeboard",
+  "productName": "LF Kneeboard",
+  "version": "0.3.7",
+  "description": "Kneeboard para DCS World: VR y escritorio, páginas dinámicas de misión, bloc con coordenadas y pizarra compartida para el vuelo.",
+  "author": "La Fundación",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "native": "node tools/build-native.js",
+    "data": "python tools/export_airports.py && python tools/export_weapons.py",
+    "test": "node tools/selftest.js && node tools/share-input-test.js && node tools/library-test.js && node tools/route-test.js && node tools/profile-test.js && node tools/dtc-test.js",
+    "dist": "electron-builder --win nsis --publish never",
+    "test:hook": "node tools/hook-test.js",
+    "test:voz": "node tools/voice-test.js",
+    "release": "electron-builder --win nsis --publish always"
+  },
+  "dependencies": {
+    "@fontsource/caveat": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/patrick-hand": "5.3.0",
+    "@fontsource/share-tech-mono": "5.3.0",
+    "@fontsource/special-elite": "5.3.0",
+    "adm-zip": "0.6.1",
+    "electron-updater": "6.8.10",
+    "koffi": "3.3.2",
+    "leaflet": "1.9.4",
+    "pdfjs-dist": "6.4.299",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.17.0"
+  },
+  "build": {
+    "appId": "es.lafundacion.kneeboard",
+    "productName": "LF Kneeboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "data/**/*",
+      "dcs-scripts/**/*",
+      "relay/**/*",
+      "package.json",
+      "!**/*.map",
+      "!**/*.d.ts",
+      "!**/*.md",
+      "!node_modules/pdfjs-dist/legacy/**",
+      "!node_modules/pdfjs-dist/types/**",
+      "!node_modules/pdfjs-dist/web/**",
+      "!node_modules/pdfjs-dist/image_decoders/**",
+      "!node_modules/pdfjs-dist/build/*.min.mjs",
+      "!node_modules/pdfjs-dist/build/pdf.sandbox*",
+      "!node_modules/@fontsource/**/files/*.woff",
+      "!node_modules/@fontsource/**/scss/**",
+      "!node_modules/leaflet/src/**",
+      "!node_modules/leaflet/dist/leaflet-src*",
+      "!node_modules/koffi/src/**",
+      "!node_modules/koffi/vendor/**",
+      "!node_modules/koffi/doc/**"
+    ],
+    "extraResources": [
+      {
+        "from": "native/voice",
+        "to": "voice",
+        "filter": [
+          "*.ps1"
+        ]
+      },
+      {
+        "from": "native/bin",
+        "to": "native",
+        "filter": [
+          "*.dll",
+          "*.exe",
+          "*.json"
+        ]
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/koffi/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LF Kneeboard",
+      "include": "build/installer.nsh",
+      "uninstallDisplayName": "LF Kneeboard"
+    },
+    "electronLanguages": [
+      "es",
+      "en-US"
+    ],
+    "compression": "maximum",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "UveDCS",
+        "repo": "LF-Kneeboard",
+        "releaseType": "draft"
+      }
+    ]
+  }
+}

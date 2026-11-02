@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Temas</title><link rel="stylesheet" href="anuncio.css">
+<style>
+  .head { position: absolute; left: 90px; right: 90px; top: 95px; display: flex; justify-content: space-between; align-items: flex-end; z-index: 2; }
+  .head h1 { font-size: 54px; margin: 22px 0 0; line-height: 1.05; }
+  .head h1 em { font-style: normal; color: var(--accent); }
+  .head p { font-size: 21px; color: var(--muted); max-width: 520px; text-align: right; margin: 0 0 6px; line-height: 1.45; }
+  .row { position: absolute; left: 70px; right: 70px; top: 420px; display: flex; justify-content: space-between; }
+  .row .t { width: 200px; position: relative; }
+  .row .t .tablet { position: relative; padding: 9px; border-radius: 22px; }
+  .row .t .tablet img { border-radius: 13px; }
+  .row .t span { display: block; text-align: center; margin-top: 16px; font: 700 14px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #cbd6e2; }
+  .row .t:nth-child(odd) { transform: translateY(-26px); }
+</style></head>
+<body>
+  <div class="head">
+    <div>
+      <div class="brand"><img src="../img/logo.svg" alt=""><div><div class="name">LF Kneeboard</div><div class="by">Temas · modo noche</div></div></div>
+      <h1>Elige cómo <em>se ve</em><br>tu kneeboard.</h1>
+    </div>
+    <p>Siete temas, de tablet táctica a libreta de papel o MFD de fósforo verde, y un modo noche que atenúa cualquiera de ellos.</p>
+  </div>
+  <div class="row">
+    <div class="t"><div class="tablet"><img src="../img/tema-tablet.jpg" alt=""></div><span>Tablet</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-mfd.jpg" alt=""></div><span>MFD verde</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-libreta.jpg" alt=""></div><span>Libreta</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-tactico.jpg" alt=""></div><span>Táctico</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-dossier.jpg" alt=""></div><span>Dossier</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-portapapeles.jpg" alt=""></div><span>Portapapeles</span></div>
+    <div class="t"><div class="tablet"><img src="../img/tema-noche.jpg" alt=""></div><span>Noche</span></div>
+  </div>
+</body></html>

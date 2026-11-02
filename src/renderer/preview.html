@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Vista previa de tema</title>
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/800.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/700.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/caveat/600.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/patrick-hand/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/share-tech-mono/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/special-elite/400.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <script>document.documentElement.dataset.p = 1; document.addEventListener('DOMContentLoaded', () => { document.body.dataset.theme = new URLSearchParams(location.search).get('theme') || 'tablet'; });</script>
+</head>
+<body>
+  <!-- Contenido de ejemplo para la vista previa de los temas en Ajustes. -->
+  <div id="kb">
+    <div class="frame">
+      <div class="deco deco-a"></div><div class="deco deco-b"></div><div class="deco deco-c"></div>
+      <div class="screen">
+        <header class="bar">
+          <div class="bar-title"><span class="bar-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M3 20l5-8 5 3 7-11 M7 11h2v2H7z M12 14h2v2h-2z M19 3h2v2h-2z"/></svg></span><span>Plan de vuelo</span></div>
+          <div class="bar-page">1/2</div><div class="bar-spacer"></div>
+          <button class="pill on">AUTO · En ruta</button>
+          <div class="bar-status"><span class="dot on"></span><span>DCS</span></div>
+          <div class="bar-clock">14:32:07</div>
+        </header>
+        <main id="content">
+          <div class="view">
+            <div class="h1">Viper 1-1 <small>F-16C · Syria · inicio 14:00:00</small></div>
+            <div class="card">
+              <div class="card-row"><span class="label">Siguiente</span><span class="tag">WP3</span><b>IP ALFA</b></div>
+              <div class="grid3" style="margin-top:.35rem">
+                <div><div class="label">Rumbo</div><div class="big" style="font-size:1.7rem">047°</div></div>
+                <div><div class="label">Distancia</div><div class="big" style="font-size:1.7rem">23.4</div></div>
+                <div><div class="label">Tiempo</div><div class="big" style="font-size:1.7rem">3:12</div></div>
+              </div>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>WP</th><th>Nombre</th><th class="num-r">Alt ft</th><th class="num-r">°M</th><th class="num-r">NM</th><th class="num-r">ETA</th></tr></thead>
+              <tbody>
+                <tr class="done"><td>0</td><td class="txt">Incirlik</td><td class="num-r">240</td><td class="num-r"></td><td class="num-r"></td><td class="num-r">14:00</td></tr>
+                <tr class="done"><td>1</td><td class="txt">Salida</td><td class="num-r">8.000</td><td class="num-r">112°</td><td class="num-r">18.2</td><td class="num-r">14:06</td></tr>
+                <tr class="done"><td>2</td><td class="txt">Push</td><td class="num-r">22.000</td><td class="num-r">138°</td><td class="num-r">41.0</td><td class="num-r">14:14</td></tr>
+                <tr class="hl"><td>3</td><td class="txt">IP Alfa</td><td class="num-r">22.000</td><td class="num-r">047°</td><td class="num-r">36.5</td><td class="num-r">14:21</td></tr>
+                <tr><td>4</td><td class="txt">Blanco</td><td class="num-r">18.000</td><td class="num-r">091°</td><td class="num-r">12.0</td><td class="num-r">14:23</td></tr>
+                <tr><td>5</td><td class="txt">Egreso</td><td class="num-r">24.000</td><td class="num-r">265°</td><td class="num-r">30.3</td><td class="num-r">14:29</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+        <footer class="tabsbar">
+          <button class="nav">‹</button>
+          <div class="tabs"><button class="tab"><span class="ti"><svg class="ico" viewBox="0 0 24 24"><path d="M8 3h8v3H8z M6 4.5H4V21h16V4.5h-2 M8 11h8 M8 15h8 M8 19h4"/></svg></span></button><button class="tab sel"><span class="ti"><svg class="ico" viewBox="0 0 24 24"><path d="M3 20l5-8 5 3 7-11 M7 11h2v2H7z M12 14h2v2h-2z M19 3h2v2h-2z"/></svg></span><span class="tl">Plan</span></button><button class="tab"><span class="ti"><svg class="ico" viewBox="0 0 24 24"><path d="M3 9h18v12H3z M6 9l12-6 M6 13h6 M6 17h6 M15 13h3v4h-3z"/></svg></span></button><button class="tab"><span class="ti"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20l1.2-5L16 4.2 19.8 8 9 18.8z M13.5 6.7l3.8 3.8 M4 20h16"/></svg></span></button><button class="tab"><span class="ti"><svg class="ico" viewBox="0 0 24 24"><path d="M2 6l7-3 6 3 7-3v15l-7 3-6-3-7 3z M9 3v15 M15 6v15"/></svg></span></button></div>
+          <button class="nav">›</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

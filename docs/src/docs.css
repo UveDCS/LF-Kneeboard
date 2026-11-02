@@ -1,0 +1,93 @@
+/* Estilo común de los documentos de LF Kneeboard: los colores del tema «Tablet táctica» de la app. */
+@import url('../../node_modules/@fontsource/inter/400.css');
+@import url('../../node_modules/@fontsource/inter/600.css');
+@import url('../../node_modules/@fontsource/inter/800.css');
+@import url('../../node_modules/@fontsource/jetbrains-mono/400.css');
+@import url('../../node_modules/@fontsource/jetbrains-mono/700.css');
+
+:root {
+  --bg: #0b1320;
+  --bg2: #101b2a;
+  --panel: rgba(255, 255, 255, .045);
+  --line: rgba(148, 170, 196, .2);
+  --ink: #e6edf5;
+  --muted: #93a3b8;
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, .14);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--sans); color: var(--ink); background: var(--bg); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+img { display: block; }
+
+/* ----- página A4 ----- */
+@page { size: A4; margin: 0; }
+.page {
+  width: 210mm; height: 297mm; padding: 15mm 15mm 13mm; position: relative; overflow: hidden;
+  page-break-after: always; break-after: page;
+  background:
+    radial-gradient(120% 70% at 100% 0%, rgba(56, 189, 248, .10) 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%);
+  display: flex; flex-direction: column;
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+.foot {
+  position: absolute; left: 15mm; right: 15mm; bottom: 7mm; display: flex; justify-content: space-between;
+  font: 400 7.5pt var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+  border-top: 1px solid var(--line); padding-top: 2.2mm;
+}
+
+/* ----- tipografía ----- */
+.kicker { font: 700 8pt var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin: 0 0 2.5mm; }
+.kicker .n { color: var(--muted); margin-right: 2.5mm; }
+h1 { font-weight: 800; letter-spacing: -.02em; margin: 0; }
+h2 { font-size: 25pt; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; margin: 0 0 3.5mm; }
+h3 { font-size: 11pt; font-weight: 800; margin: 0 0 1.5mm; letter-spacing: -.005em; }
+p { font-size: 9.6pt; line-height: 1.5; margin: 0 0 2.6mm; color: #cdd7e3; }
+.lead { font-size: 11.2pt; line-height: 1.45; color: var(--muted); margin-bottom: 6mm; max-width: 165mm; }
+b, strong { color: var(--ink); font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: .88em; color: #bfe7fb; }
+code { background: rgba(56, 189, 248, .1); border-radius: 1mm; padding: .2mm 1mm; }
+
+/* ----- bloques ----- */
+.cols { display: grid; gap: 7mm; flex: 1; min-height: 0; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c-text-img { grid-template-columns: 82mm 1fr; }
+.stack > * + * { margin-top: 4mm; }
+.feat { list-style: none; margin: 0; padding: 0; }
+.feat li { position: relative; padding: 0 0 3mm 5mm; font-size: 9.4pt; line-height: 1.45; color: #cdd7e3; }
+.feat li::before { content: ''; position: absolute; left: 0; top: 1.9mm; width: 2mm; height: 2mm; border-radius: .5mm; background: var(--accent); transform: rotate(45deg) scale(.7); }
+.feat li b { color: var(--ink); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 3mm; padding: 4mm 4.5mm; }
+.card p:last-child, .card .feat li:last-child { margin-bottom: 0; padding-bottom: 0; }
+.tip { border-left: 1.2mm solid var(--accent); background: var(--accent-soft); border-radius: 0 2.5mm 2.5mm 0; padding: 3mm 4mm; font-size: 9pt; line-height: 1.45; color: #d6eefb; }
+.tip b { color: #fff; }
+.tip.warn { border-color: var(--warn); background: rgba(251, 191, 36, .1); color: #fbe9b5; }
+.tag { display: inline-block; font: 700 6.8pt var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: .6mm 1.8mm; border-radius: 1mm; background: var(--accent-soft); color: var(--accent); margin-right: 1mm; vertical-align: 1px; }
+.tag.ok { background: rgba(52, 211, 153, .14); color: var(--ok); }
+.tag.warn { background: rgba(251, 191, 36, .14); color: var(--warn); }
+.tag.bad { background: rgba(248, 113, 113, .14); color: var(--bad); }
+
+/* ----- capturas en marco de tableta ----- */
+.shot { margin: 0; }
+.shot .frame {
+  border-radius: 5mm; padding: 2.4mm; background: linear-gradient(145deg, #2c3138 0%, #0c0e11 48%, #1b1f24 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09), 0 3mm 8mm rgba(0, 0, 0, .55);
+}
+.shot img { width: 100%; border-radius: 3mm; }
+.shot.wide .frame { border-radius: 3mm; padding: 1.4mm; }
+.shot.wide img { border-radius: 2mm; }
+.shot figcaption { font: 400 7.6pt var(--mono); color: var(--muted); margin-top: 2.2mm; letter-spacing: .02em; line-height: 1.4; }
+.shot figcaption b { color: var(--accent); font-weight: 700; }
+
+table { width: 100%; border-collapse: collapse; font-size: 8.6pt; }
+th { text-align: left; font: 700 7pt var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); padding: 0 2.5mm 1.8mm; border-bottom: 1px solid var(--line); }
+td { padding: 2mm 2.5mm; border-bottom: 1px solid rgba(148, 170, 196, .1); vertical-align: top; line-height: 1.4; color: #cdd7e3; }
+td:first-child { color: var(--ink); }
+kbd { font: 700 7.6pt var(--mono); color: var(--ink); background: rgba(255, 255, 255, .08); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 1mm; padding: .2mm 1.4mm; white-space: nowrap; }

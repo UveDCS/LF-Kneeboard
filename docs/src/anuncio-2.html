@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>DTC y plan de vuelo</title><link rel="stylesheet" href="anuncio.css">
+<style>
+  .copy { left: auto; right: 90px; width: 560px; }
+  .copy h1 { font-size: 56px; }
+  .steps { list-style: none; padding: 0; margin: 0 0 26px; counter-reset: s; }
+  .steps li { counter-increment: s; position: relative; padding-left: 52px; font-size: 21px; line-height: 1.4; color: #d4dfeb; margin-bottom: 14px; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 34px; height: 34px; border-radius: 9px; background: rgba(56, 189, 248, .14); border: 1px solid rgba(56, 189, 248, .45); color: var(--accent); font: 800 18px var(--mono); display: grid; place-items: center; }
+  .steps b { color: #fff; }
+</style></head>
+<body>
+  <div class="tablet" style="left:70px; top:210px; width:330px; transform:rotate(-5deg);"><img src="../img/dtc-resumen.jpg" alt=""></div>
+  <div class="tablet" style="left:470px; top:210px; width:330px; transform:rotate(5deg);"><img src="../img/dtc-cmds.jpg" alt=""></div>
+  <div class="tablet" style="left:255px; top:148px; width:365px; z-index:3;"><img src="../img/plan.jpg" alt=""></div>
+  <div class="label" style="left:95px; top:176px;">DTC · revisión</div>
+  <div class="label" style="left:340px; top:110px;">Hora fijada y velocidad</div>
+  <div class="label" style="left:600px; top:176px;">Contramedidas</div>
+  <div class="copy">
+    <div class="brand"><img src="../img/logo.svg" alt=""><div><div class="name">LF Kneeboard</div><div class="by">DTC · F/A-18C · F-16C · F-14</div></div></div>
+    <h1>Cambias el DTC,<br><em>cambia tu plan</em>.</h1>
+    <ol class="steps">
+      <li>Editas el DTC en el briefing, <b>aunque no lo guardes</b>, o trazas tu ruta con la <b>herramienta de ruta del F10</b>.</li>
+      <li>El plan de vuelo coge lo último que tocaste: puntos, horas fijas y objetivos.</li>
+      <li>En vuelo te dice si llegas <b>pronto o tarde</b> y a qué velocidad ir.</li>
+    </ol>
+    <div class="pills"><span>Contramedidas</span><span>Amenazas</span><span>JDAM</span><span>Enviar al vuelo</span></div>
+  </div>
+</body></html>

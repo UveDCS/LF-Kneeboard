@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>LF Kneeboard — Guía de uso</title>
+<link rel="stylesheet" href="docs.css">
+<style>
+  /* ----- portada ----- */
+  .cover { padding: 0; background:
+      radial-gradient(90% 60% at 90% 10%, rgba(56, 189, 248, .25) 0%, transparent 60%),
+      radial-gradient(80% 50% at 0% 100%, rgba(30, 58, 95, .7) 0%, transparent 70%),
+      linear-gradient(165deg, #142740 0%, #0b1320 50%, #060a11 100%); }
+  .cover::before { content: ''; position: absolute; inset: 0; opacity: .6;
+    background-image: linear-gradient(rgba(148, 170, 196, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 170, 196, .07) 1px, transparent 1px);
+    background-size: 9mm 9mm; -webkit-mask-image: radial-gradient(90% 70% at 60% 60%, #000 0%, transparent 80%); }
+  .cover .top { position: absolute; left: 18mm; top: 22mm; right: 18mm; z-index: 2; }
+  .cover .logo { display: flex; align-items: center; gap: 5mm; }
+  .cover .logo img { width: 22mm; height: 22mm; }
+  .cover .logo .by { font: 700 8.5pt var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--accent); }
+  .cover h1 { font-size: 46pt; line-height: .95; margin: 13mm 0 5mm; }
+  .cover h1 em { font-style: normal; color: var(--accent); }
+  .cover .sub { font-size: 13pt; line-height: 1.45; color: var(--muted); max-width: 130mm; margin: 0; }
+  .cover .tabs3 { position: absolute; left: 0; right: 0; top: 112mm; height: 160mm; }
+  .cover .t { position: absolute; border-radius: 7mm; padding: 3mm; background: linear-gradient(145deg, #2c3138 0%, #0c0e11 48%, #1b1f24 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 8mm 16mm rgba(0,0,0,.6); }
+  .cover .t img { width: 100%; border-radius: 4.5mm; }
+  .cover .bottom { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; display: flex; justify-content: space-between; align-items: flex-end; font: 400 8pt var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; z-index: 2; }
+  .cover .bottom b { color: var(--ink); font-weight: 700; }
+
+  /* ----- índice ----- */
+  .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 2.2mm 9mm; margin-top: 2mm; }
+  .toc a { display: flex; gap: 4mm; align-items: baseline; text-decoration: none; color: var(--ink); font-size: 10.5pt; font-weight: 600; padding: 2.4mm 0; border-bottom: 1px solid var(--line); }
+  .toc a span { font: 700 8pt var(--mono); color: var(--accent); width: 7mm; }
+  .toc a small { margin-left: auto; font: 400 8pt var(--mono); color: var(--muted); }
+  .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+  .steps3 .card h3 { display: flex; gap: 3mm; align-items: center; }
+  .steps3 .card h3 i { font: 800 11pt var(--mono); font-style: normal; color: var(--accent); width: 7mm; height: 7mm; border-radius: 1.6mm; background: var(--accent-soft); border: 1px solid rgba(56,189,248,.4); display: grid; place-items: center; }
+  .steps3 p { font-size: 8.8pt; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
+  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm 5mm; }
+  .themes figure { margin: 0; }
+  .themes .frame { padding: 1.6mm; border-radius: 3.5mm; }
+  .themes img { border-radius: 2.2mm; }
+  .themes figcaption { text-align: center; }
+  .note-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 5mm; }
+  .note-row .card { padding: 3.2mm 3.8mm; }
+  .note-row h3 { font-size: 9.6pt; }
+  .note-row p { font-size: 8.6pt; margin: 0; }
+  .use-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .card.use { background: linear-gradient(135deg, rgba(56,189,248,.10), rgba(255,255,255,.03)); border-color: rgba(56,189,248,.28); padding: 3.4mm 4mm; }
+  .card.use h3 { font-size: 9.8pt; color: #bfe7fb; }
+  .card.use p { font-size: 8.8pt; margin: 0; }
+  .hl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .hl .card { padding: 3.4mm 4mm; }
+  .hl h3 { font-size: 9.8pt; }
+  .hl p { font-size: 8.5pt; margin: 0; }
+  .defs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-top: 5mm; }
+  .defs .card { padding: 3.2mm 3.6mm; }
+  .defs h3 { font: 700 8pt var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  .defs p { font-size: 8.5pt; margin: 0; }
+  .timeline { list-style: none; margin: 0; padding: 0; counter-reset: t; }
+  .timeline li { counter-increment: t; position: relative; padding: 0 0 3.6mm 11mm; font-size: 9.2pt; line-height: 1.45; color: #cdd7e3; }
+  .timeline li::before { content: counter(t); position: absolute; left: 0; top: -.4mm; width: 7mm; height: 7mm; border-radius: 1.6mm; background: var(--accent-soft); border: 1px solid rgba(56,189,248,.4); color: var(--accent); font: 800 9pt var(--mono); display: grid; place-items: center; }
+  .timeline li:last-child { padding-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================== PORTADA ============================== -->
+<section class="page cover">
+  <div class="top">
+    <div class="logo"><img src="../img/logo.svg" alt=""><div class="by">La Fundación · DCS World</div></div>
+    <h1>LF Kneeboard<br><em>Guía de uso</em></h1>
+    <p class="sub">El kneeboard que lee la misión y tu DTC. Plan de vuelo, radios, mapa, DTC y el Piernógrafo del escuadrón, en VR y en el monitor.</p>
+  </div>
+  <div class="tabs3">
+    <div class="t" style="left:8mm; top:24mm; width:68mm; transform:rotate(-8deg);"><img src="../img/dtc-resumen.jpg" alt=""></div>
+    <div class="t" style="left:134mm; top:24mm; width:68mm; transform:rotate(8deg);"><img src="../img/mapa.jpg" alt=""></div>
+    <div class="t" style="left:61mm; top:4mm; width:88mm; z-index:3;"><img src="../img/plan.jpg" alt=""></div>
+  </div>
+  <div class="bottom"><div>Versión <b>0.3.6</b> · noviembre de 2026</div><div>Hecho por y para <b>La Fundación</b></div></div>
+</section>
+
+<!-- ============================== QUÉ ES ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">01</span>Empezar</div>
+  <h2>Qué es y cómo se instala</h2>
+  <p class="lead">LF Kneeboard es un kneeboard para DCS World. Además de enseñar tus PDF e imágenes, <b>lee la misión</b> en la que entras y te prepara el plan de vuelo, las radios, el apoyo, el mapa y el DTC de tu avión. Se ve <b>en el visor</b> (cualquier visor OpenXR) y <b>en el monitor</b> como una ventana encima de DCS.</p>
+
+  <div class="steps3">
+    <div class="card"><h3><i>1</i>Instala</h3><p>Ejecuta <code>LF Kneeboard Setup.exe</code>. No pide permisos de administrador y se instala solo para tu usuario de Windows.</p></div>
+    <div class="card"><h3><i>2</i>Bienvenida</h3><p>Al abrirlo por primera vez pulsa <b>Instalar y empezar</b>. Copia el script de DCS (no toca tu <code>Export.lua</code>) y activa la capa de VR.</p></div>
+    <div class="card"><h3><i>3</i>Vuela</h3><p>Entra en una misión. El kneeboard se rellena solo con tu avión, tu ruta, tus radios y tu DTC. <kbd>AltGr</kbd> + <kbd>K</kbd> lo saca y lo guarda.</p></div>
+  </div>
+
+  <div style="height:8mm"></div>
+  <div class="kicker">Contenido</div>
+  <nav class="toc">
+    <a><span>02</span>La interfaz y las pestañas<small>3</small></a>
+    <a><span>08</span>Mapa<small>9</small></a>
+    <a><span>03</span>Piernógrafo e índice<small>4</small></a>
+    <a><span>09</span>Radios y apoyo<small>10</small></a>
+    <a><span>04</span>Marcadores y pestaña Misión<small>5</small></a>
+    <a><span>10</span>Tarjeta de vuelo y tiempos<small>11</small></a>
+    <a><span>05</span>Plan de vuelo<small>6</small></a>
+    <a><span>11</span>Bloc y coordenadas<small>12</small></a>
+    <a><span>06</span>DTC<small>7</small></a>
+    <a><span>12</span>Vuelo compartido y curso DKS<small>13</small></a>
+    <a><span>07</span>De dónde sale la ruta<small>8</small></a>
+    <a><span>13</span>Carta, voz y temas<small>14</small></a>
+    <a><span></span>&nbsp;<small></small></a>
+    <a><span>14</span>Ajustes y controles<small>15</small></a>
+  </nav>
+
+  <div style="height:7mm"></div>
+  <div class="kicker">Lo esencial</div>
+  <div class="hl">
+    <div class="card"><h3>VR y monitor</h3><p>Cualquier visor OpenXR, o una ventana encima de DCS en el monitor.</p></div>
+    <div class="card"><h3>Lee la misión</h3><p>Plan de vuelo, radios, apoyo y mapa de tu avión y tu bando, sin preparar nada.</p></div>
+    <div class="card"><h3>Sigue tu DTC</h3><p>Lo que cambies en el editor de DTC o en la herramienta de ruta llega al plan.</p></div>
+    <div class="card"><h3>Piernógrafo</h3><p>Las páginas del escuadrón para tu avión, con índice y marcadores.</p></div>
+    <div class="card"><h3>Con tu vuelo</h3><p>Páginas, puntos, dibujos y DTC compartidos con el resto del vuelo.</p></div>
+    <div class="card"><h3>HOTAS y voz</h3><p>Se maneja con tus botones o con la voz, aunque DCS tenga el foco.</p></div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip"><b>Convive con todo.</b> El script de DCS va en <code>Scripts\Hooks</code> y un mod mínimo en <code>Mods\Services</code>; no modifica <code>Export.lua</code> ni la instalación de DCS. Funciona junto a SRS, DKS, Tacview, DCS-BIOS y OpenKneeboard. Si quieres saber exactamente qué instala, mira el documento <b>«Cómo funciona por dentro»</b>.</div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>2</span></div>
+</section>
+
+<!-- ============================== INTERFAZ ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">02</span>La interfaz</div>
+  <h2>Pestañas, cuadrícula y presets</h2>
+  <p class="lead">Arriba, el título de la pestaña, el contador de páginas, el modo AUTO, el estado de DCS y la hora de la misión. Abajo, la barra de pestañas y los botones de página.</p>
+  <div class="cols c-text-img">
+    <div class="stack">
+      <ul class="feat">
+        <li><b>Pestañas favoritas.</b> La barra de abajo enseña solo las que marques con la estrella. Las demás están en la <b>cuadrícula</b> (el botón de la izquierda de la barra).</li>
+        <li><b>Presets de pestañas.</b> Guarda tu juego de pestañas con un nombre («Caza», «Ataque nocturno»…) y cambia entre ellos desde la cuadrícula, desde Ajustes o con un botón del HOTAS.</li>
+        <li><b>Pestaña siguiente / anterior</b> desde el HOTAS recorre solo tus favoritas.</li>
+        <li><b>Dos kneeboards</b> a la vez, cada uno con su pestaña.</li>
+        <li><b>Modo AUTO</b> (opcional): al empezar cada fase del vuelo (tierra, rodaje, despegue, en ruta, objetivo, aproximación) abre <i>tu</i> marcador de esa fase. El programa nunca decide por ti qué página toca.</li>
+        <li><b>Lápiz</b> sobre cualquier página, con la presión de tu tableta.</li>
+        <li><b>En VR</b>: se amplía al mirarlo, con su propia opacidad, y se recentra con una tecla.</li>
+      </ul>
+      <div class="tip"><b>Plantillas por tipo de vuelo</b> en Ajustes › Pestañas: Completa, Caza, Ataque, Helicóptero y Entrenamiento. Conservan los nombres y ajustes de tus pestañas.</div>
+    </div>
+    <figure class="shot"><div class="frame"><img src="../img/cuadricula.jpg" alt=""></div><figcaption><b>Cuadrícula</b> · todas las pestañas, las favoritas con estrella y tus presets abajo.</figcaption></figure>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>3</span></div>
+</section>
+
+<!-- ============================== PIERNÓGRAFO ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">03</span>El corazón del programa</div>
+  <h2>Piernógrafo e índice</h2>
+  <p class="lead">La biblioteca de páginas del escuadrón, con el mismo formato que <b>KneeboardManager</b>: una carpeta por juego con su <code>kneeboard.json</code>. Si ya tienes una biblioteca, la encuentra sola. En cabina enseña solo los juegos del avión que vuelas.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/piernografo.jpg" alt=""></div><figcaption><b>Piernógrafo</b> · las páginas de tu avión, en orden.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/indice.jpg" alt=""></div><figcaption><b>Índice</b> · miniaturas agrupadas por juego.</figcaption></figure>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Índice</h3><p>Con el índice abierto, «página siguiente» del HOTAS salta de juego en juego. También con la voz: «índice».</p></div>
+    <div class="card"><h3>Ir a una página</h3><p>Pulsa el contador «3/77» o teclea el número directamente y salta a esa página.</p></div>
+    <div class="card"><h3>Biblioteca</h3><p>En Ajustes activas, desactivas y reordenas páginas, conviertes un PDF en páginas, las copias al kneeboard de DCS o las metes en un .miz.</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Antes de rodar</h3><p>Repasa las páginas del procedimiento de tu avión sin salir de cabina, en orden.</p></div><div class="card use"><h3>En vuelo</h3><p>Abre el índice y salta al juego que necesitas (emergencias, aproximación) en dos pulsaciones del HOTAS.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>4</span></div>
+</section>
+
+<!-- ============================== MARCADORES ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">04</span>Tus páginas a mano</div>
+  <h2>Marcadores y pestaña Misión</h2>
+  <p class="lead">Marca las páginas que vas a necesitar y dales un tipo. La pestaña <b>Misión</b> reúne solo tus páginas marcadas, ordenadas por fase del vuelo.</p>
+  <div class="cols c-text-img">
+    <div class="stack">
+      <ul class="feat">
+        <li><b>Tipos de marcador:</b> Tierra, Rodaje, Salida, En ruta, Misión, Aproximación, Emergencias y General.</li>
+        <li><b>Cada avión tiene los suyos.</b> Marcar o quitar una página en el F-16 no cambia los del F/A-18, aunque la página sea la misma.</li>
+        <li>Se guardan aunque cierres el programa o DCS.</li>
+        <li>Funcionan en las páginas de Misión, Piernógrafo, carpetas de imágenes y PDF.</li>
+        <li>Con el <b>modo AUTO</b>, al cambiar de fase se abre tu marcador de esa fase.</li>
+      </ul>
+      <figure class="shot"><div class="frame"><img src="../img/marcadores.jpg" alt="" style="height:62mm; object-fit:cover; object-position:top;"></div><figcaption><b>Marcar esta página</b> · eliges el tipo del marcador.</figcaption></figure>
+    </div>
+    <figure class="shot"><div class="frame"><img src="../img/mision.jpg" alt=""></div><figcaption><b>Misión</b> · solo tus páginas marcadas, con el aviso de para qué avión es cada marcador.</figcaption></figure>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>5</span></div>
+</section>
+
+<!-- ============================== PLAN DE VUELO ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">05</span>Se monta solo</div>
+  <h2>Plan de vuelo</h2>
+  <p class="lead">Con la ruta de tu avión: rumbos magnéticos, distancias, tiempos, hora de llegada y combustible estimado. En vuelo, arriba tienes el <b>siguiente punto</b> con rumbo a volar, distancia, tiempo y hora de llegada.</p>
+  <div class="cols c-text-img">
+    <div class="stack">
+      <ul class="feat">
+        <li><b>Avanza solo</b> siguiendo el número de waypoint: al pasar a menos de 1 nm del punto, o al rebasarlo. Si DCS da el steerpoint activo del avión, manda ese.</li>
+        <li><b>Hora fijada.</b> En los puntos con hora fija del DTC te dice si llegas pronto o tarde y <b>a qué velocidad sobre el suelo</b> ir para llegar justo.</li>
+        <li>Los <b>puntos de objetivo</b> salen marcados en rojo, y las horas fijas con la etiqueta «fija».</li>
+        <li><b>Renombra</b> los puntos con el lápiz: el nombre sale también en el mapa y en la tarjeta.</li>
+        <li>Acciones de HOTAS <b>Waypoint siguiente / anterior</b> por si quieres llevarlo a mano.</li>
+      </ul>
+      <div class="tip">La etiqueta azul de arriba dice <b>de dónde sale la ruta</b>: la misión, tu DTC, el editor de DTC del juego o la herramienta de ruta del F10. Lo explica la página 8.</div>
+    </div>
+    <figure class="shot"><div class="frame"><img src="../img/plan.jpg" alt=""></div><figcaption><b>Plan de vuelo</b> · siguiente punto con hora fijada y tabla de la ruta.</figcaption></figure>
+  </div>
+  <div class="defs">
+    <div class="card"><h3>Rumbo a volar</h3><p>Rumbo magnético desde tu posición hasta el siguiente punto.</p></div>
+    <div class="card"><h3>Distancia</h3><p>Millas náuticas hasta el punto, en directo.</p></div>
+    <div class="card"><h3>Tiempo</h3><p>Lo que tardas a tu velocidad sobre el suelo actual.</p></div>
+    <div class="card"><h3>Llegas a las</h3><p>Hora de la misión a la que llegarás, frente a la del plan.</p></div>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>6</span></div>
+</section>
+
+<!-- ============================== DTC ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">06</span>F/A-18C · F-16C · F-14</div>
+  <h2>DTC</h2>
+  <p class="lead">La pestaña DTC enseña tu cartucho de datos y lo <b>revisa antes de despegar</b>: otro avión u otro mapa, horas que no cuadran con la misión, radios distintas de las de la misión o secciones vacías.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/dtc-resumen.jpg" alt=""></div><figcaption><b>Resumen</b> · revisión, rutas con sus horas y navegación.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/dtc-cmds.jpg" alt=""></div><figcaption><b>Contramedidas</b> · programas, bingo y programa automático por amenaza.</figcaption></figure>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Amenazas y armas</h3><p>Zonas MEZ, prioridades del RWR, clases del HARM, objetivos de JDAM por estación y VIP/VRP.</p></div>
+    <div class="card"><h3>Importar</h3><p>Desde la pestaña o Ajustes › Misión. Se copia a <code>Saved Games\DCS\DTC</code> para cargarlo también en cabina. Nunca pisa otro DTC.</p></div>
+    <div class="card"><h3>Enviar al vuelo</h3><p>Llega comprimido a «Compartido» de cada compañero, que decide si lo usa.</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>En el briefing</h3><p>Mira la revisión: te avisa si el DTC es de otro mapa o si sus horas no cuadran con las de la misión.</p></div><div class="card use"><h3>Antes del ataque</h3><p>Repasa qué programa de contramedidas sale contra cada amenaza y qué objetivos llevan tus JDAM.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>7</span></div>
+</section>
+
+<!-- ============================== FUENTES DE RUTA ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">07</span>Manda lo último que tocas</div>
+  <h2>De dónde sale la ruta</h2>
+  <p class="lead">El plan de vuelo, el mapa y la tarjeta usan siempre la misma ruta. Si cambias la ruta en DCS, el kneeboard la sigue: <b>gana lo último que hayas tocado</b>.</p>
+  <table>
+    <tr><th style="width:52mm">Fuente</th><th>Cuándo se usa</th><th style="width:44mm">Etiqueta en el plan</th></tr>
+    <tr><td><span class="tag ok">en directo</span><br>Ruta del avión</td><td>Si DCS da la ruta que lleva el avión (no todos los módulos la dan; el F/A-18 no). Manda sobre todo lo demás.</td><td><span class="mono">avión (en directo)</span></td></tr>
+    <tr><td><span class="tag">F10</span><br>Herramienta de ruta</td><td>Trazas una ruta con <b>Show Route Tool</b> en el mapa F10 y la activas. Usa sus nombres, altitudes y horas.</td><td><span class="mono">herramienta de ruta del F10</span></td></tr>
+    <tr><td><span class="tag">DTC</span><br>Editor de DTC del juego</td><td>Cambias el DTC en el briefing o en la elección de plaza y cierras el editor, <b>aunque no lo guardes</b>.</td><td><span class="mono">DTC del editor del juego</span></td></tr>
+    <tr><td><span class="tag">DTC</span><br>DTC guardado en DCS</td><td>Guardas o cargas un DTC en DCS durante la misión.</td><td><span class="mono">DTC &lt;nombre&gt;</span></td></tr>
+    <tr><td><span class="tag">DTC</span><br>Elegido en el kneeboard</td><td>Lo importas o eliges en la pestaña DTC o en Ajustes › Misión.</td><td><span class="mono">DTC &lt;nombre&gt;</span></td></tr>
+    <tr><td><span class="tag warn">misión</span><br>DTC de la misión</td><td>El que la misión lleva dentro del .miz para tu plaza, o el de DKS (<code>*_OB.dtc</code>).</td><td><span class="mono">DTC &lt;nombre&gt;</span></td></tr>
+    <tr><td><span class="tag warn">misión</span><br>Ruta del editor</td><td>Si no hay nada de lo anterior, la ruta de tu grupo en la misión.</td><td><span class="mono">misión</span></td></tr>
+  </table>
+  <div style="height:6mm"></div>
+  <div class="pair">
+    <div class="tip"><b>¿Qué da mi avión?</b> En Ajustes › Integración DCS, la línea «Ruta:» dice si llegan la ruta en directo, la herramienta de ruta y el editor de DTC.</div>
+    <div class="tip warn"><b>Cambios a mano en cabina.</b> Lo que cambies en el UFC o el DED solo llega si DCS da la ruta del avión. En el F/A-18 no la da.</div>
+  </div>
+  <div style="height:6mm"></div>
+  <div class="card">
+    <div class="kicker" style="margin-bottom:3.5mm">Ejemplo en un F/A-18</div>
+    <ol class="timeline">
+      <li>Entras en la misión. El plan enseña la ruta del DTC que la misión trae para tu plaza: <span class="mono">DTC Golpe de acero</span>.</li>
+      <li>En el F10 trazas otra ruta con la herramienta de ruta y la activas. El plan pasa a <span class="mono">herramienta de ruta del F10</span>.</li>
+      <li>Abres el DTC en el briefing, mueves un punto y cierras sin guardar. El plan pasa a <span class="mono">DTC del editor del juego</span>, con tu cambio.</li>
+      <li>Si vuelves a tocar la herramienta de ruta, vuelve a mandar ella. Siempre gana lo último.</li>
+    </ol>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>8</span></div>
+</section>
+
+<!-- ============================== MAPA ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">08</span>Situación</div>
+  <h2>Mapa</h2>
+  <p class="lead">Satélite, topográfico u oscuro. Las capas necesitan internet; sin conexión se sigue viendo la ruta.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/mapa.jpg" alt=""></div><figcaption><b>Mapa</b> · ruta, aeródromos, CAP, FLOT y burbuja de amenaza del DTC.</figcaption></figure>
+    <div class="stack">
+      <ul class="feat">
+        <li>Tu <b>ruta</b> con los nombres de los puntos, el <b>bullseye</b> con sus anillos, el apoyo y los <b>aeródromos</b> (los de tu bando en azul).</li>
+        <li><b>Tu avión en directo</b> y una línea hasta el siguiente punto con su rumbo magnético y su distancia.</li>
+        <li><b>Capas del DTC:</b> FLOT, FAOR, corredores, líneas geográficas, hipódromos de CAP y burbujas de amenaza (con un botón para ocultarlas).</li>
+        <li><b>Lápiz compartido:</b> cada piloto dibuja con su color y una leyenda dice quién ha dibujado qué.</li>
+        <li><b>Clic en el mapa</b> para pasar un punto al bloc.</li>
+      </ul>
+      <figure class="shot"><div class="frame"><img src="../img/mapa-linea.jpg" alt="" style="height:70mm; object-fit:cover; object-position:50% 45%;"></div><figcaption><b>Línea al siguiente punto</b> con rumbo y distancia.</figcaption></figure>
+    </div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Navegación</h3><p>Sigue la línea al siguiente punto con su rumbo y distancia, sin cambiar de pestaña.</p></div><div class="card use"><h3>Coordinación</h3><p>Dibuja la entrada al objetivo y lo ve todo el vuelo; la leyenda dice quién ha dibujado qué.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>9</span></div>
+</section>
+
+<!-- ============================== RADIOS Y APOYO ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">09</span>Comunicaciones</div>
+  <h2>Radios y apoyo</h2>
+  <p class="lead">Los presets de la misión o de tu DTC, con cada frecuencia identificada. Y el apoyo de tu bando, con su TACAN y tu posición respecto al bullseye.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/radios.jpg" alt=""></div><figcaption><b>Radios</b> · presets de COMM 1 y 2, con su nombre.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/apoyo.jpg" alt=""></div><figcaption><b>Apoyo</b> · bullseye, AWACS, tanqueros, barcos y JTAC.</figcaption></figure>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Identificadas</h3><p>Intravuelo, AWACS, torre, tanquero… y además las frecuencias útiles del mapa.</p></div>
+    <div class="card"><h3>Editables</h3><p>Si cambias un preset en cabina, lo editas aquí. Los cambios se guardan por avión.</p></div>
+    <div class="card"><h3>Solo tu bando</h3><p>Unidades, apoyo, aeródromos y frecuencias de tu bando (y los aeródromos neutrales).</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Cambios de frecuencia</h3><p>Sabes qué preset es la torre o el AWACS sin buscar en el briefing.</p></div><div class="card use"><h3>Repostaje</h3><p>El TACAN y la frecuencia del tanquero, con tu posición respecto al bullseye.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>10</span></div>
+</section>
+
+<!-- ============================== TARJETA Y TIEMPOS ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">10</span>Como CombatFlite</div>
+  <h2>Tarjeta de vuelo y tiempos</h2>
+  <p class="lead">La tarjeta y el nav log se generan con la misión. Los tiempos te dan la hora, el cronómetro, la cuenta atrás al push y el bingo según la distancia a casa.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/tarjeta.jpg" alt=""></div><figcaption><b>Tarjeta</b> · vuelo con colas, láser y STN, comunicaciones y cargamento.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tiempos.jpg" alt=""></div><figcaption><b>Tiempos</b> · reloj, cronómetro, push, bingo y tiempos de bloque.</figcaption></figure>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Editable</h3><p>Paquete, código de abortar, TOT y notas por punto. Se guardan por misión y puedes añadir pilotos y frecuencias.</p></div>
+    <div class="card"><h3>Al Piernógrafo</h3><p>«Guardar en el Piernógrafo» convierte la tarjeta y el nav log en páginas, listas para DCS o el .miz.</p></div>
+    <div class="card"><h3>Libro de vuelo</h3><p>Calzos fuera, despegue, aterrizaje y calzos dentro automáticos, con horas por avión exportables a CSV.</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Briefing de vuelo</h3><p>La tarjeta resume indicativos, láser, comunicaciones y combustible de todo el elemento.</p></div><div class="card use"><h3>Gestión del combustible</h3><p>El bingo según la distancia a casa se recalcula solo mientras vuelas.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>11</span></div>
+</section>
+
+<!-- ============================== BLOC ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">11</span>Como DCS Scratchpad</div>
+  <h2>Bloc y coordenadas</h2>
+  <p class="lead">Notas libres y plantillas para lo que se dicta por radio. Con una tecla capturas las coordenadas del centro del mapa F10 en el formato de tu avión.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="../img/bloc-9line.jpg" alt=""></div><figcaption><b>9-line CAS</b> · cada línea en su campo.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/bloc-coords.jpg" alt=""></div><figcaption><b>Coordenadas</b> · DDM, DMS, MGRS y elevación de un punto del F10.</figcaption></figure>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Plantillas</h3><p>Notas, 9-line, check-in JTAC, autorización ATC, repostaje y BDA.</p></div>
+    <div class="card"><h3>Capturar</h3><p><kbd>AltGr</kbd> + <kbd>M</kbd> con el F10 abierto. Sale una cruz en el centro (en VR, fija en el centro de la vista).</p></div>
+    <div class="card"><h3>Se rellena solo</h3><p>Si estabas en un campo de ubicación (por ejemplo, la línea 6 del 9-line), el punto va directo ahí.</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Apoyo aéreo cercano</h3><p>Copia el 9-line del JTAC línea a línea y captura la posición del blanco desde el F10.</p></div><div class="card use"><h3>Puntos nuevos</h3><p>Pasa un punto del mapa al bloc y envíaselo a tu punto con el formato de su cabina.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>12</span></div>
+</section>
+
+<!-- ============================== COMPARTIDO Y DKS ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">12</span>Con tu vuelo</div>
+  <h2>Vuelo compartido y curso DKS</h2>
+  <p class="lead">Conectaos a una sala para enviaros páginas, notas, puntos, dibujos y DTC. Y si volais el curso de DKS, la lección se abre sola.</p>
+  <div class="pair">
+    <div class="stack">
+      <figure class="shot"><div class="frame"><img src="../img/compartido.jpg" alt=""></div><figcaption><b>Compartido</b> · un DTC recibido de un compañero, listo para usar.</figcaption></figure>
+    </div>
+    <div class="stack">
+      <figure class="shot"><div class="frame"><img src="../img/leccion.jpg" alt=""></div><figcaption><b>Lección</b> · objetivos con su nivel y tareas para marcar en vuelo.</figcaption></figure>
+    </div>
+  </div>
+  <div class="note-row">
+    <div class="card"><h3>Sala</h3><p>Un piloto hace de anfitrión o usáis un servidor de salas del escuadrón. Solo se muestra tu IP pública.</p></div>
+    <div class="card"><h3>Pizarra</h3><p>Una pizarra en directo y dibujos sobre el mapa que ve todo el vuelo, cada uno con su color.</p></div>
+    <div class="card"><h3>Curso DKS</h3><p>Si la misión lleva el código de la lección («TIE-1»), se abre sola, con la hoja de evaluación para el instructor.</p></div>
+  </div>
+  
+  <div class="kicker" style="margin-top:6mm">Cuándo te sirve</div>
+  <div class="use-row"><div class="card use"><h3>Misiones en grupo</h3><p>El líder envía su DTC o una página del briefing y cada piloto decide si la usa.</p></div><div class="card use"><h3>Instrucción</h3><p>La lección y la hoja de evaluación del curso de DKS, en la pierna del alumno.</p></div></div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>13</span></div>
+</section>
+
+<!-- ============================== CARTA, VOZ, TEMAS ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">13</span>Como un EFB</div>
+  <h2>Carta, voz y temas</h2>
+  <div class="cols" style="grid-template-columns: 64mm 1fr; flex: none;">
+    <figure class="shot"><div class="frame"><img src="../img/carta.jpg" alt=""></div><figcaption><b>Carta georreferenciada</b> con tu avión y la ruta.</figcaption></figure>
+    <div class="stack">
+      <div class="card"><h3>Carta georreferenciada</h3><p>Una imagen o la página de un PDF calibrada con dos o más puntos conocidos. Encima se dibujan tu avión con su rumbo y la ruta, con zoom y modo seguir.</p></div>
+      <div class="card"><h3>Órdenes de voz</h3><p>Sin conexión, con el reconocedor en español de Windows. Mantén un botón o di la palabra de activación («piernógrafo»): «radios», «plan de vuelo», «página tres», «marca punto», «modo noche»…</p></div>
+      <div class="card"><h3>Pestañas de documentos</h3><p>PDF, carpeta de imágenes, kneeboard de DCS, la captura de una ventana (SRS, Discord…) y la <b>pestaña web</b>: escribe la dirección arriba o abre un archivo de tu PC con el botón de la carpeta. Los PDF se abren con su visor, con páginas y marcadores.</p></div>
+    </div>
+  </div>
+  <div style="height:6mm"></div>
+  <div class="kicker">Siete temas y modo noche</div>
+  <div class="themes">
+    <figure class="shot"><div class="frame"><img src="../img/tema-tablet.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Tablet táctica</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-mfd.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>MFD verde</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-libreta.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Libreta</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-noche.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Noche (rojo)</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-tactico.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Kneeboard táctico</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-dossier.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Dossier</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="../img/tema-portapapeles.jpg" alt="" style="height:44mm; object-fit:cover; object-position:top;"></div><figcaption>Portapapeles</figcaption></figure>
+    <div class="card" style="align-self:start"><h3>Modo noche</h3><p style="font-size:8.6pt">Atenúa cualquier tema para no deslumbrarte en vuelos nocturnos. <kbd>AltGr</kbd> + <kbd>N</kbd> o la voz: «modo noche».</p></div>
+  </div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>14</span></div>
+</section>
+
+<!-- ============================== AJUSTES Y CONTROLES ============================== -->
+<section class="page">
+  <div class="kicker"><span class="n">14</span>A tu manera</div>
+  <h2>Ajustes y controles</h2>
+  <p class="lead">Todo se maneja con el teclado o los botones y setas de cualquier mando, aunque DCS tenga el foco. Cada acción admite varias asignaciones y combinaciones con modificador.</p>
+  <figure class="shot wide"><div class="frame"><img src="../img/ajustes-controles.jpg" alt=""></div><figcaption><b>Ajustes › Controles</b> · pulsa «Asignar» y luego la tecla o el botón del HOTAS.</figcaption></figure>
+  <div style="height:5mm"></div>
+  <div class="pair">
+    <table>
+      <tr><th>Acción</th><th>Por defecto</th></tr>
+      <tr><td>Mostrar / ocultar</td><td><kbd>AltGr</kbd> + <kbd>K</kbd></td></tr>
+      <tr><td>Página siguiente / anterior</td><td><kbd>AltGr</kbd> + <kbd>Av Pág</kbd> / <kbd>Re Pág</kbd></td></tr>
+      <tr><td>Pestaña siguiente / anterior</td><td><kbd>AltGr</kbd> + <kbd>Fin</kbd> / <kbd>Inicio</kbd></td></tr>
+      <tr><td>Capturar coordenadas F10</td><td><kbd>AltGr</kbd> + <kbd>M</kbd></td></tr>
+      <tr><td>Modo automático</td><td><kbd>AltGr</kbd> + <kbd>A</kbd></td></tr>
+      <tr><td>Modo escritura</td><td><kbd>AltGr</kbd> + <kbd>W</kbd></td></tr>
+    </table>
+    <table>
+      <tr><th>Acción</th><th>Por defecto</th></tr>
+      <tr><td>Recentrar VR</td><td><kbd>AltGr</kbd> + <kbd>R</kbd></td></tr>
+      <tr><td>Zoom fijo VR</td><td><kbd>AltGr</kbd> + <kbd>Z</kbd></td></tr>
+      <tr><td>Modo noche</td><td><kbd>AltGr</kbd> + <kbd>N</kbd></td></tr>
+      <tr><td>Enviar página al vuelo</td><td><kbd>AltGr</kbd> + <kbd>S</kbd></td></tr>
+      <tr><td>Cronómetro</td><td><kbd>AltGr</kbd> + <kbd>T</kbd></td></tr>
+      <tr><td>Preset de pestañas siguiente</td><td>sin asignar</td></tr>
+    </table>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tip"><b>Tu perfil en otro PC.</b> En Ajustes › Actualizar y perfil, «Exportar perfil» guarda en un .zip tus pestañas, controles, temas, VR, marcadores, nombres de puntos, presets, tarjetas, bloc y libro de vuelo. El programa se actualiza solo al cerrarlo, sin tocar tus ajustes.</div>
+  <div class="foot"><span>LF Kneeboard · Guía de uso</span><span>15</span></div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,52 @@
+-- Página de LF Kneeboard en Opciones > Especial (solo informativa).
+local leftMargin = 56
+local width = 850
+
+local TitleSkin = {
+	["params"] = { ["name"] = "staticOptionsTitleSkin", },
+	["states"] = { ["released"] = { [1] = { ["text"] = { ["horzAlign"] = { ["type"] = "min" } } } } },
+}
+local HelpSkin = {
+	["params"] = { ["name"] = "staticSkin2", },
+	["states"] = { ["released"] = { [1] = { ["text"] = { ["fontSize"] = 10, ["horzAlign"] = { ["type"] = "min" } } } } },
+}
+
+dialog = {
+	["children"] = {
+		["containerPlugin"] = {
+			["children"] = {
+				["lfkbTitleLabel"] = {
+					["params"] = {
+						["enabled"] = true,
+						["bounds"] = { ["x"] = leftMargin, ["y"] = 30, ["w"] = width, ["h"] = 24, },
+						["visible"] = true, ["tooltip"] = "", ["zindex"] = 0, ["text"] = "$LFKB_TITLE",
+					},
+					["skin"] = TitleSkin,
+					["type"] = "Static",
+				},
+				["lfkbInfoLabel"] = {
+					["params"] = {
+						["bounds"] = { ["x"] = leftMargin, ["y"] = 70, ["w"] = width, ["h"] = 60, },
+						["enabled"] = true, ["text"] = "$LFKB_INFO", ["tooltip"] = "", ["visible"] = true, ["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},
+			},
+			["type"] = "Panel",
+			["skin"] = { ["params"] = { ["name"] = "panelSkin", }, },
+			["params"] = {
+				["enabled"] = true,
+				["bounds"] = { ["x"] = 0, ["y"] = 0, ["w"] = 974, ["h"] = 600, },
+				["visible"] = true, ["tooltip"] = "", ["zindex"] = 2, ["text"] = "",
+			},
+		},
+	},
+	["type"] = "Window",
+	["skin"] = { ["params"] = { ["name"] = "windowSkin", }, },
+	["params"] = {
+		["bounds"] = { ["h"] = 851, ["w"] = 1135, ["x"] = 0, ["y"] = 0, },
+		["draggable"] = true, ["enabled"] = true, ["hasCursor"] = true, ["lockFlow"] = false,
+		["modal"] = false, ["text"] = "dialog", ["zOrder"] = 1,
+	},
+}
