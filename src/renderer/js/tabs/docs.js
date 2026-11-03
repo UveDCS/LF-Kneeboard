@@ -1,6 +1,6 @@
 // Pestañas de documentos: carpeta de imágenes, kneeboard de DCS, PDF, página web / archivo local y captura de ventana.
 import { icon } from '../icons.js';
-import { bmType, bmOrder } from '../bookmarks.js';
+import { bmType } from '../bookmarks.js';
 import { h, clear, emptyState, debounce } from '../util.js';
 
 // ------------------------------------------------------------------ imágenes (carpeta y kneeboard de DCS)
@@ -100,8 +100,8 @@ export const library = {
   },
 };
 
-// Misión: las páginas que has marcado en el Piernógrafo, ordenadas por fase (Tierra → Emergencias), y después
-// las que has añadido a Misión sin marcador, en el orden en que las añadiste.
+// Misión: las páginas que has marcado en el Piernógrafo y las que has añadido sin marcador, todas juntas en el
+// orden normal del Piernógrafo (y agrupadas por juego). El tipo de marcador se sigue viendo en cada página.
 export const dcsKneeboard = {
   icon: 'bookmarks',
   label: 'Misión: solo las páginas marcadas',
@@ -114,17 +114,15 @@ export const dcsKneeboard = {
         const all = await ctx.kb.kneeboardAll(ctx.aircraft());
         const bms = ctx.S.bookmarks || {};
         const mp = ctx.S.missionPages || {};
-        const rank = (it) => (it.bm ? bmOrder(it.bm.type) : 1000);
         return all
-          .map((it, i) => { const k = kneeboardKey(ctx, it); return { ...it, i, bm: bms[k], mp: mp[k] }; })
-          .filter((it) => it.bm || it.mp)
-          .sort((a, b) => rank(a) - rank(b) || (a.bm ? a.i - b.i : (a.mp.at || 0) - (b.mp.at || 0)));
+          .map((it) => { const k = kneeboardKey(ctx, it); return { ...it, bm: bms[k], mp: mp[k] }; })
+          .filter((it) => it.bm || it.mp);
       },
       keyOf: (it) => kneeboardKey(ctx, it),
-      groupOf: (it) => (it.bm ? bmType(it.bm.type).label : 'En Misión'),
-      labelOf: (it) => `${it.bm ? bmType(it.bm.type).label : 'En Misión'} · ${it.group} · ${pageName(it)}`,
+      groupOf: (it) => it.group,
+      labelOf: (it) => `${it.bm ? `${bmType(it.bm.type).label} · ` : ''}${it.group} · ${pageName(it)}`,
     }, () => emptyState(icon('bookmarks'), 'Sin páginas marcadas',
-      'Abre el Piernógrafo, busca las páginas que te interesan para esta misión y márcalas con el icono de marcador (Tierra, Salida, Aproximación…). Aparecerán aquí ordenadas por fase. En ese mismo menú puedes añadir una página a Misión sin que sea un marcador.'));
+      'Abre el Piernógrafo, busca las páginas que te interesan para esta misión y márcalas con el icono de marcador (Tierra, Salida, Aproximación…). Aparecerán aquí en el orden del Piernógrafo. En ese mismo menú puedes añadir una página a Misión sin que sea un marcador.'));
     const base = inst.onLibrary;
     inst.onLibrary = () => { version++; base(); };
     const baseBm = inst.onBookmarks;

@@ -367,6 +367,18 @@ table.tbl.md td { font-family: var(--font-ui); }
 .idx-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .idx-img img:not([src]) { visibility: hidden; }
 .idx-bm { position: absolute; top: .2rem; right: .2rem; font-size: .6rem; }
+/* Añadir a Misión desde el índice: botón redondo en la esquina de cada miniatura. */
+.idx-mis { position: absolute; left: .25rem; bottom: .25rem; width: 1.7rem; height: 1.7rem; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(8, 14, 22, .78); color: #fff; border: 1px solid rgba(255, 255, 255, .35); cursor: pointer; }
+.idx-mis svg { width: .95rem; height: .95rem; }
+.idx-mis:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.idx-mis.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.idx-tile.in-mis { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.idx-mis.rm:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+.idx-tile.removed .idx-img img, .idx-tile.removed .idx-l, .idx-tile.removed .idx-n { opacity: .3; }
+.idx-tile.removed { border-style: dashed; }
+.idx-head .grow { flex: 1; }
+.idx-mis-all { align-self: center; }
 .idx-n { position: absolute; top: .45rem; left: .45rem; font: 700 .62rem var(--font-mono); background: rgba(0,0,0,.65); color: #fff; padding: 0 .25rem; border-radius: .2rem; }
 .idx-l { font-size: .66rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .idx-help { font-size: .72rem; margin-top: .9rem; line-height: 1.4; }
@@ -409,6 +421,7 @@ table.tbl.md td { font-family: var(--font-ui); }
 .favbtn.on { color: var(--warn); opacity: 1; }
 
 /* Plan de vuelo: hora fijada (DTC o misión) y puntos de objetivo */
+.tag.sent { background: color-mix(in srgb, var(--ok, #34d399) 18%, transparent); color: var(--ok, #34d399); }
 .tag.tgt { background: #ef4444; color: #fff; margin-left: .3rem; }
 .tag.fix { background: transparent; border: 1px solid var(--accent); color: var(--accent); font-size: .58rem; padding: 0 .25rem; }
 .tot { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .8rem; margin-top: .5rem; padding: .4rem .6rem; border-radius: .45rem;

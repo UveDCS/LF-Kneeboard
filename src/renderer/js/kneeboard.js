@@ -51,6 +51,7 @@ const ctx = {
 };
 
 const tabs = () => S.config.tabs || [];
+const inboxNew = () => (S.inbox || []).filter((it) => !it.mine).length; // lo que te han enviado (no lo tuyo)
 const curTab = () => tabs()[tabIndex];
 const curInst = () => (curTab() ? getInstance(curTab()) : null);
 
@@ -197,18 +198,26 @@ function saveBookmarks() {
   for (const { inst } of instances.values()) if (inst.onBookmarks) inst.onBookmarks();
 }
 
+// Pone o quita páginas de la pestaña Misión: [{ key, label }]. Se guarda una sola vez por llamada.
+function setMissionPages(list, on) {
+  const now = Date.now();
+  list.forEach((p, i) => {
+    if (!canBeInMission(p.key)) return;
+    if (on) { if (!S.missionPages[p.key]) S.missionPages[p.key] = { label: p.label, at: now + i }; }
+    else delete S.missionPages[p.key];
+  });
+  kb.storeSet(mpStoreOf(ctx.aircraft()), S.missionPages);
+  for (const { inst: i } of instances.values()) if (i.onBookmarks) i.onBookmarks();
+  renderChrome();
+}
+
 function setMissionPage(on) {
   const inst = curInst();
   const key = pageKeyOf(inst, curPage());
   if (!key) return;
-  if (on) {
-    S.missionPages[key] = { label: inst.pageLabel ? inst.pageLabel(curPage()) : `Página ${curPage() + 1}`, at: Date.now() };
-    toast(`Página añadida a la pestaña Misión${ctx.aircraft() ? ` (solo en ${ctx.aircraft()})` : ''}`);
-  } else delete S.missionPages[key];
-  kb.storeSet(mpStoreOf(ctx.aircraft()), S.missionPages);
-  for (const { inst: i } of instances.values()) if (i.onBookmarks) i.onBookmarks();
+  setMissionPages([{ key, label: inst.pageLabel ? inst.pageLabel(curPage()) : `Página ${curPage() + 1}` }], on);
+  if (on) toast(`Página añadida a la pestaña Misión${ctx.aircraft() ? ` (solo en ${ctx.aircraft()})` : ''}`);
   closeOverlay();
-  renderChrome();
 }
 
 function setBookmark(type) {
@@ -375,22 +384,102 @@ function openIndex() {
   }, { root: null, rootMargin: '300px' });
   const tiles = new Map();
   const groups = new Map();
+  // Añadir a Misión desde el índice: un clic por página (o todo el juego de una vez), sin cerrar el índice.
+  // En el índice de la propia pestaña Misión es al revés: cada página se quita (su marcador o su «sin marcador»)
+  // y se puede volver a poner tal como estaba tocando otra vez.
+  const inMision = t.type === 'dcs-kneeboard';
+  const removed = new Map(); // key → { bm, mp } para deshacer
+  const isOn = (it) => (inMision ? !removed.has(it.key) : !!S.missionPages[it.key]);
+  const removeFromMision = (list) => {
+    for (const it of list) {
+      if (removed.has(it.key)) continue;
+      removed.set(it.key, { bm: S.bookmarks[it.key], mp: S.missionPages[it.key] });
+      delete S.bookmarks[it.key];
+    }
+    saveBookmarks();
+    setMissionPages(list.map((it) => ({ key: it.key, label: it.label })), false);
+  };
+  const restoreToMision = (list) => {
+    for (const it of list) {
+      const r = removed.get(it.key);
+      if (!r) continue;
+      removed.delete(it.key);
+      if (r.bm) S.bookmarks[it.key] = r.bm;
+      if (r.mp) S.missionPages[it.key] = r.mp;
+    }
+    saveBookmarks();
+    kb.storeSet(mpStoreOf(ctx.aircraft()), S.missionPages);
+    renderChrome();
+  };
+  const toggleOne = (it) => {
+    if (inMision) (removed.has(it.key) ? restoreToMision : removeFromMision)([it]);
+    else setMissionPages([{ key: it.key, label: it.label }], !S.missionPages[it.key]);
+    paintMis();
+  };
+  const misToggles = [];
+  const misLabel = (on) => (inMision
+    ? (on ? 'Quitar de la pestaña Misión' : 'Quitada: toca para volver a ponerla')
+    : (on ? 'En Misión: toca para quitarla' : 'Añadir a la pestaña Misión'));
+  const paintMis = () => {
+    for (const m of misToggles) {
+      const on = isOn(m.it);
+      m.el.classList.toggle('on', inMision ? false : on);
+      m.el.classList.toggle('rm', inMision && on);
+      m.el.title = misLabel(on);
+      m.el.replaceChildren(icon(inMision ? (on ? 'close' : 'undo') : (on ? 'check' : 'plus')));
+      m.tile.classList.toggle('in-mis', !inMision && on);
+      m.tile.classList.toggle('removed', inMision && !on);
+    }
+    for (const g of groupMis) {
+      const all = g.list.length && g.list.every(isOn);
+      if (inMision) g.btn.replaceChildren(icon(all ? 'close' : 'undo'), all ? ' Quitar el grupo de Misión' : ' Volver a ponerlo');
+      else g.btn.replaceChildren(icon(all ? 'close' : 'plus'), all ? ' Quitar el juego de Misión' : ' Añadir todo el juego a Misión');
+      g.all = all;
+    }
+  };
+  const groupMis = [];
   for (const s of secs) {
     const grid = h('div.idx-grid');
-    const head = h('div.idx-head', h('b', s.group), h('span.muted', `${s.count} págs.`));
+    const inMis = items.slice(s.page, s.page + s.count).filter((it) => canBeInMission(it.key));
+    const g = { list: inMis, all: false, btn: null };
+    if (inMis.length) {
+      g.btn = h('button.btn.small.idx-mis-all', {
+        onclick: () => {
+          if (inMision) (g.all ? removeFromMision : restoreToMision)(inMis);
+          else setMissionPages(inMis.map((it) => ({ key: it.key, label: it.label })), !g.all);
+          paintMis();
+        },
+      });
+      groupMis.push(g);
+    }
+    const head = h('div.idx-head', h('b', s.group), h('span.muted', `${s.count} págs.`), g.btn ? h('span.grow') : null, g.btn);
     groups.set(s.page, head);
     body.append(head, grid);
     for (const it of items.slice(s.page, s.page + s.count)) {
       const bm = it.key ? S.bookmarks[it.key] : null;
       const img = h('img', { alt: '', draggable: false, 'data-path': it.path || '' });
-      const tile = h('button.idx-tile', { title: it.label, onclick: () => { setPage(it.page, { manual: true }); closeOverlay(); } },
-        h('div.idx-img', img, bm ? h('span.tag.idx-bm', bmType(bm.type).short) : null),
+      const mis = canBeInMission(it.key) ? h('span.idx-mis', {
+        role: 'button',
+        onclick: (e) => {
+          e.stopPropagation();
+          toggleOne(it);
+        },
+      }) : null;
+      const tile = h('button.idx-tile', { title: it.label, onclick: () => {
+        if (inMision && removed.has(it.key)) return;
+        const now = it.key ? indexOf(curInst()).find((x) => x.key === it.key) : null;
+        setPage(now ? now.page : it.page, { manual: true });
+        closeOverlay();
+      } },
+        h('div.idx-img', img, bm ? h('span.tag.idx-bm', bmType(bm.type).short) : null, mis),
         h('span.idx-n', String(it.page + 1)), h('span.idx-l', it.label));
+      if (mis) misToggles.push({ el: mis, it, tile });
       tiles.set(it.page, tile);
       grid.append(tile);
       if (it.path) io.observe(img);
     }
   }
+  paintMis();
   const render = () => {
     const p = curPage();
     const si = currentSection(secs, p);
@@ -403,7 +492,11 @@ function openIndex() {
     if (sel) sel.scrollIntoView({ block: 'center' });
   };
   openOverlay(`Índice · ${t.title}`, chips, body,
-    h('div.muted.idx-help', 'Toca una página para abrirla. Con el HOTAS: «Página siguiente / anterior» salta de juego mientras el índice está abierto, y la acción «Índice de páginas» lo cierra.'));
+    h('div.muted.idx-help', inMision && misToggles.length
+      ? 'Toca una página para abrirla, o su «×» para quitarla de Misión (quita su marcador). Si te equivocas, tócala otra vez y vuelve como estaba. Con el HOTAS: «Página siguiente / anterior» salta de grupo mientras el índice está abierto.'
+      : misToggles.length
+      ? `Toca una página para abrirla, o su «+» para añadirla a la pestaña Misión (sin marcador; solo en ${ctx.aircraft() || 'este avión'}). Con el HOTAS: «Página siguiente / anterior» salta de juego mientras el índice está abierto, y la acción «Índice de páginas» lo cierra.`
+      : 'Toca una página para abrirla. Con el HOTAS: «Página siguiente / anterior» salta de juego mientras el índice está abierto, y la acción «Índice de páginas» lo cierra.'));
   $('overlay').classList.add('wide');
   indexOpen = { render, io };
   requestAnimationFrame(render);
@@ -428,7 +521,7 @@ function openAllTabs() {
   const grid = h('div.tabgrid');
   const draw = () => clear(grid).append(...tabs().map((t, i) => h('div.tabtile-wrap',
     h('button.tabtile', { className: `tabtile${i === tabIndex ? ' sel' : ''}${t.fav ? ' fav' : ''}`, onclick: () => switchTab(i, { manual: true }) },
-      tabIcon(t), h('span', t.title), t.type === 'shared' && S.inbox.length ? h('span.badge', S.inbox.length) : null),
+      tabIcon(t), h('span', t.title), t.type === 'shared' && inboxNew() ? h('span.badge', inboxNew()) : null),
     h('button.favbtn', {
       className: `favbtn${t.fav ? ' on' : ''}`,
       title: t.fav ? 'Quitar de la barra' : 'Fijar en la barra',
@@ -517,7 +610,7 @@ function renderChrome() {
   const anyFav = tabs().some((x) => x.fav);
   let hiddenInbox = false;
   tabs().forEach((tab, i) => {
-    const badge = tab.type === 'shared' && S.inbox.length ? h('span.badge', S.inbox.length) : null;
+    const badge = tab.type === 'shared' && inboxNew() ? h('span.badge', inboxNew()) : null;
     if (anyFav && !tab.fav && i !== tabIndex) {
       if (badge) hiddenInbox = true;
       return;
@@ -530,7 +623,7 @@ function renderChrome() {
   });
   // Algo nuevo en «Compartido» sin estar en la barra: aviso en el botón de la cuadrícula.
   $('allTabs').classList.toggle('has-badge', hiddenInbox);
-  $('allTabs').dataset.badge = hiddenInbox ? String(S.inbox.length) : '';
+  $('allTabs').dataset.badge = hiddenInbox ? String(inboxNew()) : '';
   bar.scrollLeft = scroll;
   const sel = bar.querySelector('.tab.sel');
   if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });

@@ -308,6 +308,41 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
         await wait(1200);
         say(`página añadida a Misión sin marcador: botón ${added}, contador «${await exec(`(document.querySelector('.bar-page') || {}).textContent || ''`)}»`);
         await shot('mision-sin-marcador');
+        // Desde el índice del Piernógrafo: «+» en dos miniaturas y «Añadir todo el juego» en el segundo juego.
+        await goTab(lib);
+        await wait(600);
+        await exec(`document.getElementById('idxBtn').click()`);
+        await wait(1500);
+        const r = await exec(`(() => {
+          const t = [...document.querySelectorAll('.idx-mis')];
+          t[3].click(); t[5].click();
+          const all = document.querySelectorAll('.idx-mis-all');
+          if (all[1]) all[1].click();
+          return { toggles: t.length, on: document.querySelectorAll('.idx-mis.on').length, grupos: all.length };
+        })()`);
+        await wait(600);
+        await shot('indice-mision');
+        await exec(`document.querySelector('#overlay .close, #overlayClose') && document.querySelector('#overlay .close, #overlayClose').click()`);
+        await goTab(mis);
+        await wait(1500);
+        say(`índice → Misión: ${JSON.stringify(r)}, contador de Misión «${await exec(`(document.querySelector('.bar-page') || {}).textContent || ''`)}»`);
+        // Índice de la pestaña Misión: quitar dos páginas, quitar un grupo entero y devolver una.
+        await exec(`document.getElementById('idxBtn').click()`);
+        await wait(1500);
+        const q = await exec(`(() => {
+          const t = [...document.querySelectorAll('.idx-mis')];
+          const antes = t.length;
+          t[0].click(); t[1].click();
+          const g = document.querySelectorAll('.idx-mis-all');
+          if (g.length > 1) g[g.length - 1].click();
+          t[1].click();
+          return { antes, quitadas: document.querySelectorAll('.idx-tile.removed').length, grupos: g.length };
+        })()`);
+        await wait(600);
+        await shot('indice-mision-quitar');
+        await exec(`document.querySelector('#overlay .close, #overlayClose') && document.querySelector('#overlay .close, #overlayClose').click()`);
+        await wait(1500);
+        say(`Misión, quitar desde su índice: ${JSON.stringify(q)}, contador ahora «${await exec(`(document.querySelector('.bar-page') || {}).textContent || ''`)}»`);
       }
       const nti = list.findIndex((t) => t.type === 'notes');
       if (nti >= 0) {
@@ -361,6 +396,28 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
         await wait(3500);
         say(`tableta: cursor ${await exec(`(() => { const c = document.querySelector('.tablet-cursor'); return c && !c.hidden ? c.style.transform : 'oculto'; })()`)}`);
         await shot('tableta-pizarra');
+      }
+    }
+
+    // Lo que envías al vuelo también sale en tu «Compartido» (sala propia de prueba en el puerto 17790).
+    {
+      const list = cfg.get().tabs;
+      const sh = list.findIndex((t) => t.type === 'shared');
+      if (sh >= 0) {
+        await exec(`kb.patchConfig({ share: { host: true, hostPort: 17790, connect: true, room: 'PRUEBA', callsign: 'Dagger 1-1' } })`);
+        await wait(2500);
+        const sent = await exec(`(async () => [
+          await kb.shareSend({ type: 'note', title: 'Push', text: 'Push a las 14:25 por el norte.' }),
+          await kb.shareSend({ type: 'point', point: { lat: 42.2711, lon: 42.0662, alt: 1214, name: 'Blanco 2', note: 'SA-6' } }),
+          await kb.sharePage('Plan de vuelo', null),
+          await kb.shareSend({ type: 'mapink', color: '#f00', pts: [[42, 42], [42.1, 42.1]] }),
+        ])()`);
+        await wait(800);
+        await goTab(sh);
+        await wait(800);
+        say(`enviado al vuelo: ${JSON.stringify(sent)} · en mi Compartido: ${await exec(`kb.init().then((i) => (i.inbox || []).filter((x) => x.mine).map((x) => x.type).join(','))`)} · aviso de nuevos: «${await exec(`(document.querySelector('#tabs .tab.sel .badge') || {}).textContent || 'sin aviso'`)}»`);
+        await shot('compartido-enviado');
+        await exec(`kb.patchConfig({ share: { host: false, connect: false } })`);
       }
     }
 

@@ -33,7 +33,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 ### Marcadores y navegación
 - **Marcadores con tipo** (Tierra, Rodaje, Salida, En ruta, Misión, Aproximación, Emergencias, General) en las páginas de Misión, Biblioteca, Carpeta y PDF. **Cada avión tiene los suyos**: marcar o quitar una página en el F-16 no cambia los del F/A-18. Se guardan aunque cierres el programa o DCS.
 - Con el modo **AUTO** activado, al empezar cada fase del vuelo el kneeboard abre **tu** marcador de esa fase. El programa no decide por ti qué página corresponde a cada fase.
-- **Añadir a Misión sin marcador**: en el menú del marcador, «Añadir a la pestaña Misión» la pone en Misión (grupo «En Misión», tras las marcadas) sin que el modo AUTO ni la lista de marcadores la usen. También va por avión.
+- **Añadir a Misión sin marcador**: en el menú del marcador, «Añadir a la pestaña Misión» la pone en Misión sin que el modo AUTO ni la lista de marcadores la usen. También va por avión. En el **índice del Piernógrafo** cada miniatura tiene un «+» para añadirla con un clic (y cada juego, un botón para añadirlo entero); en el **índice de Misión**, una «×» para quitarla (se puede deshacer tocándola otra vez). Misión enseña todas sus páginas en el orden normal del Piernógrafo, agrupadas por juego.
 - **Ir a una página escribiendo su número**: pulsa el contador «3/77» o teclea el número directamente.
 - **Índice del Piernógrafo**: miniaturas de todas las páginas agrupadas por juego, con saltos directos a cada juego. Con el HOTAS, la acción «Índice de páginas» lo abre y «Página siguiente / anterior» salta de juego mientras está abierto. También hay acciones «Juego siguiente / anterior» y la orden de voz «índice».
 - **Pestañas favoritas**: la barra de abajo enseña solo las que marques con la estrella. Las demás están en la cuadrícula (botón de la izquierda de la barra). La barra se desplaza con la rueda o arrastrándola. Pestaña siguiente/anterior del HOTAS recorre solo las favoritas.
@@ -82,6 +82,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 ### Vuelo compartido
 - **Enviar una página** al vuelo (botón 📤 o una tecla), notas, plantillas y puntos.
 - **Pizarra en directo** y **dibujos sobre el mapa** que ven todos, cada uno en su propio mapa.
+- Lo que **tú** envías (páginas, notas, puntos y DTC) también queda en tu «Compartido», marcado como «enviado», para tenerlo a mano. El aviso de cosas nuevas solo cuenta lo que te mandan los demás.
 - Un piloto hace de anfitrión, o usáis un servidor de salas (ver abajo).
 
 ### Biblioteca de páginas (compatible con KneeboardManager)

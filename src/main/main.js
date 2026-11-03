@@ -653,6 +653,14 @@ function onTablet(pen) {
   });
 }
 
+// Lo que envías también queda en tu «Compartido», marcado como tuyo (los dibujos y la pizarra en directo no:
+// esos ya los ves en tu mapa o tu pizarra).
+const KEEP_SENT = ['page', 'note', 'point', 'dtc'];
+function keepSent(item) {
+  if (!item || !KEEP_SENT.includes(item.type)) return;
+  pushInbox({ ...item, from: 'Tú', mine: true, at: Date.now(), id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}` });
+}
+
 function pushInbox(item) {
   inbox.unshift(item);
   if (inbox.length > 60) inbox.length = 60;
@@ -789,6 +797,7 @@ function registerIpc() {
   ipcMain.handle('share:send', (e, item) => {
     const ok = share.send(item);
     if (!ok) toast('No estás conectado a una sala (Ajustes > Vuelo compartido)', 'warn');
+    else keepSent(item);
     return ok;
   });
   // Se envía la imagen de la página y, si la pestaña lo permite, sus datos (para copiarlos en la del compañero).
@@ -801,6 +810,7 @@ function registerIpc() {
     const item = { type: 'page', title, image: `data:image/jpeg;base64,${small.toJPEG(82).toString('base64')}`, data: data || null };
     const ok = share.send(item);
     toast(ok ? `Página «${title}» enviada al vuelo` : 'No estás conectado a una sala (Ajustes > Vuelo compartido)', ok ? 'info' : 'warn');
+    if (ok) keepSent(item);
     return ok;
   });
   ipcMain.handle('share:addresses', () => ({ lan: lanAddresses(), port: cfg.get().share.hostPort }));
@@ -854,6 +864,7 @@ function registerIpc() {
     let ok = false;
     try { ok = share.send({ type: 'dtc', ...DTC.pack(d.file) }); } catch (err) { toast(`No se pudo enviar: ${err.message}`, 'warn'); return false; }
     toast(ok ? `DTC «${d.name}» enviado al vuelo` : 'No estás conectado a una sala (Ajustes > Vuelo compartido)', ok ? 'info' : 'warn');
+    if (ok) keepSent({ type: 'dtc', name: d.name, aircraftType: d.type, file: d.file });
     return ok;
   });
   ipcMain.handle('dtc:installShared', (e, id) => {

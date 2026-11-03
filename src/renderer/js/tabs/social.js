@@ -89,6 +89,7 @@ export const shared = {
 
     function itemView(it) {
       const meta = h('div.card-row', h('b', it.from || 'Vuelo'), h('span.tag', it.type === 'page' ? 'página' : it.type === 'point' ? 'punto' : it.type === 'dtc' ? 'DTC' : 'nota'),
+        it.mine ? h('span.tag', { className: 'tag sent', title: 'Lo has enviado tú al vuelo' }, 'enviado') : null,
         h('span.muted', new Date(it.at || Date.now()).toLocaleTimeString('es-ES')));
       if (it.type === 'page') {
         // Si viene con datos (tarjeta, nombres de puntos, presets, plantilla), se pueden copiar en tu pestaña.
@@ -96,7 +97,7 @@ export const shared = {
         const d = it.data;
         const target = d && KIND_TAB[d.kind];
         return h('div', meta, h('div.muted', it.title || ''),
-          target ? h('button.btn.small.primary', { style: { marginTop: '.4rem' }, onclick: () => {
+          target && !it.mine ? h('button.btn.small.primary', { style: { marginTop: '.4rem' }, onclick: () => {
             const inst = ctx.instance(target);
             if (inst && inst.applyShared) inst.applyShared(d.payload);
             else ctx.toast('Añade esa pestaña para poder copiarlo', 'warn');
@@ -106,6 +107,7 @@ export const shared = {
       if (it.type === 'dtc') {
         const mine = ctx.aircraft();
         const out = h('div.muted', { style: { fontSize: '.75rem', marginTop: '.3rem' } });
+        if (it.mine) return h('div.card', meta, h('div', h('b', it.name), h('span.muted', ` · ${it.aircraftType}`)), h('div.muted', { style: { fontSize: '.75rem', marginTop: '.3rem' } }, 'Enviado al vuelo: cada compañero decide si lo usa.'));
         return h('div.card', meta, h('div', h('b', it.name), h('span.muted', ` · ${it.aircraftType}`)),
           mine && it.aircraftType && mine !== it.aircraftType ? h('div.muted', `Es de otro avión (tú vuelas ${mine}).`) : null,
           h('div.card-row', { style: { marginTop: '.4rem' } },
