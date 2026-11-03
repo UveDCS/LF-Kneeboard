@@ -399,7 +399,7 @@ R.mision = async () => {
   if (type) {
     const plan = C.plan || {};
     const dtcSel = h('select.f', { onchange: (e) => patch({ dtc: { ...(C.dtc || {}), [type]: e.target.value || null } }) },
-      h('option', { value: '' }, 'Automático: el de la misión, el de DKS (*_OB) o el más reciente'),
+      h('option', { value: '' }, 'Automático: el de la misión o el de DKS (*_OB)'),
       h('option', { value: 'mision', selected: (C.dtc || {})[type] === 'mision' }, 'Ninguno: presets y ruta de la misión'),
       dtcs.map((d) => h('option', { value: d.file, selected: (C.dtc || {})[type] === d.file }, `${d.aircraft} / ${d.name}`)));
     main.append(h('h2', `Ajustes para ${type}`), h('div.card',

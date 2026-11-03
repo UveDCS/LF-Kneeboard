@@ -311,7 +311,7 @@ export const radios = {
     let editing = false;
     let edits = null; // { [avión]: { [radio]: { [canal]: { freq, name } } } }
 
-    // Presets del DTC en uso (ver la pestaña DTC: el importado, el de la misión, el de DKS o el más reciente).
+    // Presets del DTC en uso (ver la pestaña DTC: el importado, el de la misión o el de DKS); si no hay, los de la misión.
     // Sin DTC, o con «Presets de la misión» elegido, los del .miz.
     async function presets(m) {
       if (m.dtc && m.dtc.radios.length) return m.dtc.radios;

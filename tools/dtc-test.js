@@ -84,7 +84,7 @@ ok(m.dtc.threats[0].lat != null && m.dtc.lines[0].points[0].lat != null && m.dtc
 const rev = m.dtc.review.map((r) => r.text).join(' | ');
 ok(/presets de COMM 1 son distintos/.test(rev) && /hora fija/.test(rev), `Revisión: ${m.dtc.review.length} avisos`);
 const m2 = buildMissionModel(mission, { unitName: 'Dagger 1-1', dtc: { ...d, origin: 'reciente', useRoute: false } });
-ok(m2.routeSource === 'misión' && m2.dtc.radios.length === 1, 'Un DTC «reciente» solo da las radios, no la ruta');
+ok(m2.routeSource === 'misión' && m2.dtc.radios.length === 1, 'Un DTC sin ruta en uso solo da las radios');
 const wrong = DTC.review({ ...d, terrain: 'Nevada', type: 'F-16C_50', aircraft: 'F-16C' }, m);
 ok(wrong.filter((r) => r.level === 'error').length === 2, 'Revisión: avisa si es de otro avión o de otro mapa');
 

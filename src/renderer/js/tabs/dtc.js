@@ -8,7 +8,6 @@ const ORIGIN = {
   elegido: 'elegido por ti',
   misión: 'el que trae la misión',
   DKS: 'el de DKS (*_OB)',
-  reciente: 'el más reciente de este avión (solo radios)',
   'guardado en DCS': 'el que acabas de guardar o cargar en DCS',
   'editor del juego': 'el del editor de DTC del juego (sin guardar)',
 };
@@ -41,7 +40,7 @@ export const dtc = {
       const t = type();
       const cur = (ctx.S.config.dtc || {})[t] || '';
       return h('select.f', { style: { maxWidth: '100%', fontSize: '.78rem' }, onchange: (e) => ctx.kb.dtcUse(t, e.target.value || null) },
-        h('option', { value: '' }, 'Automático (misión, DKS o el más reciente)'),
+        h('option', { value: '' }, 'Automático (misión o DKS)'),
         h('option', { value: 'mision', selected: cur === 'mision' }, 'Ninguno: presets y ruta de la misión'),
         files.map((f) => h('option', { value: f.file, selected: cur === f.file }, `${f.aircraft} / ${f.name}`)));
     }

@@ -531,20 +531,21 @@ function readCourse(file) {
   }
 }
 
-// DTC más adecuado para un avión: primero los de DKS (*_OB.dtc), después el más reciente.
+// DTC de DKS para un avión (*_OB.dtc, el más reciente si hay varios). Otros DTC guardados no se usan solos:
+// cualquier DTC de la carpeta no tiene por qué ser el de esta misión.
 function autoDtc(type) {
   if (!type) return null;
   let best = null;
   for (const d of integ.dtcDirs()) {
     for (const ac of safeReaddir(d)) {
       for (const f of safeReaddir(path.join(d, ac))) {
-        if (!/\.dtc$/i.test(f)) continue;
+        if (!/_OB\.dtc$/i.test(f)) continue;
         const file = path.join(d, ac, f);
         try {
           const j = JSON.parse(fs.readFileSync(file, 'utf8'));
           if (j.type !== type) continue;
-          const score = (/_OB\.dtc$/i.test(f) ? 1e13 : 0) + fs.statSync(file).mtimeMs;
-          if (!best || score > best.score) best = { file, score, name: f.replace(/\.dtc$/i, '') };
+          const mtime = fs.statSync(file).mtimeMs;
+          if (!best || mtime > best.mtime) best = { file, mtime, name: f.replace(/\.dtc$/i, '') };
         } catch { /* no es JSON */ }
       }
     }
@@ -576,8 +577,8 @@ function latestDtc(type) {
 }
 
 // DTC del avión. Normalmente, por este orden: el elegido o importado en el kneeboard, el que la misión mete
-// en el .miz para esa plaza, el de la carpeta «DTC» junto al .miz, el de DKS (*_OB.dtc) y, solo para las
-// radios, el más reciente de ese avión. Pero si en DCS guardas o cargas un DTC durante la misión (editor de DTC
+// en el .miz para esa plaza, el de la carpeta «DTC» junto al .miz y el de DKS (*_OB.dtc). Si no hay ninguno, no
+// hay DTC: radios y ruta salen de la misión. Pero si en DCS guardas o cargas un DTC durante la misión (editor de DTC
 // del juego, DCS-DTC…), ese pasa delante: es lo último que has hecho. «at» dice cuándo, para compararlo con
 // la herramienta de ruta del F10.
 function resolveDtc(type, miz, { mizFiles = [], cartridges = [], since = 0, pickedAt = 0 } = {}) {
@@ -601,9 +602,7 @@ function resolveDtc(type, miz, { mizFiles = [], cartridges = [], since = 0, pick
   }
   if (base) return base;
   const a = autoDtc(type);
-  if (!a) return null;
-  const ob = /_OB\.dtc$/i.test(a.file);
-  return { ...a, origin: ob ? 'DKS' : 'reciente', useRoute: ob, at: 0 };
+  return a ? { ...a, origin: 'DKS', useRoute: true, at: 0 } : null;
 }
 
 // Usa un DTC para su avión: lo copia a Saved Games\DCS\DTC\<avión> (para cargarlo en cabina) y lo deja elegido.
