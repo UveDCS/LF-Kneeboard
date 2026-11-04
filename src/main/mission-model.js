@@ -232,7 +232,18 @@ function buildMissionModel(mission, sel = {}) {
   const known = [toolRoute ? sel.routeTool.pts : null, dtcRoute ? sel.dtc.route : null].filter(Boolean);
   let route = missionRoute;
   let routeSource = 'misión';
-  if (sel.liveRoute && sel.liveRoute.length >= 2 && !same(sel.liveRoute, missionRoute) && !known.some((k) => same(sel.liveRoute, k))) {
+  // Origen elegido a mano en el plan de vuelo (Ajustes guardado en sources.route); si no hay de esa fuente,
+  // se queda la de la misión y se dice por qué.
+  const pref = sel.routePref || 'auto';
+  if (pref === 'mision') {
+    routeSource = 'misión (elegida)';
+  } else if (pref === 'dtc') {
+    if (dtcRoute) { route = fromDtc(); routeSource = sel.dtc.origin === 'editor del juego' ? 'DTC del editor del juego (elegido)' : `DTC ${sel.dtc.name || ''} (elegido)`.replace('  ', ' '); }
+    else routeSource = 'misión (no hay ruta de DTC en uso)';
+  } else if (pref === 'herramienta') {
+    if (toolRoute) { route = fromTool(); routeSource = 'herramienta de ruta del F10 (elegida)'; }
+    else routeSource = 'misión (no hay ruta de la herramienta del F10 activada)';
+  } else if (sel.liveRoute && sel.liveRoute.length >= 2 && !same(sel.liveRoute, missionRoute) && !known.some((k) => same(sel.liveRoute, k))) {
     route = toRoute(sel.liveRoute.map((p, i) => ({ ...p, idx: i, name: (missionRoute[i] || {}).name })), 'avión');
     routeSource = 'avión (en directo)';
   } else if (toolFirst) {
@@ -299,6 +310,8 @@ function buildMissionModel(mission, sel = {}) {
       return { ...b, side: c === 'neutral' || !coalition ? 'neutral' : c === coalition ? 'own' : 'enemy' };
     }).filter((b) => !coalition || b.side !== 'enemy'),
     routeSource,
+    routePref: pref,
+    routeOptions: { dtc: !!dtcRoute, herramienta: !!toolRoute },
     missionRoute,
     players: listPlayerUnits(mission),
     dtc: null,

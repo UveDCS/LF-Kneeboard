@@ -9,6 +9,23 @@ function noMission(icon, title) {
   return emptyState(icon, title, 'Abre una misión en DCS (con el hook instalado) o carga un .miz en Ajustes > Misión.');
 }
 
+// Origen elegido a mano (ruta o radios): botones pequeños, que también se ven y se pulsan en VR (un desplegable
+// de Windows no saldría en el visor). Se guarda en sources.<clave> y main.js recalcula la misión.
+function sourcePicker(ctx, key, label, options, current, note) {
+  const set = (v) => {
+    ctx.S.config.sources = { ...(ctx.S.config.sources || {}), [key]: v };
+    ctx.kb.patchConfig({ sources: { [key]: v } });
+  };
+  return h('div.src-pick', { title: note || '' },
+    h('span.src-label', label),
+    options.map(([v, text, ok = true]) => h('button.chip', {
+      className: `chip${v === current ? ' sel' : ''}${ok ? '' : ' off'}`,
+      title: ok ? '' : 'Ahora no hay de esta fuente: se usaría la de la misión',
+      onclick: () => set(v),
+    }, text)),
+    note ? h('span.src-note', note) : null);
+}
+
 function throttle(fn, ms) {
   let last = 0, t = null;
   return (...a) => {
@@ -166,8 +183,12 @@ export const flightplan = {
       const mv = ctx.magvar();
 
       el.append(h('div.h1', m.unit ? m.unit.callsign || m.unit.name : 'Ruta',
-        h('small', `${m.unit ? m.unit.type : ''} · ${m.theatre} · inicio ${m.startTimeText}`),
-        h('span.tag', { title: 'De dónde sale la ruta' }, `Ruta: ${m.routeSource || 'misión'}`)));
+        h('small', `${m.unit ? m.unit.type : ''} · ${m.theatre} · inicio ${m.startTimeText}`)),
+        sourcePicker(ctx, 'route', 'Ruta', [
+          ['auto', 'Auto'], ['mision', 'Misión'],
+          ['dtc', 'DTC', !!(m.routeOptions && m.routeOptions.dtc)],
+          ['herramienta', 'F10', !!(m.routeOptions && m.routeOptions.herramienta)],
+        ], m.routePref || 'auto', `Ahora: ${m.routeSource || 'misión'}`));
       if (page === 0) {
         el.append(h('div.grid2',
           h('div.card', h('div.label', 'Salida'), baseLine(m.departure) || h('div.muted', 'Sin aeródromo')),
@@ -313,9 +334,16 @@ export const radios = {
 
     // Presets del DTC en uso (ver la pestaña DTC: el importado, el de la misión o el de DKS); si no hay, los de la misión.
     // Sin DTC, o con «Presets de la misión» elegido, los del .miz.
+    // Origen de los presets: automático (los del DTC en uso y, de las radios que el DTC no trae o no carga,
+    // los de la misión), solo la misión o solo el DTC. Se elige arriba y se guarda en sources.radios.
     async function presets(m) {
-      if (m.dtc && m.dtc.radios.length) return m.dtc.radios;
-      return m.radios;
+      const pref = (ctx.S.config.sources || {}).radios || 'auto';
+      const mis = m.radios || [];
+      const dtc = (m.dtc && m.dtc.radios) || [];
+      if (pref === 'mision' || !dtc.length) return mis;
+      if (pref === 'dtc') return dtc;
+      const have = new Set(dtc.map((r) => r.name));
+      return [...dtc, ...mis.filter((r) => !have.has(r.name))].sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true }));
     }
 
     // Aplica tus cambios (hechos aquí, p. ej. si cambias un preset en cabina) sobre la lista de presets.
@@ -349,8 +377,12 @@ export const radios = {
       const labels = labelsFor(m);
       clear(el);
       if (page === 0) {
+        el.append(sourcePicker(ctx, 'radios', 'Origen', [
+          ['auto', 'Auto'], ['mision', 'Misión'], ['dtc', 'DTC', !!(m.dtc && m.dtc.radios && m.dtc.radios.length)],
+        ], (ctx.S.config.sources || {}).radios || 'auto',
+        (ctx.S.config.sources || {}).radios === 'dtc' && !(m.dtc && m.dtc.radios && m.dtc.radios.length) ? 'No hay radios de DTC en uso: salen las de la misión' : ''));
         el.append(h('div.card-row', { style: { marginBottom: '.5rem' } },
-          h('div.h1', { style: { margin: 0 } }, 'Presets de radio', h('small', list[0] ? list[0].source : '')),
+          h('div.h1', { style: { margin: 0 } }, 'Presets de radio', h('small', [...new Set(list.map((r) => r.source))].join(' · '))),
           h('span.bar-spacer'),
           h('button.btn.small', { className: `btn small${editing ? ' primary' : ''}`, onclick: () => { editing = !editing; render(); } }, icon('pen'), editing ? ' Listo' : ' Editar'),
           (edits[type] && Object.keys(edits[type]).length) ? h('button.btn.small', { title: 'Quitar tus cambios', onclick: () => { if (confirm('¿Quitar los cambios hechos a mano en estos presets?')) { delete edits[type]; ctx.kb.storeSet('radioedits', edits); render(); } } }, icon('reset')) : null));

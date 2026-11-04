@@ -28,6 +28,17 @@ const ASPECT = 0.72;
 app.setAppUserModelId('es.lafundacion.kneeboard');
 if (process.env.LFKB_USERDATA) app.setPath('userData', process.env.LFKB_USERDATA);
 const TEST_OFFSCREEN = !!process.env.LFKB_SNAPSHOT;
+// Arrancado por Windows al iniciar sesión (opción «Iniciar con Windows»): el kneeboard empieza oculto.
+const STARTED_AT_LOGIN = process.argv.includes('--autostart');
+
+// «Iniciar con Windows»: entrada en HKCU\...\Run con el mismo nombre que borra el desinstalador. Se vuelve a
+// escribir en cada arranque, porque una reinstalación podía dejar la opción marcada y la entrada borrada.
+function syncAutostart(on) {
+  if (!app.isPackaged || TEST_OFFSCREEN) return;
+  try {
+    app.setLoginItemSettings({ openAtLogin: !!on, name: 'es.lafundacion.kneeboard', path: process.execPath, args: ['--autostart'] });
+  } catch (e) { console.error('Iniciar con Windows', e.message); }
+}
 
 // Un fallo inesperado no debe sacar una ventana de error encima de DCS: se apunta y se sigue.
 process.on('uncaughtException', (err) => {
@@ -697,7 +708,7 @@ function registerIpc() {
     const share0 = JSON.stringify(before.share);
     // La pestaña y página de cada kneeboard las guarda el propio kneeboard: no se pisan desde Ajustes.
     if (Array.isArray(p.views)) p.views = p.views.map((v, i) => ({ ...v, state: (before.views[i] || {}).state || v.state }));
-    if (p.startWithWindows !== undefined && app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!p.startWithWindows });
+    if (p.startWithWindows !== undefined) syncAutostart(!!p.startWithWindows);
     if (p.tabs && !('activePreset' in p)) p.activePreset = null; // pestañas cambiadas a mano: ya no es el preset
     cfg.patch(p);
     const c = cfg.get();
@@ -707,6 +718,7 @@ function registerIpc() {
     }
     if (p.alwaysOnTop !== undefined) views.forEach((w) => w && w.setAlwaysOnTop(c.alwaysOnTop, 'screen-saver'));
     if (p.share && JSON.stringify(c.share) !== share0) share.apply();
+    if (p.sources) dcs.rebuild(); // origen de la ruta o de las radios elegido a mano
     if (p.dtc) dcs.rebuild();
     if (p.updates && updater) updater.start();
     if (p.voice || p.tabs) voice.apply();
@@ -1096,6 +1108,8 @@ function listFiles(dir, kind = 'images') {
 // ------------------------------------------------------------------ arranque
 app.whenReady().then(() => {
   cfg = new Config(app.getPath('userData'));
+  syncAutostart(cfg.get().startWithWindows);
+  if (STARTED_AT_LOGIN && !cfg.get().hidden) cfg.patch({ hidden: true });
   registerProtocols();
 
   dcs = new DcsLink(cfg);

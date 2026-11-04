@@ -81,6 +81,12 @@ table.t { width: 100%; border-collapse: collapse; }
 .ph.sel { background: rgba(56,189,248,.15); color: var(--accent); border-color: rgba(56,189,248,.5); }
 .mv { display: flex; flex-direction: column; gap: 2px; }
 .mv button { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0; line-height: 1; }
+.mv .grip { cursor: grab; color: var(--muted); font-size: 18px; line-height: 1; text-align: center; user-select: none; touch-action: none; }
+.mv .grip:hover { color: var(--ink); }
+body.dragging-tab, body.dragging-tab * { cursor: grabbing !important; user-select: none; }
+.tabrow.dragging { opacity: .45; }
+.tabrow.drop-before { box-shadow: inset 0 3px 0 var(--accent); }
+.tabrow.drop-after { box-shadow: inset 0 -3px 0 var(--accent); }
 
 .slider { display: grid; grid-template-columns: 150px 1fr 70px; gap: 12px; align-items: center; padding: 4px 0; }
 .slider output { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: right; }

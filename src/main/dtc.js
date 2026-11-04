@@ -24,6 +24,20 @@ function readDtcFile(file) {
   return parseDtc(json, { file });
 }
 
+// «Do not upload tab data» del editor de DTC: la sección lleva mirror_<NOMBRE> = true y DCS no la carga en el
+// avión (se queda lo que ya tenía). El kneeboard tampoco la usa.
+const MIRRORS = [
+  { sec: 'COMM', key: 'COMM1', label: 'COMM 1' },
+  { sec: 'COMM', key: 'COMM2', label: 'COMM 2' },
+  { sec: 'WYPT', key: 'NAV_PTS', label: 'waypoints' },
+  { sec: 'MPD', key: 'NAV_PTS', label: 'waypoints' },
+  { sec: 'MPD', key: 'DEST', label: 'destinos' },
+  { sec: 'MPD', key: 'GEO_LINES', label: 'líneas geográficas' },
+  { sec: 'MPD', key: 'THREAT_PTS', label: 'amenazas' },
+  { sec: 'SA', key: 'MEZ_THRTS', label: 'amenazas (MEZ)' },
+];
+const notUploaded = (d, sec, key) => !!(d && d[sec] && d[sec][`mirror_${key}`] === true);
+
 function parseDtc(json, { file = '' } = {}) {
   const d = obj(json && json.data);
   const type = (json && json.type) || d.type || '';
@@ -43,6 +57,7 @@ function parseDtc(json, { file = '' } = {}) {
     nav: navOf(d),
     tis: d.TIS ? { ownCallsign: String(d.TIS.own_callsign || '').trim(), missionCallsign: !!d.TIS.use_mission_callsign, sendTo: arr(d.TIS.send_to_callsigns) } : null,
     sections: Object.keys(d).filter((k) => d[k] && typeof d[k] === 'object'),
+    notUploaded: [...new Set(MIRRORS.filter((m) => notUploaded(d, m.sec, m.key)).map((m) => m.label))],
   };
   out.route = (out.routes.find((r) => r.points.length >= 2) || { points: [] }).points;
   return out;
@@ -55,6 +70,7 @@ function radiosFromDtc(dtc) {
   const out = [];
   for (const [radioName, chans] of Object.entries(comm)) {
     if (!chans || typeof chans !== 'object' || radioName.startsWith('mirror')) continue;
+    if (comm[`mirror_${radioName}`] === true) continue; // «Do not upload tab data»: esa radio se queda como en la misión
     // Canales numerados (1…20) y especiales sin número (CUE, GUARD, MAN, MAR…), que van al final con su nombre.
     const channels = Object.entries(chans)
       .filter(([, v]) => v && typeof v === 'object')
@@ -87,6 +103,8 @@ function point(p, extra = {}) {
 }
 
 function routesOf(d) {
+  // Waypoints marcados «Do not upload tab data»: el avión se queda con la ruta de la misión.
+  if (notUploaded(d, 'WYPT', 'NAV_PTS') || notUploaded(d, 'MPD', 'NAV_PTS')) return [];
   // F/A-18: WYPT.NAV_PTS + rutas 1–3 (R1/R1_order…) con sus tiempos en WYPT.NAV_ROUTE.
   if (d.WYPT && Array.isArray(d.WYPT.NAV_PTS)) {
     const pts = d.WYPT.NAV_PTS.filter(isXY);
@@ -145,7 +163,7 @@ function routesOf(d) {
 function linesOf(d) {
   const out = [];
   // F-16: líneas geográficas 1–4 (cada punto dice a qué líneas pertenece).
-  const geo = arr(d.MPD && d.MPD.GEO_LINES).filter(isXY);
+  const geo = notUploaded(d, 'MPD', 'GEO_LINES') ? [] : arr(d.MPD && d.MPD.GEO_LINES).filter(isXY);
   for (const L of [1, 2, 3, 4]) {
     const pts = geo.filter((p) => p[`L${L}`]).sort((a, b) => a.number - b.number);
     if (pts.length >= 2) out.push({ kind: 'geo', label: `Línea ${L}`, points: pts.map(xy) });
@@ -172,10 +190,10 @@ function capsOf(d) {
 
 function threatsOf(d) {
   const out = [];
-  for (const t of arr(d.SA && d.SA.MEZ_THRTS).filter(isXY)) {
+  for (const t of notUploaded(d, 'SA', 'MEZ_THRTS') ? [] : arr(d.SA && d.SA.MEZ_THRTS).filter(isXY)) {
     out.push({ num: t.num, x: t.x, y: t.y, type: t.threat_type || '', label: t.text || `MEZ ${t.num || ''}`.trim(), radiusNm: num(t.threat_ring_radius), level: num(t.threat_level), src: 'MEZ' });
   }
-  for (const t of arr(d.MPD && d.MPD.THREAT_PTS).filter(isXY)) {
+  for (const t of notUploaded(d, 'MPD', 'THREAT_PTS') ? [] : arr(d.MPD && d.MPD.THREAT_PTS).filter(isXY)) {
     const r = num(t.range ?? t.radius ?? t.threat_ring_radius ?? t.Range);
     out.push({ num: t.number ?? t.num, x: t.x, y: t.y, type: t.type || t.threat_type || '', label: t.note || t.text || t.type || `Amenaza ${t.number || ''}`.trim(), radiusNm: r, level: null, src: 'HSD' });
   }
@@ -327,14 +345,19 @@ function review(dtc, mission) {
   const type = mission && mission.unit && mission.unit.type;
   if (type && dtc.type && type !== dtc.type) add('error', `Es un DTC de ${dtc.aircraft} y tu avión es ${type}.`);
   if (mission && dtc.terrain && !sameTheatre(dtc.terrain, mission.theatre)) add('error', `El DTC es del mapa ${dtc.terrain} y la misión es de ${mission.theatre}.`);
-  if (!dtc.radios.length) { if (dtc.sections.includes('COMM')) add('warn', 'Los presets de radio están vacíos.'); }
+  const nu = dtc.notUploaded || [];
+  if (nu.length) add('info', `Marcado «Do not upload tab data» (no se carga en el avión): ${nu.join(', ')}. El kneeboard tampoco lo usa y deja lo de la misión.`);
+  const commOff = nu.some((s) => /^COMM/.test(s));
+  if (!dtc.radios.length) { if (dtc.sections.includes('COMM') && !commOff) add('warn', 'Los presets de radio están vacíos.'); }
   else if (mission && mission.radios && mission.radios.length) {
-    const a = dtc.radios[0].channels.filter((c) => typeof c.ch === 'number');
-    const b = new Map(mission.radios[0].channels.map((c) => [c.ch, c.freq > 10000 ? c.freq / 1e6 : c.freq]));
+    const r = dtc.radios[0];
+    const m = mission.radios.find((x) => x.name === r.name);
+    const a = r.channels.filter((c) => typeof c.ch === 'number');
+    const b = new Map(((m && m.channels) || []).map((c) => [c.ch, c.freq > 10000 ? c.freq / 1e6 : c.freq]));
     const diff = a.filter((c) => b.has(c.ch) && Math.abs(b.get(c.ch) - c.freq) > 0.001).length;
-    if (diff) add('info', `${diff} presets de ${dtc.radios[0].name} son distintos de los de la misión (manda el DTC si lo cargas en cabina).`);
+    if (diff) add('info', `${diff} presets de ${r.name} son distintos de los de la misión (manda el DTC si lo cargas en cabina).`);
   }
-  if (!dtc.route.length) add('warn', 'No trae ruta: el plan de vuelo usará la de la misión.');
+  if (!dtc.route.length) add('warn', nu.includes('waypoints') ? 'Waypoints sin cargar (Do not upload): el plan de vuelo usará la ruta de la misión.' : 'No trae ruta: el plan de vuelo usará la de la misión.');
   else {
     const t0 = dtc.route.find((p) => p.tos != null);
     const start = mission && mission.startTime;

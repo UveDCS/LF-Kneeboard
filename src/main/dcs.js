@@ -281,6 +281,7 @@ class DcsLink extends EventEmitter {
       warehouses: this.warehouses,
       liveRoute: this.manual ? null : this.liveRoute,
       routeTool: this.manual ? null : this.routeTool,
+      routePref: (this.cfg.get().sources || {}).route || 'auto',
       dtc: this.dtcFor(type),
     };
     let model = buildMissionModel(this.missionRaw, sel);

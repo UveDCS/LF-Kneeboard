@@ -12,6 +12,8 @@ Hecho por y para **La Fundación**.
    - Registra la capa OpenXR para tu usuario de Windows, para que el kneeboard se vea en el visor.
 3. Entra en una misión. El kneeboard se rellena solo.
 
+**Iniciar con Windows** (Ajustes › Aspecto): se abre oculto al encender el PC, listo para sacarlo con tu tecla.
+
 Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de DCS y el registro de OpenXR.
 
 **Actualizaciones**: el programa busca versiones nuevas en *Releases* al arrancar y cada 6 horas. Las descarga en segundo plano y las instala al cerrarlo, sin tocar tus ajustes ni lo instalado en DCS. Se puede desactivar en **Ajustes > Actualizar y perfil**.
@@ -37,6 +39,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 - **Ir a una página escribiendo su número**: pulsa el contador «3/77» o teclea el número directamente.
 - **Índice del Piernógrafo**: miniaturas de todas las páginas agrupadas por juego, con saltos directos a cada juego. Con el HOTAS, la acción «Índice de páginas» lo abre y «Página siguiente / anterior» salta de juego mientras está abierto. También hay acciones «Juego siguiente / anterior» y la orden de voz «índice».
 - **Pestañas favoritas**: la barra de abajo enseña solo las que marques con la estrella. Las demás están en la cuadrícula (botón de la izquierda de la barra). La barra se desplaza con la rueda o arrastrándola. Pestaña siguiente/anterior del HOTAS recorre solo las favoritas.
+- **Ordenar las pestañas arrastrándolas** por su asa (⠿) en Ajustes › Pestañas.
 - **Presets de pestañas**: guarda tus pestañas tal como están (cuáles, orden, nombres, fijas y ajustes) con un nombre y cambia de uno a otro desde Ajustes > Pestañas, desde la cuadrícula del kneeboard o con la acción «Preset de pestañas siguiente».
 - **Plantillas por tipo de vuelo** en Ajustes > Pestañas: Completa, Caza, Ataque, Helicóptero y Entrenamiento. Conservan los nombres y ajustes de tus pestañas, y tus PDF y webs.
 - **Tamaño en 2D**: textos y botones (Ctrl + rueda) y alto de la ventana, en Ajustes > Aspecto, o arrastrando la esquina.
@@ -49,6 +52,8 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 
 ### DTC (F-16C, F/A-18C, F-14)
 - **Importar un DTC** desde la pestaña DTC o Ajustes > Misión: se copia a `Saved Games\DCS\DTC\<avión>` para cargarlo también en cabina. Lo último que hagas manda: un DTC que guardes o cargues en DCS durante la misión (aparece en su carpeta de Saved Games) pasa delante de lo anterior. Si no, por este orden: lo que tengas en el **editor de DTC del juego** (botón DTC del briefing o de la elección de plaza; se lee al cerrarlo, aunque no lo guardes), el elegido o importado en el kneeboard, el que la misión lleva dentro del `.miz` para tu plaza, el de una carpeta `DTC` junto al `.miz`, y el de DKS (`*_OB.dtc`). Si no hay ningún DTC en uso, radios y ruta salen de la misión (otros DTC que tengas guardados no se usan solos).
+- **«Do not upload tab data»**: las secciones que marques así en el editor de DTC (radios COMM 1/2, waypoints, amenazas, líneas…) no se cargan en el avión, y el kneeboard tampoco las usa: se queda lo de la misión. La revisión del DTC dice cuáles son.
+- **Elegir el origen a mano**: en el Plan de vuelo, «Ruta: Auto · Misión · DTC · F10» (el mapa y la tarjeta usan la misma); en Radios, «Origen: Auto · Misión · DTC». En automático, las radios que el DTC no trae o no carga salen de la misión.
 - **Pestaña DTC**: revisión antes de despegar (otro avión u otro mapa, horas que no cuadran con la misión, radios distintas, secciones vacías), rutas con sus horas, navegación (TACAN, ICLS, WP de casa y A/A), **contramedidas** (programas, bingo y programa automático por amenaza), **amenazas** (MEZ, prioridades del RWR, clases del HARM) y **armamento** (JDAM por estación, VIP/VRP).
 - **Plan de vuelo**: ruta del DTC con sus horas. Si haces una ruta con la **herramienta de ruta del F10** («Show Route Tool») y la activas, el plan usa esa (con sus nombres, altitudes y horas); entre ella y cualquier DTC (el del editor, uno guardado o cargado en DCS o uno elegido en el kneeboard) manda lo último que hayas tocado. Lo que cambies a mano en cabina solo llega si DCS da la ruta del avión (Ajustes > Integración DCS dice qué da tu avión). La herramienta de ruta y el editor de DTC viven en el Lua de la interfaz de DCS, que el script de `Scripts\Hooks` no ve: los lee un mod mínimo, `Saved Games\DCS\Mods\Services\LFKneeboard`, que se instala y se quita junto con el script (sale como «LF Kneeboard» en Opciones > Especial, sin nada que ajustar). En los puntos con hora fija dice si llegas pronto o tarde y a qué velocidad sobre el suelo ir para llegar justo; los puntos de objetivo salen marcados.
 - **Mapa**: FLOT, FAOR, corredores, líneas geográficas, hipódromos de CAP y burbujas de amenaza (botón para ocultarlas).

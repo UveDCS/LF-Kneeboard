@@ -133,7 +133,7 @@ R.general = () => {
     h('div.card',
       chk('Modo noche', 'Atenúa y tiñe de rojo cualquier tema. Acción «Modo noche» para cambiarlo en vuelo.', C.night, (v) => patch({ night: v })),
       chk('Dos kneeboards', 'Un segundo kneeboard independiente (por ejemplo, radios a la izquierda y plan a la derecha).', C.dual, (v) => patch({ dual: v })),
-      chk('Iniciar con Windows', 'Se abre en segundo plano al encender el PC, listo para cuando entres en DCS.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
+      chk('Iniciar con Windows', 'Se abre oculto al encender el PC (en la bandeja), listo para cuando entres en DCS: sácalo con tu tecla.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
       chk('Siempre encima de DCS', 'Recomendado si juegas en ventana o pantalla completa sin bordes.', C.alwaysOnTop, (v) => patch({ alwaysOnTop: v })),
       chk('Clic a través', 'El ratón atraviesa el kneeboard en el monitor (se puede alternar con una tecla).', C.clickThrough, (v) => patch({ clickThrough: v })),
       slider('Opacidad en el monitor', C.overlayOpacity, 0.3, 1, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ overlayOpacity: v }))),
@@ -207,6 +207,48 @@ Las pestañas que ya tienes conservan su nombre y sus ajustes, y tus PDF, webs y
   const card = h('div.card');
   const tabs = C.tabs.map((t) => ({ ...t }));
   const save = () => patch({ tabs });
+  // Arrastrar una pestaña por su asa (⠿) a otra posición. Con eventos de puntero, no con el arrastre del
+  // navegador, para que no se líe con los campos de texto de cada fila. Una línea marca dónde caerá.
+  function startDrag(e, from) {
+    if (e.button > 0) return;
+    e.preventDefault();
+    const rows = [...card.querySelectorAll(':scope > .tabrow')];
+    const row = rows[from];
+    if (!row) return;
+    row.classList.add('dragging');
+    document.body.classList.add('dragging-tab');
+    let ins = from;
+    const mark = () => rows.forEach((r, k) => {
+      r.classList.toggle('drop-before', k === ins && ins !== from && ins !== from + 1);
+      r.classList.toggle('drop-after', k === rows.length - 1 && ins === rows.length && from !== rows.length - 1);
+    });
+    let scroll = 0;
+    const timer = setInterval(() => { if (scroll) main.scrollTop += scroll; }, 16);
+    const move = (ev) => {
+      ins = rows.length;
+      for (let k = 0; k < rows.length; k++) {
+        const r = rows[k].getBoundingClientRect();
+        if (ev.clientY < r.top + r.height / 2) { ins = k; break; }
+      }
+      const box = main.getBoundingClientRect();
+      scroll = ev.clientY < box.top + 50 ? -12 : ev.clientY > box.bottom - 50 ? 12 : 0;
+      mark();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      clearInterval(timer);
+      document.body.classList.remove('dragging-tab');
+      rows.forEach((r) => r.classList.remove('dragging', 'drop-before', 'drop-after'));
+      const to = ins > from ? ins - 1 : ins;
+      if (to === from) return;
+      const [t] = tabs.splice(from, 1);
+      tabs.splice(to, 0, t);
+      save().then(render);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
   tabs.forEach((t, i) => {
     const type = TAB_TYPES[t.type] || { label: t.type };
     const opts = h('div.opts');
@@ -248,6 +290,7 @@ Las pestañas que ya tienes conservan su nombre y sus ajustes, y tus PDF, webs y
       onclick: () => { t.fav = !t.fav; favBtn.classList.toggle('on', t.fav); favBtn.replaceChildren(icon('star', t.fav ? 'filled' : '')); save(); } }, icon('star', t.fav ? 'filled' : ''));
     card.append(h('div.tabrow',
       h('div.mv',
+        h('span.grip', { title: 'Arrastra para cambiar el orden', onpointerdown: (e) => startDrag(e, i) }, '⠿'),
         h('button', { title: 'Subir', onclick: () => { if (i > 0) { [tabs[i - 1], tabs[i]] = [tabs[i], tabs[i - 1]]; save().then(render); } } }, '▲'),
         h('button', { title: 'Bajar', onclick: () => { if (i < tabs.length - 1) { [tabs[i + 1], tabs[i]] = [tabs[i], tabs[i + 1]]; save().then(render); } } }, '▼')),
       h('div.ic', favBtn, iconPicker(t, save)),

@@ -421,6 +421,43 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
       }
     }
 
+    // Origen de la ruta y de las radios elegido a mano.
+    {
+      const list = cfg.get().tabs;
+      const fp = list.findIndex((t) => t.type === 'flightplan');
+      const rd = list.findIndex((t) => t.type === 'radios');
+      const routeNow = () => exec(`(document.querySelector('.src-pick .src-note') || {}).textContent || ''`);
+      const pick = (txt) => exec(`[...document.querySelectorAll('.src-pick .chip')].filter((b) => b.offsetParent).find((b) => b.textContent === ${JSON.stringify(txt)}).click()`);
+      if (fp >= 0) {
+        await goTab(fp);
+        await wait(800);
+        const auto = await routeNow();
+        await pick('Misión');
+        await wait(1500);
+        const mis = await routeNow();
+        await shot('plan-origen-mision');
+        await pick('DTC');
+        await wait(1500);
+        const dtc = await routeNow();
+        await pick('Auto');
+        await wait(1500);
+        say(`origen de la ruta: auto «${auto}» · misión «${mis}» · DTC «${dtc}» · guardado ${JSON.stringify(cfg.get().sources)}`);
+      }
+      if (rd >= 0) {
+        await goTab(rd);
+        await wait(800);
+        const src = () => exec(`(document.querySelector('.h1 small') || {}).textContent || ''`);
+        const a = await src();
+        await pick('Misión');
+        await wait(1500);
+        const b2 = await src();
+        await shot('radios-origen');
+        await pick('Auto');
+        await wait(1000);
+        say(`origen de las radios: auto «${a}» · misión «${b2}»`);
+      }
+    }
+
     // Pestaña siguiente/anterior con favoritas: solo pasa por ellas (también saliendo de una que no lo es).
     {
       const list = cfg.get().tabs;
@@ -502,6 +539,23 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
       const img = await sw.webContents.capturePage();
       fs.writeFileSync(path.join(out, `settings-${s}.png`), img.toPNG());
       say(`ajustes ${s}`);
+    }
+    // Ajustes › Pestañas: arrastrar la primera pestaña por su asa hasta debajo de la tercera.
+    {
+      await sw.webContents.executeJavaScript(`location.hash = 'pestanas'`);
+      await wait(1500);
+      const before = cfg.get().tabs.map((t) => t.title).slice(0, 4).join(' · ');
+      await sw.webContents.executeJavaScript(`(() => {
+        const rows = [...document.querySelectorAll('.card > .tabrow')];
+        const grip = rows[0].querySelector('.grip');
+        const r3 = rows[2].getBoundingClientRect();
+        const ev = (t, y) => new PointerEvent(t, { bubbles: true, clientX: 20, clientY: y, button: 0, buttons: 1, pointerType: 'mouse' });
+        grip.dispatchEvent(ev('pointerdown', rows[0].getBoundingClientRect().top + 10));
+        window.dispatchEvent(ev('pointermove', r3.bottom - 2));
+        window.dispatchEvent(ev('pointerup', r3.bottom - 2));
+      })()`);
+      await wait(1200);
+      say(`arrastrar pestañas: antes «${before}» · después «${cfg.get().tabs.map((t) => t.title).slice(0, 4).join(' · ')}»`);
     }
   } catch (e) {
     say(`ERROR ${e.stack}`);

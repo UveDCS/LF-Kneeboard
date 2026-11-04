@@ -421,6 +421,12 @@ table.tbl.md td { font-family: var(--font-ui); }
 .favbtn.on { color: var(--warn); opacity: 1; }
 
 /* Plan de vuelo: hora fijada (DTC o misión) y puntos de objetivo */
+/* Elegir de dónde sale la ruta o las radios. */
+.src-pick { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: .1rem 0 .5rem; }
+.src-pick .src-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-right: .1rem; }
+.src-pick .chip { padding: .12rem .5rem; font-size: .72rem; }
+.src-pick .chip.off:not(.sel) { opacity: .45; }
+.src-pick .src-note { flex-basis: 100%; font-size: .72rem; color: var(--muted); }
 .tag.sent { background: color-mix(in srgb, var(--ok, #34d399) 18%, transparent); color: var(--ok, #34d399); }
 .tag.tgt { background: #ef4444; color: #fff; margin-left: .3rem; }
 .tag.fix { background: transparent; border: 1px solid var(--accent); color: var(--accent); font-size: .58rem; padding: 0 .25rem; }
