@@ -44,6 +44,8 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
     };
     const exec = (js) => win.webContents.executeJavaScript(js, true);
     const goTab = async (i) => { win.webContents.send('goto-tab', i); await wait(200); };
+    // LFKB_SNAP_SETTINGS: solo las capturas de Ajustes (sin misión ni biblioteca de prueba).
+    kneeboard: { if (process.env.LFKB_SNAP_SETTINGS) break kneeboard;
     if (process.env.LFKB_LIBRARY) cfg.patch({ library: { root: process.env.LFKB_LIBRARY } });
     // Pestañas de documentos opcionales para la prueba
     const extra = [];
@@ -427,7 +429,7 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
       const fp = list.findIndex((t) => t.type === 'flightplan');
       const rd = list.findIndex((t) => t.type === 'radios');
       const routeNow = () => exec(`(document.querySelector('.src-pick .src-note') || {}).textContent || ''`);
-      const pick = (txt) => exec(`[...document.querySelectorAll('.src-pick .chip')].filter((b) => b.offsetParent).find((b) => b.textContent === ${JSON.stringify(txt)}).click()`);
+      const pick = (txt) => exec(`[...document.querySelectorAll('.src-pick .chip')].filter((b) => b.offsetParent).find((b) => b.textContent === ${JSON.stringify(txt)})?.click()`);
       if (fp >= 0) {
         await goTab(fp);
         await wait(800);
@@ -518,6 +520,8 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
     }
     cfg.patch({ theme: 'tablet' });
     broadcast('config', cfg.get());
+
+    } // kneeboard
 
     // Actualizaciones (solo en la versión instalada): ¿responde GitHub y se entiende el resultado?
     if (process.env.LFKB_UPDATE_TEST && updater) {

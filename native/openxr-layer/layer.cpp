@@ -72,6 +72,7 @@ XrInstance gInstance = XR_NULL_HANDLE;
 HANDLE gMapping = nullptr;
 LfkbHeader* gShm = nullptr;
 DWORD gLastOpenTry = 0;
+DWORD gLastOpenError = 0;
 uint32_t gLastHeartbeat = 0;
 DWORD gHeartbeatChangedAt = 0;
 
@@ -81,7 +82,22 @@ bool openShared() {
   if (now - gLastOpenTry < 2000) return false;
   gLastOpenTry = now;
   gMapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, LFKB_SHM_NAME);
-  if (!gMapping) return false;
+  if (!gMapping) {
+    // Se anota el motivo una vez (y otra si cambia), para poder diagnosticar sin llenar el registro.
+    DWORD err = GetLastError();
+    if (err != gLastOpenError) {
+      gLastOpenError = err;
+      if (err == ERROR_FILE_NOT_FOUND) {
+        logf("Sin conexión: LF Kneeboard no está abierto (se reintenta cada 2 s)");
+      } else if (err == ERROR_ACCESS_DENIED) {
+        logf("Sin conexión: permiso denegado (error 5). LF Kneeboard y DCS se ejecutan con permisos distintos: "
+             "abre los dos como administrador o ninguno");
+      } else {
+        logf("Sin conexión con LF Kneeboard (error %lu)", err);
+      }
+    }
+    return false;
+  }
   void* p = MapViewOfFile(gMapping, FILE_MAP_ALL_ACCESS, 0, 0, LFKB_TOTAL_BYTES);
   if (!p) {
     CloseHandle(gMapping);
@@ -97,6 +113,7 @@ bool openShared() {
     gMapping = nullptr;
     return false;
   }
+  gLastOpenError = 0;
   logf("Conectado con LF Kneeboard");
   return true;
 }
@@ -560,6 +577,15 @@ XRAPI_ATTR XrResult XRAPI_CALL layerCreateApiLayerInstance(const XrInstanceCreat
   char exe[MAX_PATH] = {0};
   GetModuleFileNameA(nullptr, exe, MAX_PATH);
   logf("Instancia OpenXR creada en %s (%s)", exe, info->applicationInfo.applicationName);
+  HANDLE tok = nullptr;
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tok)) {
+    TOKEN_ELEVATION el{};
+    DWORD n = 0;
+    if (GetTokenInformation(tok, TokenElevation, &el, sizeof(el), &n)) {
+      logf("DCS %s", el.TokenIsElevated ? "se ejecuta como administrador" : "se ejecuta sin elevar");
+    }
+    CloseHandle(tok);
+  }
   return r;
 }
 

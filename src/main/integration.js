@@ -132,6 +132,40 @@ function unregisterLayer(manifest) {
   try { reg(['delete', LAYER_KEY, '/v', manifest, '/f']); } catch { /* no estaba */ }
 }
 
+// Registro que escribe la capa OpenXR dentro de DCS (se rehace cada vez que DCS la carga).
+// LFKB_LAYER_LOG: otro archivo, solo en las pruebas.
+const LAYER_LOG = process.env.LFKB_LAYER_LOG || path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'LF Kneeboard', 'openxr-layer.log');
+
+// Resume el último arranque de DCS en VR: si cargó la capa, si abrió sesión, si conectó y, si no, por qué.
+function layerLog(file = LAYER_LOG) {
+  let text;
+  let at;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+    at = fs.statSync(file).mtimeMs;
+  } catch {
+    return null;
+  }
+  const lines = text.split(/\r?\n/).map((l) => l.replace(/^\[[\d:]+\]\s*/, '').trim()).filter(Boolean);
+  const lastIdx = (re) => {
+    for (let i = lines.length - 1; i >= 0; i--) if (re.test(lines[i])) return i;
+    return -1;
+  };
+  const conn = lastIdx(/^Conectado con LF Kneeboard/);
+  const prob = lastIdx(/^Sin conexión|^Sesión sin Direct3D|versión distinta/);
+  const elev = lastIdx(/^DCS se ejecuta/);
+  return {
+    file,
+    at,
+    loaded: lastIdx(/^Instancia OpenXR creada/) >= 0,
+    session: lastIdx(/^Sesión D3D11 creada/) >= 0,
+    connected: conn >= 0,
+    problem: prob > conn ? lines[prob] : null,
+    dcsElevated: elev >= 0 ? /como administrador/.test(lines[elev]) : null,
+    lines: lines.slice(-20),
+  };
+}
+
 function dcsKneeboardDirs(aircraft) {
   const out = [];
   for (const dir of savedGamesDirs()) {
@@ -158,5 +192,5 @@ function dtcDirs() {
 
 module.exports = {
   HOOK_NAME, MOD_REL, savedGamesDirs, hookStatus, installHook, installTo, modFiles, uninstallHook, updateInstalledHooks,
-  layerStatus, registerLayer, unregisterLayer, dcsKneeboardDirs, dtcDirs,
+  layerStatus, registerLayer, unregisterLayer, dcsKneeboardDirs, dtcDirs, layerLog, LAYER_LOG,
 };

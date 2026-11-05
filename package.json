@@ -1,7 +1,7 @@
 {
   "name": "lf-kneeboard",
   "productName": "LF Kneeboard",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Kneeboard para DCS World: VR y escritorio, páginas dinámicas de misión, bloc con coordenadas y pizarra compartida para el vuelo.",
   "author": "La Fundación",
   "license": "MIT",
@@ -14,6 +14,8 @@
     "dist": "electron-builder --win nsis --publish never",
     "test:hook": "node tools/hook-test.js",
     "test:tableta": "node tools/tablet-test.js",
+    "test:vr": "node tools/vr-perm-test.js",
+    "test:paquete": "node tools/package-check.js",
     "test:voz": "node tools/voice-test.js",
     "release": "electron-builder --win nsis --publish always"
   },
@@ -60,7 +62,6 @@
       "!node_modules/@fontsource/**/scss/**",
       "!node_modules/leaflet/src/**",
       "!node_modules/leaflet/dist/leaflet-src*",
-      "!node_modules/koffi/src/**",
       "!node_modules/koffi/vendor/**",
       "!node_modules/koffi/doc/**"
     ],

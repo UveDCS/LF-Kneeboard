@@ -17,7 +17,7 @@ const target = ['-target', 'x86_64-windows-gnu'];
 
 zig(['c++', ...target, '-O2', '-shared', '-std=c++17', '-fno-exceptions', '-Wno-nullability-completeness',
   '-Inative/openxr-layer/include', 'native/openxr-layer/layer.cpp',
-  '-o', 'native/bin/lfkb_openxr_layer.dll', '-lkernel32']);
+  '-o', 'native/bin/lfkb_openxr_layer.dll', '-lkernel32', '-ladvapi32']);
 
 zig(['cc', ...target, '-O2', 'native/input-helper/input.c', 'native/input-helper/tablet.c',
   '-o', 'native/bin/lfkb-input.exe', '-luser32', '-lwinmm', '-lws2_32', '-Wl,--subsystem,windows']);

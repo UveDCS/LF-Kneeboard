@@ -908,7 +908,13 @@ function registerIpc() {
     dcsConnected: dcs.connected(),
     routeSources: dcs.sources || null,
     vrActive: vr ? vr.active : false,
+    vrBridge: vr ? { ok: vr.ok, error: vr.error || null, elevated: vr.elevated } : null,
+    layerLog: integ.layerLog(),
   }));
+  ipcMain.handle('vr:openlog', () => {
+    const f = fs.existsSync(integ.LAYER_LOG) ? integ.LAYER_LOG : path.join(app.getPath('userData'), 'vr.log');
+    shell.showItemInFolder(f);
+  });
   ipcMain.handle('integration:install', (e, what) => {
     const res = {};
     try {
@@ -1165,7 +1171,14 @@ app.whenReady().then(() => {
   else if (process.env.LFKB_TABLET_GO) input.start(['--solo-tableta']); // pruebas de la tableta: sin teclado ni mandos
 
   vr = new VrBridge();
-  vr.on('log', (m) => console.log('VR', m));
+  // Lo que pasa con el visor se guarda también en vr.log (se rehace en cada arranque) para poder diagnosticar.
+  const vrLog = path.join(app.getPath('userData'), 'vr.log');
+  try { fs.writeFileSync(vrLog, ''); } catch { /* sin permisos */ }
+  vr.on('log', (m) => {
+    console.log('VR', m);
+    try { fs.appendFileSync(vrLog, `[${new Date().toLocaleString('es-ES')}] ${m}
+`); } catch { /* sin permisos */ }
+  });
   vr.start();
   vr.on('gaze', (i, g) => sendToView(i, 'gaze', g));
   vr.on('active', (a) => broadcast('vr-active', a));

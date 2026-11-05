@@ -383,6 +383,44 @@ kb.on('bind:captured', async ({ action, combo }) => {
 });
 kb.on('devices', (d) => { INIT.devices = d; if (section === 'controles') render(); });
 
+// Qué pasó la última vez que DCS arrancó en VR, leído del registro de la capa. Solo se muestra si el visor no está activo.
+function vrDiagnosis(st) {
+  const L = st.layerLog;
+  const b = st.vrBridge || {};
+  const when = L ? new Date(L.at).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  let cls = 'muted';
+  let msg;
+  if (b.error) {
+    cls = 'warn';
+    msg = `${b.error} Cierra LF Kneeboard del todo (también de la bandeja) y vuelve a abrirlo.`;
+  } else if (!L || !L.loaded) {
+    msg = 'DCS aún no ha cargado la capa. Si DCS estaba abierto cuando la registraste, reinícialo. Tiene que arrancar en VR por OpenXR: si lo fuerzas a SteamVR/OpenVR, la capa no entra.';
+  } else if (L.problem && /permiso denegado/.test(L.problem)) {
+    cls = 'warn';
+    msg = `Última vez en DCS (${when}): la capa no pudo conectar porque DCS y LF Kneeboard se ejecutaban con permisos distintos (uno como administrador). Desde esta versión debería funcionar igual; si sigue pasando, ábrelos los dos igual.`;
+  } else if (L.problem && /no está abierto/.test(L.problem)) {
+    msg = `Última vez en DCS (${when}): LF Kneeboard no estaba abierto (o se cerró) mientras volabas en VR.`;
+  } else if (L.problem) {
+    cls = 'warn';
+    msg = `Última vez en DCS (${when}): ${L.problem}`;
+  } else if (!L.session) {
+    cls = 'warn';
+    msg = `Última vez en DCS (${when}): la capa se cargó, pero DCS no llegó a abrir la sesión de VR.`;
+  } else if (!L.connected) {
+    cls = 'warn';
+    msg = `Última vez en DCS (${when}): la capa se cargó pero no conectó con el kneeboard. Hasta la 0.3.11 era un fallo del instalador, ya corregido: reinicia DCS y vuelve a probar. Si sigue pasando, envía el registro de VR.`;
+  } else {
+    msg = `Última vez en DCS (${when}): todo correcto, la capa se conectó con el kneeboard.`;
+  }
+  const extra = [];
+  if (b.elevated) extra.push('LF Kneeboard se está ejecutando como administrador.');
+  if (L && L.dcsElevated) extra.push('DCS se ejecutó como administrador.');
+  return h('div.vrdiag',
+    h(`div.small.${cls}`, msg),
+    extra.length ? h('div.small.muted', extra.join(' ')) : null,
+    h('div.row', h('button.btn.small', { onclick: () => kb.vrOpenLog() }, 'Ver registro de VR'), h('button.btn.small', { onclick: () => render() }, 'Comprobar de nuevo')));
+}
+
 R.vr = async () => {
   const st = await kb.integrationStatus();
   main.append(h('h1', 'Realidad virtual'), h('p.lead', 'El kneeboard se dibuja dentro del visor mediante una capa OpenXR (como OpenKneeboard). Mueve los controles con DCS abierto y verás el cambio al momento.'));
@@ -393,6 +431,7 @@ R.vr = async () => {
         ? h('button.btn.small', { onclick: async () => { await kb.integrationUninstall({ layer: true }); render(); } }, 'Quitar')
         : h('button.btn.small.primary', { onclick: async () => { const r = await kb.integrationInstall({ layer: true }); if (r.error) alert(r.error); render(); } }, 'Registrar')),
     st.layer.others.length ? h('div.small.muted', `También tienes registrado: ${st.layer.others.map((o) => o.path).join(', ')}. Si usas los dos kneeboards a la vez, se verán ambos.`) : null,
+    !st.vrActive && (st.layer.registered || st.layerLog) ? vrDiagnosis(st) : null,
     chk('Mostrar en VR', null, C.vr.enabled, (v) => patch({ vr: { enabled: v } })),
     chk('Ocultar la ventana del monitor', 'Útil si solo vuelas en VR. Para escribir con el teclado usa la acción «Modo escritura».', C.vr.hideWindow, (v) => patch({ vr: { hideWindow: v } })),
     chk('Ampliar al mirarlo', 'El kneeboard crece cuando lo miras de frente.', C.vr.gazeZoom, (v) => patch({ vr: { gazeZoom: v } })),

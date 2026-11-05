@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('kb', {
   integrationInstall: (what) => ipcRenderer.invoke('integration:install', what),
   integrationUninstall: (what) => ipcRenderer.invoke('integration:uninstall', what),
   recenter: () => ipcRenderer.invoke('vr:recenter'),
+  vrOpenLog: () => ipcRenderer.invoke('vr:openlog'),
   timer: (cmd) => ipcRenderer.invoke('timer', cmd),
   messagesClear: () => ipcRenderer.invoke('messages:clear'),
   kneeboardProbe: () => ipcRenderer.invoke('dcs:kbprobe'),

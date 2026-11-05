@@ -12,6 +12,8 @@ Hecho por y para **La Fundación**.
    - Registra la capa OpenXR para tu usuario de Windows, para que el kneeboard se vea en el visor.
 3. Entra en una misión. El kneeboard se rellena solo.
 
+**Si no lo ves en el visor**: mira **Ajustes › Realidad virtual**. Cuando el visor no está activo, dice qué pasó la última vez que DCS arrancó en VR (si cargó la capa, si conectó con el kneeboard y, si no, por qué), con un botón para ver el registro. DCS tiene que arrancar en VR por OpenXR (no forzado a SteamVR/OpenVR) y hay que reiniciarlo después de registrar la capa.
+
 **Iniciar con Windows** (Ajustes › Aspecto): se abre oculto al encender el PC, listo para sacarlo con tu tecla.
 
 Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de DCS y el registro de OpenXR.
@@ -158,6 +160,8 @@ npm test             # geodesia, .miz, controles, sala compartida, biblioteca, s
 npm run test:voz     # órdenes de voz con la voz española de Windows (sin micrófono)
 npm run test:hook -- ruta\mision.miz   # el hook de DCS con Lua 5.1 y un DCS simulado
 npm run test:tableta # el lector de tabletas contra un servidor OTD-IPC falso (native/test/otdipc_server.c)
+npm run test:vr      # permisos de la memoria compartida con la capa VR
+npm run test:paquete # tras compilar el instalador: koffi y el puente VR funcionan dentro del app.asar
 npm run native       # compila la capa OpenXR y el lector de mandos (pip install ziglang)
 npm run dist         # genera el instalador en dist/ (sin publicar)
 npm run release      # genera el instalador y lo publica en GitHub Releases (necesita GH_TOKEN)

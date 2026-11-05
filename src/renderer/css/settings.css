@@ -153,3 +153,4 @@ nav button.sel .ico { color: var(--accent); }
 .preset { display: grid; grid-template-columns: 22px minmax(140px, 1fr) auto auto auto auto; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; }
 .preset.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,.15); }
 .preset .ico { width: 18px; height: 18px; color: var(--accent); }
+.vrdiag { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--panel2); line-height: 1.45; }

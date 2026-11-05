@@ -14,8 +14,9 @@ const TOTAL = HEADER + MAX_VIEWS * 2 * SLOT;
 const VIEW_OFF = (i) => 64 + i * 128;
 
 class VrBridge extends EventEmitter {
-  constructor() {
+  constructor(opts = {}) {
     super();
+    this.name = opts.name || SHM_NAME; // otro nombre solo en las pruebas
     this.ok = false;
     this.front = [0, 0];
     this.seq = [0, 0];
@@ -31,22 +32,48 @@ class VrBridge extends EventEmitter {
       koffi = require('koffi');
     } catch (e) {
       this.emit('log', `VR desactivado: ${e.message}`);
+      this.error = `No se pudo cargar el puente con el visor (${e.message}).`;
       return false;
     }
     const k32 = koffi.load('kernel32.dll');
-    this.CreateFileMappingW = k32.func('intptr_t __stdcall CreateFileMappingW(intptr_t hFile, void *attr, uint32_t protect, uint32_t hi, uint32_t lo, str16 name)');
+    const SA = koffi.struct('LFKB_SECURITY_ATTRIBUTES', { nLength: 'uint32_t', lpSecurityDescriptor: 'void *', bInheritHandle: 'int' });
+    this.CreateFileMappingW = k32.func('intptr_t __stdcall CreateFileMappingW(intptr_t hFile, LFKB_SECURITY_ATTRIBUTES *attr, uint32_t protect, uint32_t hi, uint32_t lo, str16 name)');
     this.MapViewOfFile = k32.func('intptr_t __stdcall MapViewOfFile(intptr_t h, uint32_t access, uint32_t offHi, uint32_t offLo, uintptr_t bytes)');
     this.copyTo = k32.func('void __stdcall RtlMoveMemory(intptr_t dst, const void *src, uintptr_t n)');
     this.copyFrom = k32.func('void __stdcall RtlMoveMemory(void *dst, intptr_t src, uintptr_t n)');
     const PAGE_READWRITE = 0x04;
     const FILE_MAP_ALL_ACCESS = 0xf001f;
-    this.handle = this.CreateFileMappingW(-1, null, PAGE_READWRITE, 0, TOTAL, SHM_NAME);
+    // Permisos explícitos: si LF Kneeboard se abre como administrador, Windows solo dejaría abrir la memoria
+    // a otros procesos elevados y DCS (sin elevar) no vería el kneeboard. Se da acceso a los usuarios del
+    // equipo (el nombre «Local\» ya la limita a esta sesión de Windows) con nivel de integridad medio.
+    let attr = null;
+    try {
+      const adv = koffi.load('advapi32.dll');
+      const toSd = adv.func('bool __stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(str16 sddl, uint32_t rev, _Out_ void **sd, void *len)');
+      const out = [null];
+      if (toSd('D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AU)S:(ML;;NW;;;ME)', 1, out, null) && out[0]) {
+        attr = { nLength: koffi.sizeof(SA), lpSecurityDescriptor: out[0], bInheritHandle: 0 };
+      }
+    } catch (e) {
+      this.emit('log', `Permisos de la memoria compartida: ${e.message}`);
+    }
+    try {
+      this.elevated = !!koffi.load('shell32.dll').func('bool __stdcall IsUserAnAdmin()')();
+    } catch { this.elevated = null; }
+    this.handle = this.CreateFileMappingW(-1, attr, PAGE_READWRITE, 0, TOTAL, this.name);
+    if (!this.handle && attr) this.handle = this.CreateFileMappingW(-1, null, PAGE_READWRITE, 0, TOTAL, this.name);
     if (!this.handle) {
       this.emit('log', 'No se pudo crear la memoria compartida para VR');
+      this.error = 'No se pudo preparar la memoria compartida con el visor.';
       return false;
     }
+    this.emit('log', `Memoria compartida lista (${attr ? 'permisos para DCS con o sin administrador' : 'permisos por defecto'}; LF Kneeboard ${this.elevated ? 'como administrador' : 'sin elevar'})`);
     this.base = BigInt(this.MapViewOfFile(this.handle, FILE_MAP_ALL_ACCESS, 0, 0, TOTAL));
-    if (!this.base) return false;
+    if (!this.base) {
+      this.emit('log', 'No se pudo abrir la memoria compartida para VR');
+      this.error = 'No se pudo preparar la memoria compartida con el visor.';
+      return false;
+    }
     const h = Buffer.alloc(16);
     h.writeUInt32LE(MAGIC, 0);
     h.writeUInt32LE(VERSION, 4);
