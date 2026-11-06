@@ -133,6 +133,7 @@ function defaults() {
     clickThrough: false,
     alwaysOnTop: true,
     overlayOpacity: 1,
+    stowAnim: 'slide',
     hidden: false,
     views: [
       { state: { tab: 0, pages: {} }, bounds: null, vr: { pos: [0.13, -0.36, -0.42], rot: [-8, -48, 0], width: 0.24 } },

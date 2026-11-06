@@ -136,7 +136,12 @@ R.general = () => {
       chk('Iniciar con Windows', 'Se abre oculto al encender el PC (en la bandeja), listo para cuando entres en DCS: sácalo con tu tecla.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
       chk('Siempre encima de DCS', 'Recomendado si juegas en ventana o pantalla completa sin bordes.', C.alwaysOnTop, (v) => patch({ alwaysOnTop: v })),
       chk('Clic a través', 'El ratón atraviesa el kneeboard en el monitor (se puede alternar con una tecla).', C.clickThrough, (v) => patch({ clickThrough: v })),
-      slider('Opacidad en el monitor', C.overlayOpacity, 0.3, 1, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ overlayOpacity: v }))),
+      slider('Opacidad en el monitor', C.overlayOpacity, 0.3, 1, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ overlayOpacity: v })),
+      h('div.row', h('span', { style: { width: '170px' } }, 'Al sacarlo y guardarlo'),
+        h('select.f', { onchange: (e) => patch({ stowAnim: e.target.value }) },
+          [['slide', 'Sube y se desvanece'], ['fade', 'Solo se desvanece'], ['none', 'Sin animación (aparece al instante)']]
+            .map(([v, l]) => h('option', { value: v, selected: (C.stowAnim || 'slide') === v }, l)))),
+      h('div.small.muted', 'Si dentro de DCS la animación va a tirones, prueba «Solo se desvanece» o «Sin animación».')),
     h('h2', 'Tamaño en el monitor (2D)'),
     h('div.card',
       slider('Textos y botones', C.uiScale || 1, 0.7, 1.6, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ uiScale: v })),

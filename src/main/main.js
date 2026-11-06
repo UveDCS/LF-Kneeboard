@@ -1,5 +1,5 @@
-// LF Kneeboard: proceso principal.
-const { app, BrowserWindow, ipcMain, protocol, net, screen, Tray, Menu, dialog, shell, nativeImage, desktopCapturer, session } = require('electron');
+﻿// LF Kneeboard: proceso principal.
+const { app, BrowserWindow, ipcMain, protocol, net, screen, Tray, Menu, dialog, shell, nativeImage, desktopCapturer, session, Notification } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -72,6 +72,10 @@ const inbox = [];
 const timers = { running: false, startedAt: 0, acc: 0, push: null };
 let forcedZoom = false;
 let updater = null;
+let updateWin = null;      // aviso de versión nueva
+let noticeFor = null;      // versión de la que ya se avisó en esta sesión
+let noticePending = false; // se avisó con DCS abierto: se enseña la ventana al cerrarlo
+let installWhenReady = false;
 let dcsState = 'off'; // on = datos del script · open = DCS abierto sin datos · off = DCS cerrado
 const store = {};
 
@@ -83,7 +87,7 @@ const fileUrl = (p) => {
 };
 
 function broadcast(channel, ...args) {
-  for (const w of [...views, settingsWin]) {
+  for (const w of [...views, settingsWin, updateWin]) {
     if (w && !w.isDestroyed()) w.webContents.send(channel, ...args);
   }
 }
@@ -198,7 +202,7 @@ function createView(i) {
   win.loadURL(`app://kb/src/renderer/kneeboard.html?view=${i}`);
   win.once('ready-to-show', () => {
     applyWindowState(i);
-    startFrames(i);
+    if (wantFrames()) startFrames(i);
   });
   const saveBounds = () => {
     if (win.isDestroyed() || win.__offscreen) return;
@@ -226,25 +230,28 @@ function applyWindowState(i) {
   const win = views[i];
   if (!win || win.isDestroyed()) return;
   const c = cfg.get();
-  const wantVisible = !c.hidden && (i === 0 || c.dual);
-  const offscreen = c.vr.enabled && c.vr.hideWindow;
-  if (!wantVisible) {
-    win.hide();
-  } else {
-    if (offscreen && !win.__offscreen) {
-      const all = screen.getAllDisplays().map((d) => d.bounds);
-      const minX = Math.min(...all.map((d) => d.x));
-      win.__offscreen = true;
-      win.setPosition(minX - win.getBounds().width - 200, 0);
-    } else if (!offscreen && win.__offscreen) {
-      win.__offscreen = false;
-      const b = cfg.get().views[i].bounds || defaultBounds(i);
-      win.setBounds(boundsVisible(b) ? b : defaultBounds(i));
-    }
-    if (!win.isVisible()) win.showInactive();
-    win.setOpacity(offscreen ? 1 : c.overlayOpacity);
-    win.setIgnoreMouseEvents(!!c.clickThrough && !offscreen, { forward: true });
+  if (i !== 0 && !c.dual) {
+    win.hide(); // segunda ventana sin usar
+    updatePlacement(i);
+    return;
   }
+  // Guardado (o «Ocultar la ventana del monitor» en VR): la ventana NO se oculta, se aparca fuera de todas las
+  // pantallas. Ocultándola, Windows y Chromium soltaban sus recursos de la tarjeta gráfica y, con DCS abierto
+  // ocupando la GPU y su memoria, al volver a sacarla iba a tirones hasta medio minuto.
+  const park = !!c.hidden || (c.vr.enabled && c.vr.hideWindow);
+  if (park && !win.__offscreen) {
+    const all = screen.getAllDisplays().map((d) => d.bounds);
+    const minX = Math.min(...all.map((d) => d.x));
+    win.__offscreen = true;
+    win.setPosition(minX - win.getBounds().width - 200, 0);
+  } else if (!park && win.__offscreen) {
+    win.__offscreen = false;
+    const b = cfg.get().views[i].bounds || defaultBounds(i);
+    win.setBounds(boundsVisible(b) ? b : defaultBounds(i));
+  }
+  if (!win.isVisible()) win.showInactive();
+  win.setOpacity(park ? 1 : c.overlayOpacity);
+  win.setIgnoreMouseEvents(park || !!c.clickThrough, { forward: true });
   updatePlacement(i);
 }
 
@@ -263,10 +270,115 @@ function updatePlacement(i) {
   });
 }
 
+// Las imágenes para el visor solo se capturan mientras DCS está en VR con la capa conectada: capturar cada
+// repintado (lectura de la GPU y copia de varios MB) frena el kneeboard y no sirve de nada en 2D.
 const frameState = [{}, {}];
+const wantFrames = () => !!(vr && vr.ok && (vr.active || process.env.LFKB_SNAPSHOT));
+function stopFrames(i) {
+  const win = views[i];
+  const st = frameState[i];
+  if (st.timer) clearTimeout(st.timer);
+  st.timer = null;
+  st.latest = null;
+  if (st.subscribed && win && !win.isDestroyed()) {
+    try { win.webContents.endFrameSubscription(); } catch { /* ya cerrada */ }
+  }
+  st.subscribed = false;
+}
+// Con DCS abierto, Windows da preferencia a DCS (primer plano) y el kneeboard, encima de él, iba a tirones.
+// Mientras DCS está abierto, los procesos de la app (principal, ventanas y gráficos) pasan a prioridad
+// «por encima de lo normal»; el kneeboard trabaja poco, así que a DCS no le quita casi nada. Al cerrarlo, se vuelve a la normal.
+let boosted = null;
+function setDcsPriority(on) {
+  if (on === boosted && !on) return;
+  const os = require('os');
+  const prio = on ? os.constants.priority.PRIORITY_ABOVE_NORMAL : os.constants.priority.PRIORITY_NORMAL;
+  let changed = 0;
+  for (const m of app.getAppMetrics()) {
+    try {
+      if (os.getPriority(m.pid) !== prio) { os.setPriority(m.pid, prio); changed++; }
+    } catch { /* proceso ya cerrado */ }
+  }
+  if (input && input.proc && input.proc.pid) {
+    try { if (os.getPriority(input.proc.pid) !== prio) { os.setPriority(input.proc.pid, prio); changed++; } } catch { /* cerrado */ }
+  }
+  if (on !== boosted) console.log(`Prioridad ${on ? 'alta (DCS abierto)' : 'normal'}${changed ? '' : ' (sin cambios)'}`);
+  boosted = on;
+}
+
+// Medición (LFKB_PERF, en modo de prueba): fotogramas por segundo del kneeboard animándose sin parar,
+// con y sin captura para el visor, y CPU de toda la app.
+async function perfCheck() {
+  const win = views[0];
+  const measure = async (label) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    app.getAppMetrics();
+    vr.takeStats();
+    const fps = await win.webContents.executeJavaScript(`new Promise((done) => {
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:200px;background:red;z-index:99999';
+      document.body.append(d);
+      let n = 0; const t0 = performance.now();
+      const step = (t) => { n++; d.style.transform = 'translateX(' + (n % 300) + 'px)'; if (t - t0 < 8000) requestAnimationFrame(step); else { d.remove(); done(n / ((t - t0) / 1000)); } };
+      requestAnimationFrame(step);
+    })`);
+    const cpu = app.getAppMetrics().reduce((a, m) => a + m.cpu.percentCPUUsage, 0);
+    const st = vr.takeStats();
+    console.log(`[perf] ${label}: kneeboard a ${fps.toFixed(0)} fps, CPU de la app ${cpu.toFixed(0)} % (de un núcleo), imágenes al visor ${(st.n / 8).toFixed(1)}/s${st.n ? `, ${st.w}x${st.h}, ${(st.ms / st.n).toFixed(1)} ms de media` : ''}`);
+  };
+  const b = win.getBounds();
+  win.setBounds({ ...b, width: 968, height: 1345 });
+  startFrames(0);
+  await measure('capturando para el visor (0.3.12, siempre)');
+  stopFrames(0);
+  await measure('sin capturar (2D o visor en espera)');
+  const os = require('os');
+  const prios = () => app.getAppMetrics().map((m) => `${m.type}:${os.getPriority(m.pid)}`).join(' ');
+  // Guardar y sacar: la ventana sigue viva (aparcada fuera de las pantallas) y vuelve a su sitio.
+  const before = cfg.get().views[0].bounds || defaultBounds(0); // su sitio guardado
+  setHidden(true);
+  await new Promise((r) => setTimeout(r, 600));
+  const parked = win.getBounds();
+  let warmFrames = 0;
+  win.webContents.beginFrameSubscription(false, () => { warmFrames++; });
+  await new Promise((r) => setTimeout(r, 5000));
+  win.webContents.endFrameSubscription();
+  console.log(`[perf] guardado y quieto: ${warmFrames} fotogramas en 5 s (repintado para mantenerlo en la tarjeta gráfica)`);
+  const fpsHidden = await win.webContents.executeJavaScript(`new Promise((d) => { let n = 0; const t0 = performance.now(); const f = (t) => { n++; if (t - t0 < 2000) requestAnimationFrame(f); else d(n / 2); }; requestAnimationFrame(f); })`);
+  setHidden(false);
+  await new Promise((r) => setTimeout(r, 600));
+  const back = win.getBounds();
+  console.log(`[perf] guardado: visible ${win.isVisible()}, en x=${parked.x} (antes x=${before.x}), sigue pintando a ${fpsHidden.toFixed(0)} fps; al sacarlo vuelve a x=${back.x}, y=${back.y} (${back.x === before.x && back.y === before.y ? 'su sitio' : 'OTRO sitio'})`);
+  setDcsPriority(true);
+  console.log(`[perf] prioridades con DCS abierto: ${prios()}`);
+  setDcsPriority(false);
+  console.log(`[perf] prioridades sin DCS: ${prios()}`);
+}
+// Prueba del aviso de versión nueva (LFKB_SNAPSHOT + LFKB_FAKE_UPDATE + LFKB_SNAP_UPDATE): capturas
+// descargando y lista, y «Actualizar ahora» (simulado: no instala nada).
+async function updateNoticeCheck() {
+  const out = process.env.LFKB_SNAPSHOT;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const shot = async (name) => {
+    const img = await updateWin.webContents.capturePage();
+    fs.writeFileSync(path.join(out, name), img.toPNG());
+    const txt = await updateWin.webContents.executeJavaScript(`[...document.querySelectorAll('#cur,#ver,#status,#now')].map((e) => e.textContent).join(' | ')`);
+    console.log(`[update] ${name}: ${txt}`);
+  };
+  await wait(4500);
+  if (!updateWin) { console.log('[update] FALLO: no salió el aviso'); return; }
+  await shot('update-descargando.png');
+  await updateWin.webContents.executeJavaScript(`document.getElementById('now').click()`);
+  await wait(800);
+  await shot('update-esperando.png');
+  await wait(6000);
+  await shot('update-lista.png');
+  console.log(`[update] menú de la bandeja: ${updater.state.state}, ${updater.state.version}`);
+}
+
 function startFrames(i) {
   const win = views[i];
-  if (!win || !vr || !vr.ok) return;
+  if (!win || win.isDestroyed() || !vr || !vr.ok) return;
   const st = frameState[i];
   if (st.subscribed) return;
   st.subscribed = true;
@@ -277,7 +389,7 @@ function startFrames(i) {
     st.timer = setTimeout(() => {
       st.timer = null;
       st.last = Date.now();
-      if (cfg.get().vr.enabled && st.latest) vr.pushFrame(i, st.latest);
+      if (cfg.get().vr.enabled && !cfg.get().hidden && st.latest) vr.pushFrame(i, st.latest);
       st.latest = null;
     }, wait);
   });
@@ -297,6 +409,48 @@ function setHidden(h) {
   else views.forEach((_, i) => applyWindowState(i));
   broadcast('config', cfg.get());
   updateTray();
+}
+
+// Aviso de versión nueva: nada más arrancar, en una ventana propia. Con DCS abierto no se pone delante:
+// se avisa con una notificación de Windows y la ventana sale al cerrar DCS.
+function noticeUpdate(version) {
+  if (noticeFor === version) return;
+  noticeFor = version;
+  updateTray();
+  if (dcsState !== 'off') {
+    noticePending = true;
+    toast(`Hay una versión nueva de LF Kneeboard (${version}): se instala sola al cerrarlo`);
+    if (Notification.isSupported() && !TEST_OFFSCREEN) {
+      const n = new Notification({ title: `LF Kneeboard ${version} disponible`, body: 'Se descarga sola y se instala al cerrar el programa. Pulsa para ver las novedades.', icon: path.join(ROOT, 'src', 'renderer', 'assets', 'icon.png') });
+      n.on('click', () => openUpdateNotice());
+      n.show();
+    }
+    return;
+  }
+  openUpdateNotice();
+}
+
+function openUpdateNotice() {
+  noticePending = false;
+  if (updateWin && !updateWin.isDestroyed()) { updateWin.show(); updateWin.focus(); return; }
+  updateWin = new BrowserWindow({
+    ...(TEST_OFFSCREEN ? { x: -6000, y: 0 } : {}),
+    width: 560,
+    height: 520,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    show: false,
+    title: 'LF Kneeboard — Versión nueva',
+    backgroundColor: '#0f141a',
+    autoHideMenuBar: true,
+    icon: path.join(ROOT, 'src', 'renderer', 'assets', 'icon.png'),
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: false, additionalArguments: ['--kb-view=-1'] },
+  });
+  updateWin.loadURL('app://kb/src/renderer/update.html');
+  updateWin.once('ready-to-show', () => { if (TEST_OFFSCREEN) updateWin.showInactive(); else { updateWin.show(); updateWin.focus(); } });
+  updateWin.on('closed', () => { updateWin = null; });
+  if (TEST_OFFSCREEN) updateWin.webContents.on('console-message', (e) => console.log('[update] consola:', e.message));
 }
 
 function openSettings(section) {
@@ -376,7 +530,10 @@ function updateCrosshair(live = dcs && dcs.live) {
 function updateTray() {
   if (!tray) return;
   const c = cfg.get();
+  const up = updater && updater.state;
+  const newer = up && up.version && ['downloading', 'ready'].includes(up.state);
   tray.setContextMenu(Menu.buildFromTemplate([
+    ...(newer ? [{ label: `Versión nueva: ${up.version}…`, click: () => openUpdateNotice() }, { type: 'separator' }] : []),
     { label: c.hidden ? 'Mostrar kneeboard' : 'Ocultar kneeboard', click: () => setHidden(!c.hidden) },
     { label: 'Ajustes…', click: () => openSettings() },
     { type: 'separator' },
@@ -1022,6 +1179,13 @@ function registerIpc() {
   ipcMain.handle('update:status', () => updater.state);
   ipcMain.handle('update:check', () => updater.check());
   ipcMain.handle('update:install', () => { quitting = true; updater.install(); });
+  // «Actualizar ahora» del aviso: si aún se está descargando, se instala en cuanto termine.
+  ipcMain.handle('update:now', () => {
+    if (updater.state.state === 'ready') { quitting = !updater.fake; updater.install(); return updater.state; }
+    installWhenReady = true;
+    if (updater.state.state === 'error') updater.check();
+    return { ...updater.state, installWhenReady };
+  });
 
   // Perfil: exportar / importar configuración y datos
   ipcMain.handle('profile:export', async (e) => {
@@ -1155,7 +1319,11 @@ app.whenReady().then(() => {
     setInterval(() => {
       const open = !!focus.dcsWindow();
       const st = dcs.connected() ? 'on' : open ? 'open' : 'off';
-      if (st !== dcsState) { dcsState = st; broadcast('dcs-state', st); updateTray(); }
+      if (st !== dcsState) {
+        dcsState = st; broadcast('dcs-state', st); updateTray();
+        if (st === 'off' && noticePending) openUpdateNotice();
+      }
+      setDcsPriority(st !== 'off');
     }, 2000);
   }
 
@@ -1181,7 +1349,16 @@ app.whenReady().then(() => {
   });
   vr.start();
   vr.on('gaze', (i, g) => sendToView(i, 'gaze', g));
-  vr.on('active', (a) => broadcast('vr-active', a));
+  vr.on('active', (a) => {
+    broadcast('vr-active', a);
+    views.forEach((w, i) => { if (a) startFrames(i); else if (!process.env.LFKB_SNAPSHOT) stopFrames(i); });
+    vr.emit('log', a ? 'Visor activo: se envían imágenes al visor' : 'Visor en espera: se deja de capturar');
+  });
+  // Cada 10 s con el visor activo: cuántas imágenes se envían y lo que cuestan (para diagnosticar tirones).
+  setInterval(() => {
+    const st = vr.takeStats();
+    if (st.n) vr.emit('log', `${(st.n / 10).toFixed(1)} imágenes/s al visor, ${st.w}x${st.h}, ${(st.ms / st.n).toFixed(1)} ms de media (máx. ${st.max.toFixed(1)} ms)`);
+  }, 10000).unref();
 
   share = new Share(cfg);
   share.on('status', (s) => broadcast('share-status', s));
@@ -1245,8 +1422,13 @@ app.whenReady().then(() => {
 
   updater = new Updater(cfg, app);
   updater.on('status', (s) => broadcast('update-status', s));
-  updater.on('ready', (v) => toast(`LF Kneeboard ${v} descargado: se instalará al cerrar el programa`));
-  if (!TEST_OFFSCREEN) updater.start();
+  updater.on('available', (v) => noticeUpdate(v));
+  updater.on('ready', (v) => {
+    updateTray();
+    if (installWhenReady) { quitting = !updater.fake; updater.install(); return; }
+    toast(`LF Kneeboard ${v} descargado: se instalará al cerrar el programa`);
+  });
+  if (!TEST_OFFSCREEN || updater.fake) updater.start();
 
   registerIpc();
   createView(0);
@@ -1262,7 +1444,9 @@ app.whenReady().then(() => {
   }
 
   screen.on('display-metrics-changed', () => views.forEach((_, i) => applyWindowState(i)));
-  if (process.env.LFKB_SNAPSHOT) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
+  if (process.env.LFKB_PERF) setTimeout(() => perfCheck().then(() => app.exit(0)), 6000);
+  else if (process.env.LFKB_SNAP_UPDATE) updateNoticeCheck().then(() => app.exit(0));
+  else if (process.env.LFKB_SNAPSHOT && !process.env.LFKB_SNAP_UPDATE) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
 });
 
 function flushStores() {

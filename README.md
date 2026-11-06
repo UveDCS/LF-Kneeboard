@@ -18,7 +18,7 @@ Hecho por y para **La Fundación**.
 
 Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de DCS y el registro de OpenXR.
 
-**Actualizaciones**: el programa busca versiones nuevas en *Releases* al arrancar y cada 6 horas. Las descarga en segundo plano y las instala al cerrarlo, sin tocar tus ajustes ni lo instalado en DCS. Se puede desactivar en **Ajustes > Actualizar y perfil**.
+**Actualizaciones**: el programa busca versiones nuevas en *Releases* al arrancar y cada 6 horas. Si hay una, nada más arrancar sale un aviso con las novedades y el botón *Actualizar ahora* (con DCS abierto avisa con una notificación y enseña la ventana al cerrarlo). Las descarga en segundo plano y, si no actualizas en ese momento, las instala al cerrarlo, sin tocar tus ajustes ni lo instalado en DCS. Se puede desactivar en **Ajustes > Actualizar y perfil**.
 
 **Tu perfil en otro PC**: en **Ajustes > Actualizar y perfil**, *Exportar perfil* guarda en un `.zip` tus pestañas, controles, temas, ajustes de VR, marcadores, nombres de puntos, presets, tarjetas, bloc y libro de vuelo. *Importar perfil* lo carga en otro PC o en el de otro piloto.
 

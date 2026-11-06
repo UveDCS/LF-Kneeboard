@@ -91,6 +91,7 @@ contextBridge.exposeInMainWorld('kb', {
     status: () => ipcRenderer.invoke('update:status'),
     check: () => ipcRenderer.invoke('update:check'),
     install: () => ipcRenderer.invoke('update:install'),
+    now: () => ipcRenderer.invoke('update:now'),
   },
   profileExport: () => ipcRenderer.invoke('profile:export'),
   profileImport: () => ipcRenderer.invoke('profile:import'),

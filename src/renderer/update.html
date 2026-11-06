@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LF Kneeboard — Versión nueva</title>
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/400.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/inter/600.css">
+  <link rel="stylesheet" href="app://kb/node_modules/@fontsource/jetbrains-mono/400.css">
+  <style>
+    :root { --bg: #0f141a; --panel: #151c24; --panel2: #1b242e; --line: #263240; --ink: #e6edf5; --muted: #8a9aad; --accent: #38bdf8; --accent-ink: #04202e; --bad: #f87171; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { background: var(--bg); color: var(--ink); font: 14px/1.5 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; padding: 26px 28px 22px; gap: 16px; user-select: none; }
+    .lbl { font: 11px 'JetBrains Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .head { display: flex; align-items: center; gap: 14px; }
+    .head img { width: 44px; height: 44px; }
+    .head b { display: block; font-size: 17px; font-weight: 600; }
+    .vers { display: flex; align-items: baseline; gap: 14px; font: 300 34px/1 'JetBrains Mono', monospace; }
+    .vers .old { color: var(--muted); font-size: 22px; }
+    .vers .arrow { color: var(--muted); font-size: 18px; }
+    .vers .new { color: var(--accent); }
+    .notes { flex: 1; min-height: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; white-space: pre-wrap; color: #c9d4e0; font-size: 13px; user-select: text; }
+    .notes:empty { display: none; }
+    .bar { height: 4px; border-radius: 99px; background: var(--panel2); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
+    .status { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+    .row { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+    .row .hint { margin-right: auto; font-size: 12px; color: var(--muted); max-width: 230px; }
+    .btn { font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: 8px 18px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .btn:hover { border-color: #3a4a5c; }
+    .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .btn:disabled { opacity: .55; cursor: default; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <img src="assets/icon.png" alt="">
+    <div><span class="lbl">Actualización disponible</span><b>Hay una versión nueva de LF Kneeboard</b></div>
+  </div>
+  <div class="vers"><span class="old" id="cur"></span><span class="arrow">→</span><span class="new" id="ver"></span></div>
+  <div class="notes" id="notes"></div>
+  <div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="status" id="status"></div>
+  </div>
+  <div class="row">
+    <span class="hint">Tus ajustes, pestañas y lo instalado en DCS no se tocan.</span>
+    <button class="btn" id="later">Más tarde</button>
+    <button class="btn primary" id="now">Actualizar ahora</button>
+  </div>
+  <script>
+    (() => {
+    const kb = window.kb;
+    const $ = (id) => document.getElementById(id);
+    let waiting = false;
+    function paint(s) {
+      $('cur').textContent = s.current || '';
+      $('ver').textContent = s.version || '';
+      if (s.notes != null && $('notes').textContent !== s.notes) $('notes').textContent = s.notes;
+      $('prog').style.width = `${s.state === 'ready' ? 100 : s.progress || 0}%`;
+      const now = $('now');
+      if (s.state === 'ready') {
+        $('status').textContent = waiting ? 'Instalando: LF Kneeboard se cerrará y se abrirá solo.' : 'Descargada. Al actualizar, LF Kneeboard se cierra un momento y se vuelve a abrir.';
+        now.disabled = waiting; now.textContent = waiting ? 'Instalando…' : 'Actualizar ahora';
+      } else if (s.state === 'error') {
+        $('status').textContent = `No se pudo descargar: ${s.error || 'error desconocido'}`;
+        now.disabled = false; now.textContent = 'Reintentar';
+      } else {
+        $('status').textContent = waiting
+          ? `Descargando ${s.progress || 0} %… se instalará en cuanto termine.`
+          : `Descargando ${s.progress || 0} %… Si eliges «Más tarde», se instala sola al cerrar LF Kneeboard.`;
+        now.disabled = waiting; now.textContent = waiting ? 'Se instalará al terminar…' : 'Actualizar ahora';
+      }
+    }
+    $('now').onclick = async () => { waiting = true; paint(await kb.update.now()); };
+    $('later').onclick = () => window.close();
+    kb.on('update-status', paint);
+    kb.update.status().then(paint);
+    })();
+  </script>
+</body>
+</html>

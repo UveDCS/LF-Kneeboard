@@ -81,7 +81,10 @@ bool openShared() {
   DWORD now = GetTickCount();
   if (now - gLastOpenTry < 2000) return false;
   gLastOpenTry = now;
-  gMapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, LFKB_SHM_NAME);
+  // LFKB_SHM_NAME solo lo pone el banco de pruebas (así no se cruza con la app instalada si está abierta).
+  wchar_t name[128];
+  DWORD nn = GetEnvironmentVariableW(L"LFKB_SHM_NAME", name, 128);
+  gMapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, (nn && nn < 128) ? name : LFKB_SHM_NAME);
   if (!gMapping) {
     // Se anota el motivo una vez (y otra si cambia), para poder diagnosticar sin llenar el registro.
     DWORD err = GetLastError();
@@ -317,6 +320,20 @@ bool locateHead(Session* s, XrTime time, XrPosef* out) {
   return true;
 }
 
+// Cada 10 s, con la app conectada: fotogramas de DCS, imágenes subidas y lo que tarda la capa en el hilo de
+// render de DCS (para saber si el kneeboard le quita rendimiento).
+struct PerfStats {
+  LARGE_INTEGER freq{}, since{};
+  uint32_t frames = 0, uploads = 0;
+  double totalMs = 0, maxMs = 0, uploadMs = 0, maxUploadMs = 0;
+} gPerf;
+
+double msSince(const LARGE_INTEGER& a) {
+  LARGE_INTEGER b;
+  QueryPerformanceCounter(&b);
+  return (double)(b.QuadPart - a.QuadPart) * 1000.0 / (double)gPerf.freq.QuadPart;
+}
+
 // Prepara las capas del kneeboard. Devuelve cuántas se han rellenado.
 uint32_t buildLayers(Session* s, XrTime displayTime, XrCompositionLayerQuad* quads) {
   if (!openShared() || !appAlive()) return 0;
@@ -353,7 +370,15 @@ uint32_t buildLayers(Session* s, XrTime displayTime, XrCompositionLayerQuad* qua
     uint32_t seq = cfg.seq;
     if (seq != v.lastSeq) {
       MemoryBarrier();
+      LARGE_INTEGER u0;
+      QueryPerformanceCounter(&u0);
       upload(s, v, lfkbSlot(gShm, i, cfg.front & 1u));
+      {
+        double ms = msSince(u0);
+        gPerf.uploads++;
+        gPerf.uploadMs += ms;
+        if (ms > gPerf.maxUploadMs) gPerf.maxUploadMs = ms;
+      }
       v.lastSeq = seq;
     }
     if (!v.hasImage) continue;
@@ -500,11 +525,39 @@ XRAPI_ATTR XrResult XRAPI_CALL hookDestroySession(XrSession session) {
   return nextDestroySession(session);
 }
 
+void perfFrame(double ms) {
+  if (!gShm) {  // sin la app no se mide ni se anota nada
+    QueryPerformanceCounter(&gPerf.since);
+    return;
+  }
+  gPerf.frames++;
+  gPerf.totalMs += ms;
+  if (ms > gPerf.maxMs) gPerf.maxMs = ms;
+  double elapsed = msSince(gPerf.since);
+  if (elapsed >= 10000.0) {
+    logf("Rendimiento: DCS a %.0f fps; %.1f imágenes/s del kneeboard; la capa tarda %.2f ms de media por fotograma (máx. %.2f ms), "
+         "subir una imagen %.2f ms (máx. %.2f ms)",
+         gPerf.frames * 1000.0 / elapsed, gPerf.uploads * 1000.0 / elapsed, gPerf.totalMs / gPerf.frames, gPerf.maxMs,
+         gPerf.uploads ? gPerf.uploadMs / gPerf.uploads : 0.0, gPerf.maxUploadMs);
+    LARGE_INTEGER f = gPerf.freq;
+    gPerf = PerfStats{};
+    gPerf.freq = f;
+    QueryPerformanceCounter(&gPerf.since);
+  }
+}
+
 XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession session, const XrFrameEndInfo* info) {
   Session* s = gSession;
   if (!s || s->handle != session || !info) return nextEndFrame(session, info);
+  if (!gPerf.freq.QuadPart) {
+    QueryPerformanceFrequency(&gPerf.freq);
+    QueryPerformanceCounter(&gPerf.since);
+  }
+  LARGE_INTEGER t0;
+  QueryPerformanceCounter(&t0);
   XrCompositionLayerQuad quads[LFKB_MAX_VIEWS + 1];
   uint32_t added = buildLayers(s, info->displayTime, quads);
+  perfFrame(msSince(t0));
   if (!added) return nextEndFrame(session, info);
   std::vector<const XrCompositionLayerBaseHeader*> layers(info->layers, info->layers + info->layerCount);
   for (uint32_t i = 0; i < added; i++) layers.push_back(reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[i]));

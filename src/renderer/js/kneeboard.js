@@ -152,7 +152,7 @@ function persist() {
 // La cruz del centro de la pantalla se enseña mientras miras la página de Coordenadas.
 function updateCoordsFlag() {
   const inst = curInst();
-  const on = !!(inst && inst.isCoordsPage && inst.isCoordsPage()) && !document.hidden;
+  const on = !!(inst && inst.isCoordsPage && inst.isCoordsPage()) && !document.hidden && !(S.config && S.config.hidden);
   if (on !== coordsShown) {
     coordsShown = on;
     kb.coordsVisible(on);
@@ -744,6 +744,8 @@ function applyLook() {
   document.body.classList.toggle('night', !!c.night);
   document.body.classList.toggle('active-view', !!c.dual && S.activeView === kb.view);
   document.body.classList.toggle('vr-only', !!(c.vr.enabled && c.vr.hideWindow));
+  document.body.classList.toggle('anim-fade', c.stowAnim === 'fade');
+  document.body.classList.toggle('anim-none', c.stowAnim === 'none');
   document.documentElement.style.setProperty('--ui-scale', String(c.uiScale || 1));
 }
 
@@ -934,11 +936,23 @@ async function main() {
   });
   // Guardar / sacar el kneeboard (ver setHidden en main.js).
   kb.on('visibility', (visible) => {
+    // Guardado ya no oculta la ventana (se aparca fuera de la pantalla): el aviso de la página Coordenadas va por aquí.
+    if (S.config) S.config = { ...S.config, hidden: !visible };
+    updateCoordsFlag();
     const b = document.body;
-    if (!visible) { b.classList.remove('kb-in'); b.classList.add('kb-out'); return; }
-    b.classList.remove('kb-out', 'kb-in');
+    clearInterval(S.warmTimer);
+    if (!visible) {
+      b.classList.remove('kb-in'); b.classList.add('kb-out');
+      // Guardado, la página no cambia y la tarjeta gráfica deja de usar sus texturas: al rato, con DCS pidiendo
+      // memoria de vídeo, Windows las saca de ella y al volver a sacarlo la animación da tirones. Cambiar cada
+      // segundo una opacidad que no se ve (.001 / .0011) hace que se vuelvan a componer sin pintar nada nuevo.
+      S.warmTimer = setInterval(() => { b.classList.add('kb-parked'); b.classList.toggle('kb-warm'); }, 1000);
+      return;
+    }
+    b.classList.remove('kb-out', 'kb-in', 'kb-warm', 'kb-parked');
     void b.offsetWidth; // reinicia la animación de entrada
     b.classList.add('kb-in');
+    if (S.config && S.config.stowAnim === 'none') b.classList.remove('kb-in');
   });
   document.getElementById('kb').addEventListener('animationend', (e) => { if (e.animationName === 'kbIn') document.body.classList.remove('kb-in'); });
   kb.on('mission', (m) => { S.mission = m; loadBookmarks(); each((i) => i.onMission && i.onMission(m)); show(); });

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #define XR_USE_PLATFORM_WIN32
@@ -137,7 +138,11 @@ int main(int argc, char** argv) {
   CHECK(SUCCEEDED(hr), "Dispositivo D3D11 creado");
 
   // Memoria compartida con un fotograma de prueba (como haría la app)
-  HANDLE map = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, LFKB_TOTAL_BYTES, LFKB_SHM_NAME);
+  // Nombre propio: si LF Kneeboard está abierto en este PC, su latido no se cruza con la prueba.
+  wchar_t shmName[128];
+  swprintf(shmName, 128, L"Local\\LFKneeboard.LayerTest.%lu", GetCurrentProcessId());
+  SetEnvironmentVariableW(L"LFKB_SHM_NAME", shmName);
+  HANDLE map = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, LFKB_TOTAL_BYTES, shmName);
   auto* shm = (LfkbHeader*)MapViewOfFile(map, FILE_MAP_ALL_ACCESS, 0, 0, LFKB_TOTAL_BYTES);
   CHECK(shm != nullptr, "Memoria compartida creada (%u MB)", LFKB_TOTAL_BYTES >> 20);
   shm->magic = LFKB_MAGIC; shm->version = LFKB_VERSION; shm->viewCount = 2; shm->heartbeat = 1;
@@ -253,6 +258,29 @@ int main(int argc, char** argv) {
     CHECK(lastQuad && lastQuad->size.width < 0.24f * 1.2f, "Al sacarlo otra vez no aparece ya ampliado (%.3f m)", lastQuad ? lastQuad->size.width : 0);
     for (int i = 0; i < 60; i++) { shm->heartbeat++; endFrame(session, &fei); }
     CHECK(lastQuad && lastQuad->size.width > 0.24f * 1.5f, "y luego se amplía al mirarlo (%.3f m)", lastQuad ? lastQuad->size.width : 0);
+
+    // Medición de rendimiento: a los 10 s la capa anota en su registro los fps de DCS y lo que tarda ella.
+    {
+      DWORD t0 = GetTickCount();
+      int frames = 0;
+      while (GetTickCount() - t0 < 10300) {
+        shm->heartbeat++;
+        if (frames % 6 == 0) { px[0] ^= 1; shm->views[0].seq++; }  // una imagen nueva cada 6 fotogramas
+        endFrame(session, &fei);
+        frames++;
+        Sleep(11);
+      }
+      px[0] = 0xFF2040C0u;  // deja el fotograma de prueba como estaba
+      wchar_t logPath[MAX_PATH];
+      GetEnvironmentVariableW(L"LOCALAPPDATA", logPath, MAX_PATH);
+      wcscat(logPath, L"\\LF Kneeboard\\openxr-layer.log");
+      FILE* lf = _wfopen(logPath, L"rb");
+      std::string text;
+      if (lf) { char buf[4096]; size_t n; while ((n = fread(buf, 1, sizeof buf, lf)) > 0) text.append(buf, n); fclose(lf); }
+      size_t at = text.rfind("Rendimiento: DCS a ");
+      std::string line = at == std::string::npos ? "" : text.substr(at, text.find('\n', at) - at);
+      CHECK(!line.empty(), "Registro de rendimiento: %s", line.c_str());
+    }
 
     // App cerrada (sin latido): deja de pintarse
     for (int i = 0; i < 2; i++) endFrame(session, &fei);

@@ -29,12 +29,24 @@ button, input, textarea, select { font: inherit; color: inherit; }
   position: fixed;
   inset: 0;
   opacity: var(--gaze-opacity);
+  /* Capa propia siempre lista: sacarlo no obliga a crearla ni a pintar la página de nuevo. */
+  will-change: opacity, transform;
   transition: opacity .25s ease, filter .3s ease, transform .26s cubic-bezier(.2, .8, .25, 1);
 }
-/* Guardar y sacar el kneeboard: se desvanece hacia abajo y vuelve a subir, siempre igual. */
-body.kb-out #kb { opacity: 0; transform: translateY(5%) scale(.97); transition: opacity .14s ease, transform .16s ease-in; }
-body.kb-in #kb { animation: kbIn .28s cubic-bezier(.2, .8, .25, 1); }
-@keyframes kbIn { from { opacity: 0; transform: translateY(5%) scale(.97); } }
+/* Guardar y sacar el kneeboard. Guardado queda casi transparente (.001, que en pantalla es 0) y no a 0:
+   con opacidad 0 Chromium deja de pintarlo y al sacarlo tiene que pintarlo entero de golpe, con DCS
+   ocupando la tarjeta gráfica (los tirones del principio). Sin escala: cambiarla obliga a repintar. */
+body.kb-out #kb { opacity: .001; transform: translateY(4%); transition: opacity .14s ease, transform .16s ease-in; }
+body.kb-in #kb { animation: kbIn .24s cubic-bezier(.2, .8, .25, 1); }
+@keyframes kbIn { from { opacity: .001; transform: translateY(4%); } }
+body.kb-out.kb-parked #kb { transition: none; }
+body.kb-out.kb-parked.kb-warm #kb { opacity: .0011; }
+/* Ajustes › Apariencia › Animación: solo fundido, o ninguna. */
+body.anim-fade.kb-out #kb { transform: none; }
+body.anim-fade.kb-in #kb { animation-name: kbFade; }
+@keyframes kbFade { from { opacity: .001; } }
+body.anim-none.kb-out #kb { transform: none; transition: none; }
+body.anim-none.kb-in #kb { animation: none; }
 body.night #kb { filter: brightness(.6) sepia(1) hue-rotate(-38deg) saturate(3.2) contrast(1.05); }
 body.night[data-theme='noche'] #kb { filter: none; }
 

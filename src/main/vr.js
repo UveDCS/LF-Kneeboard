@@ -153,8 +153,15 @@ class VrBridge extends EventEmitter {
   }
 
   // image: NativeImage de Electron (BGRA en Windows)
+  takeStats() {
+    const st = this.stats || { n: 0, ms: 0, max: 0, w: 0, h: 0 };
+    this.stats = { n: 0, ms: 0, max: 0, w: 0, h: 0 };
+    return st;
+  }
+
   pushFrame(i, image) {
     if (!this.ok || !image || image.isEmpty()) return;
+    const t0 = process.hrtime.bigint();
     let { width, height } = image.getSize();
     if (width > MAX_W || height > MAX_H) {
       const k = Math.min(MAX_W / width, MAX_H / height);
@@ -176,6 +183,13 @@ class VrBridge extends EventEmitter {
     this.front[i] = back;
     this.seq[i] = (this.seq[i] + 1) >>> 0;
     this.writeU32(VIEW_OFF(i), this.seq[i]);
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    if (!this.stats) this.takeStats();
+    this.stats.n++;
+    this.stats.ms += ms;
+    this.stats.max = Math.max(this.stats.max, ms);
+    this.stats.w = width;
+    this.stats.h = height;
   }
 
   stop() {
