@@ -88,14 +88,28 @@ const BUILTIN = {
   lesson: ['Lección', 'lesson'],
 };
 
-// Plantillas según el tipo de vuelo. «*» = favorita: fija en la barra de abajo; el resto, en la cuadrícula.
+// Plantillas según el tipo de vuelo. «*» = favorita: fija en la barra de abajo. Todas traen además el resto de
+// tipos de pestaña, sin fijar (en la cuadrícula): ver fillAllTypes.
 const TEMPLATES = [
+  // La de fábrica (la primera): lo justo para empezar. Las demás se aplican desde Ajustes › Pestañas.
+  { id: 'sencillo', label: 'Sencillo', desc: 'Fijas solo el Piernógrafo y el Bloc', tabs: ['library*', 'notes*'] },
   { id: 'completa', label: 'Completa', desc: 'Todas las pestañas', tabs: ['dcs-kneeboard*', 'library*', 'cards*', 'flightplan*', 'radios*', 'dtc', 'support', 'notes*', 'map*', 'timers', 'draw', 'radiolog', 'shared', 'lesson'] },
   { id: 'caza', label: 'Caza', desc: 'Aire-aire: apoyo, bullseye y radios a mano', tabs: ['dcs-kneeboard*', 'library*', 'cards*', 'flightplan*', 'radios*', 'support*', 'map*', 'dtc', 'notes', 'timers', 'radiolog', 'shared'] },
   { id: 'ataque', label: 'Ataque', desc: 'Aire-suelo: coordenadas, mapa y pizarra', tabs: ['dcs-kneeboard*', 'library*', 'cards*', 'flightplan*', 'radios*', 'notes*', 'map*', 'dtc*', 'support', 'draw', 'timers', 'radiolog', 'shared'] },
   { id: 'helicoptero', label: 'Helicóptero', desc: 'Navegación a la vista: mapa, ruta y tiempos', tabs: ['map*', 'flightplan*', 'radios*', 'dcs-kneeboard*', 'notes*', 'timers*', 'library', 'cards', 'support', 'draw', 'shared'] },
   { id: 'entreno', label: 'Entrenamiento', desc: 'Lección de DKS, bloc y pizarra', tabs: ['lesson*', 'dcs-kneeboard*', 'library*', 'notes*', 'draw*', 'cards', 'flightplan', 'radios', 'dtc', 'map', 'timers', 'shared'] },
 ];
+
+// Temas con variante Noche (mismo kneeboard, oscuro). La luna (acción «Modo noche») cambia entre los dos.
+// El tema «Noche (rojo)» no tiene pareja: la luna lo devuelve a la Tablet.
+const NIGHT_BASES = ['tablet', 'libreta', 'portapapeles', 'tactico', 'mfd', 'dossier'];
+const isNightTheme = (t) => t === 'noche' || /-noche$/.test(String(t || ''));
+function nightPair(t) {
+  t = String(t || 'tablet');
+  if (t.endsWith('-noche')) return t.slice(0, -6);
+  if (NIGHT_BASES.includes(t)) return `${t}-noche`;
+  return t === 'noche' ? 'tablet' : 'tablet-noche';
+}
 
 function makeTab(spec) {
   const type = spec.replace('*', '');
@@ -104,7 +118,18 @@ function makeTab(spec) {
 }
 
 function defaultTabs() {
-  return TEMPLATES[0].tabs.map(makeTab);
+  return templateTabs(TEMPLATES[0].id, []);
+}
+
+// Todas las plantillas y presets traen todos los tipos de pestaña: las que no son suyas van detrás, sin fijar
+// (en la cuadrícula). Si ya tenías una de ese tipo se reutiliza (mismo identificador: no se pierden sus datos).
+function fillAllTypes(out, pool) {
+  for (const type of Object.keys(BUILTIN)) {
+    if (out.some((t) => t.type === type)) continue;
+    const i = pool.findIndex((t) => t.type === type);
+    out.push(i >= 0 ? { ...pool.splice(i, 1)[0], fav: false } : makeTab(type));
+  }
+  return out;
 }
 
 // Aplica una plantilla sin perder lo que ya tenías: las pestañas del mismo tipo conservan su nombre,
@@ -119,13 +144,14 @@ function templateTabs(id, current) {
     tab.fav = spec.endsWith('*');
     return tab;
   });
+  fillAllTypes(out, pool);
   for (const t of pool) if (!BUILTIN[t.type]) out.push({ ...t, fav: !!t.fav });
   return out;
 }
 
 function defaults() {
   return {
-    version: 5,
+    version: 6,
     firstRun: true,
     theme: 'tablet',
     night: false,
@@ -138,7 +164,7 @@ function defaults() {
     hidden: false,
     views: [
       { state: { tab: 0, pages: {} }, bounds: null, vr: { pos: [0.13, -0.36, -0.42], rot: [-8, -48, 0], width: 0.24 } },
-      { state: { tab: 2, pages: {} }, bounds: null, vr: { pos: [-0.13, -0.36, -0.42], rot: [8, -48, 0], width: 0.24 } },
+      { state: { tab: 1, pages: {} }, bounds: null, vr: { pos: [-0.13, -0.36, -0.42], rot: [8, -48, 0], width: 0.24 } },
     ],
     vr: { enabled: true, gazeZoom: true, zoomScale: 1.6, opacityIdle: 0.85, opacityGaze: 1, hideWindow: false },
     tabs: defaultTabs(),
@@ -177,6 +203,12 @@ class Config {
       if ((saved.version || 1) < 3) migrateV3(this.data);
       if ((saved.version || 1) < 4) migrateV4(this.data);
       if ((saved.version || 1) < 5) migrateV5(this.data);
+      if ((saved.version || 1) < 6) migrateV6(this.data);
+      // El «modo noche» antiguo (un filtro rojo encima de cualquier tema) pasa a ser la variante Noche del tema.
+      if (this.data.night) {
+        if (!isNightTheme(this.data.theme)) this.data.theme = nightPair(this.data.theme);
+        this.data.night = false;
+      }
     } catch {
       /* primera ejecución */
     }
@@ -274,9 +306,17 @@ function migrateV5(data) {
   data.version = 5;
 }
 
+// v6: todos los tipos de pestaña disponibles. Los que falten se añaden al final, sin fijar (en la cuadrícula).
+function migrateV6(data) {
+  if (Array.isArray(data.tabs)) data.tabs = fillAllTypes(data.tabs.map((t) => ({ ...t })), []);
+  data.version = 6;
+}
+
 // Preset de pestañas guardado por el piloto: copia de sus pestañas (con sus identificadores, para no perder datos).
-function presetTabs(preset) {
-  return (preset && Array.isArray(preset.tabs) ? preset.tabs : []).map((t) => ({ ...t, phases: [...(t.phases || [])] }));
+function presetTabs(preset, current = []) {
+  if (!preset || !Array.isArray(preset.tabs)) return [];
+  const out = (preset && Array.isArray(preset.tabs) ? preset.tabs : []).map((t) => ({ ...t, phases: [...(t.phases || [])] }));
+  return fillAllTypes(out, current.filter((t) => !out.some((o) => o.id === t.id)).map((t) => ({ ...t })));
 }
 
 function merge(base, extra) {
@@ -289,4 +329,4 @@ function merge(base, extra) {
   return out;
 }
 
-module.exports = { Config, ACTIONS, PHASES, DEFAULT_BINDINGS, TEMPLATES, defaultTabs, templateTabs, presetTabs, tid };
+module.exports = { nightPair, isNightTheme, Config, ACTIONS, PHASES, DEFAULT_BINDINGS, TEMPLATES, defaultTabs, templateTabs, presetTabs, tid };

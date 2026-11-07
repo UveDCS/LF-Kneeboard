@@ -39,6 +39,9 @@ const ctx = {
   addPoint: (p, opts) => addPoint(p, opts),
   refresh: () => { renderChrome(); updateCoordsFlag(); },
   goToPage: (n) => setPage(n, { manual: true }),
+  // Menús de las pestañas (p. ej. elegir carpeta) en la ventana superpuesta del kneeboard: se ven también en VR.
+  openOverlay: (title, ...content) => openOverlay(title, ...content),
+  closeOverlay: () => closeOverlay(),
   // Nombres de los puntos cambiados en esta ventana: el mapa y las demás pestañas los repintan.
   namesChanged: () => { for (const { inst } of instances.values()) if (inst.onConfig) inst.onConfig(S.config); },
   goToType: (type) => {
@@ -380,7 +383,7 @@ function openIndex() {
       if (!e.isIntersecting) continue;
       const img = e.target;
       io.unobserve(img);
-      kb.thumb(img.dataset.path).then((u) => { if (u) img.src = u; else img.classList.add('none'); });
+      (img.__thumb ? img.__thumb() : kb.thumb(img.dataset.path)).then((u) => { if (u) img.src = u; else img.classList.add('none'); });
     }
   }, { root: null, rootMargin: '300px' });
   const tiles = new Map();
@@ -459,6 +462,7 @@ function openIndex() {
     for (const it of items.slice(s.page, s.page + s.count)) {
       const bm = it.key ? S.bookmarks[it.key] : null;
       const img = h('img', { alt: '', draggable: false, 'data-path': it.path || '' });
+      if (it.thumb) img.__thumb = it.thumb; // páginas sin archivo propio (PDF): la pestaña dibuja la miniatura
       const mis = canBeInMission(it.key) ? h('span.idx-mis', {
         role: 'button',
         onclick: (e) => {
@@ -477,7 +481,7 @@ function openIndex() {
       if (mis) misToggles.push({ el: mis, it, tile });
       tiles.set(it.page, tile);
       grid.append(tile);
-      if (it.path) io.observe(img);
+      if (it.path || it.thumb) io.observe(img);
     }
   }
   paintMis();
@@ -619,7 +623,9 @@ function renderChrome() {
   st.append(h('span.dot', { className: `dot${ds === 'on' ? ' on' : ds === 'open' ? ' warn' : ''}`, title: dsTitle }), h('span', { title: dsTitle }, ds === 'open' ? 'DCS · sin datos' : 'DCS'));
   if (S.vrActive) st.append(h('span.tag', { title: 'Mostrándose en el visor' }, icon('vr')));
   if (S.share.status === 'conectado') st.append(h('span.tag', { title: `Sala: ${S.share.members.join(', ')}` }, icon('users'), ` ${S.share.members.length}`));
-  if (document.hasFocus()) st.append(h('span.tag', { title: 'Modo escritura: el teclado escribe en el kneeboard' }, icon('keyboard')));
+  // Modo escritura: aviso flotante abajo a la izquierda, fuera de la barra (en la barra empujaba los botones
+  // de arriba justo al hacer clic y acababas pulsando otro).
+  $('writeBadge').classList.toggle('on', document.hasFocus());
 
   const bar = $('tabs');
   const scroll = bar.scrollLeft;
@@ -651,7 +657,7 @@ function renderChrome() {
   $('dualBtn').classList.toggle('on', !!S.config.dual);
   $('vrPlaceBtn').style.display = S.config.vr.enabled ? '' : 'none';
   $('vrPlaceBtn').classList.toggle('on', !!placeOpen);
-  $('nightBtn').classList.toggle('on', !!S.config.night);
+  $('nightBtn').classList.toggle('on', S.config.theme === 'noche' || /-noche$/.test(S.config.theme || ''));
 }
 
 function updateTabArrows() {
@@ -761,7 +767,6 @@ function applyLook() {
   const c = S.config;
   const theme = THEMES.find((t) => t.id === c.theme) ? c.theme : 'tablet';
   document.body.dataset.theme = theme;
-  document.body.classList.toggle('night', !!c.night);
   document.body.classList.toggle('active-view', !!c.dual && S.activeView === kb.view);
   document.body.classList.toggle('vr-only', !!(c.vr.enabled && c.vr.hideWindow));
   document.body.classList.toggle('anim-fade', c.stowAnim === 'fade');
@@ -870,6 +875,7 @@ async function main() {
   $('dualBtn').onclick = () => kb.action('toggle_dual');
   $('vrPlaceBtn').append(icon('place'));
   $('vrPlaceBtn').onclick = toggleVrPlace;
+  $('writeBadge').append(icon('keyboard'), h('span', 'Escribiendo'));
   $('nightBtn').append(icon('moon'));
   $('nightBtn').onclick = () => kb.action('toggle_night');
   $('bmListBtn').append(icon('bookmarks'));
@@ -975,10 +981,16 @@ async function main() {
       S.warmTimer = setInterval(() => { b.classList.add('kb-parked'); b.classList.toggle('kb-warm'); }, 1000);
       return;
     }
+    if (S.config && S.config.stowAnim === 'none') {
+      // Sin animación también al entrar: sin esto, la transición normal de la opacidad lo hacía aparecer en 0,25 s.
+      b.classList.add('kb-instant');
+      b.classList.remove('kb-out', 'kb-in', 'kb-warm', 'kb-parked');
+      requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('kb-instant')));
+      return;
+    }
     b.classList.remove('kb-out', 'kb-in', 'kb-warm', 'kb-parked');
     void b.offsetWidth; // reinicia la animación de entrada
     b.classList.add('kb-in');
-    if (S.config && S.config.stowAnim === 'none') b.classList.remove('kb-in');
   });
   document.getElementById('kb').addEventListener('animationend', (e) => { if (e.animationName === 'kbIn') document.body.classList.remove('kb-in'); });
   kb.on('mission', (m) => { S.mission = m; loadBookmarks(); each((i) => i.onMission && i.onMission(m)); show(); });

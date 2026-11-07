@@ -1,10 +1,10 @@
-﻿// LF Kneeboard: proceso principal.
+// LF Kneeboard: proceso principal.
 const { app, BrowserWindow, ipcMain, protocol, net, screen, Tray, Menu, dialog, shell, nativeImage, desktopCapturer, session, Notification } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
-const { Config, ACTIONS, PHASES, TEMPLATES, defaultTabs, templateTabs, presetTabs } = require('./config');
+const { nightPair, isNightTheme, Config, ACTIONS, PHASES, TEMPLATES, defaultTabs, templateTabs, presetTabs } = require('./config');
 const { DcsLink } = require('./dcs');
 const { Input } = require('./input');
 const { VrBridge } = require('./vr');
@@ -377,6 +377,122 @@ async function updateNoticeCheck() {
   console.log(`[update] menú de la bandeja: ${updater.state.state}, ${updater.state.version}`);
 }
 
+// Prueba del Bloc (LFKB_SNAPSHOT + LFKB_NOTES_CHECK): lo escrito en «Notas» sigue ahí tras guardar y sacar
+// el kneeboard, cambiar de pestaña y de plantilla, y cambiar ajustes.
+async function notesCheck() {
+  const win = views[0];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(3000);
+  const tabs = cfg.get().tabs;
+  const ni = tabs.findIndex((t) => t.type === 'notes');
+  const key = `notes:${tabs[ni].id}`;
+  const js = (c) => win.webContents.executeJavaScript(c, true);
+  const val = () => js(`(document.querySelector('.content:not(.hidden) textarea.f, textarea.f') || {}).value`);
+  win.webContents.send('goto-tab', ni);
+  await wait(400);
+  await js(`(() => { const t = [...document.querySelectorAll('textarea.f')].find((x) => x.offsetParent); t.focus(); t.value = 'Hola bloc'; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  await wait(300);
+  const log = async (step) => console.log(`[notas] ${step}: pantalla «${await val()}», guardado «${((loadStore(key) || {}).values || {}).libre?.text}»`);
+  await log('escrito');
+  setHidden(true); await wait(2500); setHidden(false); await wait(600);
+  await log('guardar y sacar');
+  win.webContents.send('goto-tab', 0); await wait(400); win.webContents.send('goto-tab', ni); await wait(400);
+  await log('otra pestaña y volver');
+  await js(`[...document.querySelectorAll('.chip')].find((c) => c.offsetParent && /9-line/.test(c.textContent)).click()`); await wait(300);
+  await js(`[...document.querySelectorAll('.chip')].find((c) => c.offsetParent && /^Notas/.test(c.textContent)).click()`); await wait(300);
+  await log('otra plantilla y volver');
+  cfg.patch({ theme: 'tablet-noche' }); broadcast('config', cfg.get()); await wait(400);
+  cfg.patch({ theme: 'tablet' }); broadcast('config', cfg.get()); await wait(400);
+  await log('cambiar ajustes');
+  await js(`document.activeElement && document.activeElement.blur()`);
+  setHidden(true); await wait(2500); setHidden(false); await wait(600);
+  await log('sin foco, guardar y sacar');
+  // Sin animación: al sacarlo, la opacidad tiene que estar ya en 1 en el primer fotograma.
+  cfg.patch({ stowAnim: 'none' }); broadcast('config', cfg.get()); await wait(300);
+  setHidden(true); await wait(1500);
+  const probe = js(`new Promise((d) => { const o = []; const t0 = performance.now(); const f = (t) => { o.push(getComputedStyle(document.getElementById('kb')).opacity); if (t - t0 < 300) requestAnimationFrame(f); else d(o); }; requestAnimationFrame(f); })`);
+  setHidden(false);
+  const ops = await probe;
+  console.log(`[anim] sin animación, opacidad al sacarlo: ${ops.slice(0, 6).map((x) => (+x).toFixed(2)).join(' ')} …`);
+}
+
+// Prueba de la pestaña Carpeta (LFKB_SNAPSHOT + LFKB_FOLDER_CHECK=<carpeta con imágenes y un PDF>): páginas de
+// imagen y de PDF seguidas sin huecos al pasar de una a otra, selector de carpetas e índice con miniaturas del PDF.
+async function folderCheck(dir) {
+  const win = views[0];
+  const out = process.env.LFKB_SNAPSHOT;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const js = (c) => win.webContents.executeJavaScript(c, true);
+  const shot = async (name) => fs.writeFileSync(path.join(out, name), (await win.webContents.capturePage()).toPNG());
+  win.webContents.on('console-message', (e) => { if (e.level === 'error' || /Error|PDF/.test(e.message)) console.log('[carpeta] consola:', e.message); });
+  await wait(2500);
+  let tabs = cfg.get().tabs.map((t) => ({ ...t }));
+  let fi = tabs.findIndex((t) => t.type === 'folder');
+  if (fi < 0) { tabs.push({ id: 'tcarpeta', type: 'folder', title: 'Carpeta', fav: true }); fi = tabs.length - 1; }
+  tabs[fi] = { ...tabs[fi], path: dir, recent: [] };
+  cfg.patch({ tabs }); broadcast('config', cfg.get());
+  await wait(500);
+  win.webContents.send('goto-tab', fi);
+  await wait(2500);
+  const info = () => js(`(() => { const a = document.querySelector('.folderwrap.view:not(.hidden) > .doc'); const n = a && a.firstElementChild; return { title: document.title, tag: n ? n.tagName : null, w: n ? n.getBoundingClientRect().width : 0, h: n ? n.getBoundingClientRect().height : 0, pages: document.querySelector('#pageNum, .pagenum') ? document.querySelector('#pageNum, .pagenum').textContent : '' }; })()`);
+  await shot('carpeta-inicio.png');
+  console.log('[carpeta] vista:', await js(`[...document.querySelectorAll('.view:not(.hidden)')].map((v) => v.className + ' > ' + [...v.children].map((c) => c.className).join(',')).join(' | ')`));
+  await js(`(() => { const a = document.querySelector('.folderwrap.view:not(.hidden) > .doc'); window.__gaps = 0; new MutationObserver(() => { if (!a.firstElementChild) window.__gaps++; }).observe(a, { childList: true }); })()`);
+  await shot('carpeta-0.png');
+  console.log('[carpeta] página 1:', JSON.stringify(await info()));
+  // Imagen → PDF → … → imagen, pasando página como con el HOTAS.
+  const seen = [];
+  for (let k = 0; k < 13; k++) {
+    sendToView(0, 'action', 'next_page');
+    await wait(k === 0 ? 150 : 90);
+    const i = await info();
+    seen.push(`${i.tag}${Math.round(i.w)}x${Math.round(i.h)}`);
+    if (k === 0) await shot('carpeta-1-pdf.png');
+  }
+  await wait(600);
+  await shot('carpeta-ultima.png');
+  console.log('[carpeta] al pasar páginas:', seen.join(' '), '| huecos vacíos:', await js('window.__gaps'));
+  console.log('[carpeta] última:', JSON.stringify(await info()));
+  // Selector de carpetas dentro del kneeboard.
+  await js(`document.querySelector('.view:not(.hidden) .folderbtn').click()`);
+  await wait(800);
+  await shot('carpeta-selector.png');
+  console.log('[carpeta] selector:', await js(`[...document.querySelectorAll('.dirrow b')].map((b) => b.textContent).join(' | ')`));
+  await js(`[...document.querySelectorAll('.dirrow')].find((r) => /Aproximaciones/.test(r.textContent)).click()`);
+  await wait(1200);
+  console.log('[carpeta] tras elegir subcarpeta:', cfg.get().tabs[fi].path, '| recientes:', JSON.stringify(cfg.get().tabs[fi].recent));
+  await shot('carpeta-selector-sub.png');
+  await js(`[...document.querySelectorAll('.ov-body .btn.primary')].find((b) => /Listo/.test(b.textContent)).click()`);
+  await wait(800);
+  await shot('carpeta-sub.png');
+  // Vuelve a la carpeta con el PDF y abre el índice.
+  tabs = cfg.get().tabs.map((t) => ({ ...t })); tabs[fi] = { ...tabs[fi], path: dir };
+  cfg.patch({ tabs }); broadcast('config', cfg.get());
+  await wait(2500);
+  sendToView(0, 'action', 'open_index');
+  await wait(3000);
+  await shot('carpeta-indice.png');
+  console.log('[carpeta] miniaturas en el índice:', await js(`[...document.querySelectorAll('.idx img')].filter((i) => i.src).length + ' de ' + document.querySelectorAll('.idx img').length`));
+}
+
+// Prueba del aviso de modo escritura (LFKB_SNAPSHOT + LFKB_WRITE_CHECK): al dar foco al kneeboard sale el aviso
+// y los botones de la barra de arriba no se mueven.
+async function writeCheck() {
+  const win = views[0];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const js = (c) => win.webContents.executeJavaScript(c, true);
+  const pos = () => js(`['nightBtn','dualBtn','autoPill','vrPlaceBtn'].map((id) => { const r = document.getElementById(id).getBoundingClientRect(); return id + ':' + Math.round(r.x); }).join(' ')`);
+  await wait(3000);
+  const before = await pos();
+  win.focus(); win.webContents.focus();
+  await wait(500);
+  const focused = await js('document.hasFocus()');
+  const on = await js(`document.getElementById('writeBadge').classList.contains('on')`);
+  const after = await pos();
+  fs.writeFileSync(path.join(process.env.LFKB_SNAPSHOT, 'escritura.png'), (await win.webContents.capturePage()).toPNG());
+  console.log(`[escritura] foco ${focused}, aviso ${on} | antes ${before} | después ${after} | ${before === after ? 'los botones no se mueven' : 'SE MUEVEN'}`);
+}
+
 function startFrames(i) {
   const win = views[i];
   if (!win || win.isDestroyed() || !vr || !vr.ok) return;
@@ -539,7 +655,7 @@ function updateTray() {
     { label: 'Ajustes…', click: () => openSettings() },
     { type: 'separator' },
     { label: 'Modo automático', type: 'checkbox', checked: c.auto.enabled, click: () => doAction('toggle_auto') },
-    { label: 'Modo noche', type: 'checkbox', checked: c.night, click: () => doAction('toggle_night') },
+    { label: 'Modo noche', type: 'checkbox', checked: isNightTheme(c.theme), click: () => doAction('toggle_night') },
     { label: 'Recentrar VR', click: () => doAction('recenter_vr') },
     { type: 'separator' },
     { label: 'Salir', click: () => { quitting = true; app.quit(); } },
@@ -557,7 +673,7 @@ function sendToView(i, channel, payload) {
 function applyPreset(id) {
   const p = (cfg.get().tabPresets || []).find((x) => x.id === id);
   if (!p) return null;
-  cfg.patch({ tabs: presetTabs(p), activePreset: p.id });
+  cfg.patch({ tabs: presetTabs(p, cfg.get().tabs), activePreset: p.id });
   voice.apply();
   broadcast('config', cfg.get());
   toast(`Pestañas: ${p.name}`);
@@ -584,7 +700,8 @@ async function doAction(action) {
       updateTray();
       break;
     case 'toggle_night':
-      cfg.patch({ night: !c.night });
+      // Cambia entre el tema y su variante Noche (Kneeboard táctico ↔ Kneeboard táctico · Noche…).
+      cfg.patch({ theme: nightPair(c.theme), night: false });
       broadcast('config', cfg.get());
       updateTray();
       break;
@@ -955,6 +1072,9 @@ function registerIpc() {
 
   ipcMain.handle('fs:list', (e, dir, kind) => listFiles(dir, kind));
   ipcMain.handle('fs:url', (e, p) => fileUrl(p));
+  // Carpetas para elegir desde el propio kneeboard (también en VR): subcarpetas con cuántas páginas tienen,
+  // la de arriba y, en la raíz, las unidades del PC.
+  ipcMain.handle('fs:dirs', (e, dir) => listDirs(dir));
   ipcMain.handle('fs:thumb', (e, p) => thumbnail(p));
   ipcMain.handle('fs:dcsKneeboard', (e, aircraft) => {
     const out = [];
@@ -1291,6 +1411,28 @@ function thumbnail(p) {
   return thumbJobs.get(key);
 }
 
+function listDirs(dir) {
+  const drives = () => 'CDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => `${l}:\\`).filter((d) => { try { return fs.existsSync(d); } catch { return false; } });
+  const count = (d) => {
+    let images = 0, pdfs = 0;
+    for (const f of safeReaddir(d)) { if (EXT.images.test(f)) images++; else if (EXT.pdf.test(f)) pdfs++; }
+    return { images, pdfs };
+  };
+  if (!dir) return { dir: null, parent: null, dirs: [], drives: drives() };
+  const abs = path.resolve(dir);
+  const parent = path.dirname(abs) === abs ? null : path.dirname(abs);
+  const dirs = [];
+  for (const name of safeReaddir(abs)) {
+    if (dirs.length >= 300 || name.startsWith('$') || name.startsWith('.')) continue;
+    const full = path.join(abs, name);
+    let st;
+    try { st = fs.statSync(full); } catch { continue; }
+    if (st.isDirectory()) dirs.push({ name, path: full, ...count(full) });
+  }
+  dirs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  return { dir: abs, parent, dirs, ...count(abs), drives: parent ? [] : drives() };
+}
+
 function listFiles(dir, kind = 'images') {
   if (!dir) return [];
   const re = EXT[kind] || EXT.images;
@@ -1471,7 +1613,10 @@ app.whenReady().then(() => {
   screen.on('display-metrics-changed', () => views.forEach((_, i) => applyWindowState(i)));
   if (process.env.LFKB_PERF) setTimeout(() => perfCheck().then(() => app.exit(0)), 6000);
   else if (process.env.LFKB_SNAP_UPDATE) updateNoticeCheck().then(() => app.exit(0));
-  else if (process.env.LFKB_SNAPSHOT && !process.env.LFKB_SNAP_UPDATE) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
+  else if (process.env.LFKB_NOTES_CHECK) notesCheck().then(() => app.exit(0));
+  else if (process.env.LFKB_WRITE_CHECK) writeCheck().catch((e) => console.log('[escritura] FALLO', e.message)).then(() => app.exit(0));
+  else if (process.env.LFKB_FOLDER_CHECK) folderCheck(process.env.LFKB_FOLDER_CHECK).catch((e) => console.log('[carpeta] FALLO', e.message)).then(() => app.exit(0));
+  else if (process.env.LFKB_SNAPSHOT && !process.env.LFKB_SNAP_UPDATE && !process.env.LFKB_NOTES_CHECK && !process.env.LFKB_FOLDER_CHECK && !process.env.LFKB_WRITE_CHECK) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
 });
 
 function flushStores() {

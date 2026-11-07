@@ -26,7 +26,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 
 ### Lo básico (como OpenKneeboard)
 - **VR** con cualquier visor OpenXR y **escritorio** como ventana superpuesta encima de DCS.
-- Pestañas de **PDF**, **carpeta de imágenes**, **kneeboard de DCS** (las imágenes del `.miz` y de `Saved Games\DCS\Kneeboard\<avión>`), **web o archivo local** y **captura de una ventana** (SRS, Discord…).
+- Pestañas de **PDF**, **carpeta de imágenes y PDF** (las páginas de los PDF van seguidas de las imágenes, sin saltos; la carpeta se cambia desde el propio kneeboard, también en VR), **kneeboard de DCS** (las imágenes del `.miz` y de `Saved Games\DCS\Kneeboard\<avión>`), **web o archivo local** y **captura de una ventana** (SRS, Discord…).
 - La pestaña web admite una dirección `https://…` o la ruta de un archivo de tu PC (`C:\…\guia.html`). Los enlaces relativos de esa página funcionan. La dirección se **escribe en la propia pestaña** (Intro para abrirla; se queda guardada) y el botón de la carpeta **abre un archivo del PC**: los PDF con el visor de la app (páginas con el HOTAS y marcadores), y HTML, imágenes y texto en la pestaña.
 - **Lápiz** sobre cualquier página, con la presión de tu tableta.
 - **Tableta gráfica como en OpenKneeboard** (Wacom, Huion, Gaomon…): toda la superficie de la tableta es el kneeboard, con un **cursor que se ve también en el visor** cuando acercas el lápiz. Apoyarlo escribe o pulsa, el botón del lápiz borra, y los botones de la tableta se asignan como los de un mando. No le quita el foco a DCS y funciona aunque la ventana del kneeboard esté oculta. Usa el mismo camino que OpenKneeboard: **OpenTabletDriver con el plugin OTD-IPC** (o **wintab-adapter** si usas el driver del fabricante). Solo un programa a la vez puede leer la tableta. Orientación y kneeboard que controla, en Ajustes › Controles.
@@ -43,7 +43,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 - **Pestañas favoritas**: la barra de abajo enseña solo las que marques con la estrella. Las demás están en la cuadrícula (botón de la izquierda de la barra). La barra se desplaza con la rueda o arrastrándola. Pestaña siguiente/anterior del HOTAS recorre solo las favoritas.
 - **Ordenar las pestañas arrastrándolas** por su asa (⠿) en Ajustes › Pestañas.
 - **Presets de pestañas**: guarda tus pestañas tal como están (cuáles, orden, nombres, fijas y ajustes) con un nombre y cambia de uno a otro desde Ajustes > Pestañas, desde la cuadrícula del kneeboard o con la acción «Preset de pestañas siguiente».
-- **Plantillas por tipo de vuelo** en Ajustes > Pestañas: Completa, Caza, Ataque, Helicóptero y Entrenamiento. Conservan los nombres y ajustes de tus pestañas, y tus PDF y webs.
+- **Plantillas por tipo de vuelo** en Ajustes > Pestañas: Sencillo (la de fábrica: solo el Piernógrafo y el Bloc fijos en la barra), Completa, Caza, Ataque, Helicóptero y Entrenamiento. Todas traen todos los tipos de pestaña (las que no son de la plantilla van en la cuadrícula, sin fijar) y conservan los nombres y ajustes de tus pestañas, y tus PDF y webs.
 - **Tamaño en 2D**: textos y botones (Ctrl + rueda) y alto de la ventana, en Ajustes > Aspecto, o arrastrando la esquina.
 - **Cruz del centro** para capturar coordenadas del F10. Se centra en la ventana de DCS y en VR va fija en el centro de la vista. Puede salir automática (con el F10 abierto o en la página Coordenadas), siempre o nunca.
 
@@ -119,7 +119,7 @@ Para desinstalar, usa *Agregar o quitar programas*. Quita también el script de 
 - Ejemplos: «radios», «plan de vuelo», «página siguiente», «página tres», «marca punto», «oculta», «modo noche»…
 
 ### Temas
-Tablet táctica · Libreta de vuelo · Portapapeles · Kneeboard táctico · MFD de fósforo verde · Dossier · Noche (rojo). Además hay un **modo noche** que atenúa cualquier tema.
+Tablet táctica · Libreta de vuelo · Portapapeles · Kneeboard táctico · MFD de fósforo verde · Dossier · Noche (rojo). Cada uno, salvo el rojo, tiene su **variante Noche** (el mismo kneeboard en oscuro y con poco brillo): la luna de la barra, o `AltGr + N`, cambia entre el tema y su variante.
 
 ## Controles por defecto
 

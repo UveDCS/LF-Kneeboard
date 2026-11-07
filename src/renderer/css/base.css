@@ -47,8 +47,7 @@ body.anim-fade.kb-in #kb { animation-name: kbFade; }
 @keyframes kbFade { from { opacity: .001; } }
 body.anim-none.kb-out #kb { transform: none; transition: none; }
 body.anim-none.kb-in #kb { animation: none; }
-body.night #kb { filter: brightness(.6) sepia(1) hue-rotate(-38deg) saturate(3.2) contrast(1.05); }
-body.night[data-theme='noche'] #kb { filter: none; }
+body.kb-instant #kb { transition: none !important; }
 
 .frame {
   position: absolute;
@@ -204,6 +203,11 @@ canvas.ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-ev
 .tools { display: flex; gap: .3rem; }
 
 /* ---------- avisos ---------- */
+.write-badge { position: absolute; left: .7rem; bottom: 3.6rem; z-index: 7; display: flex; align-items: center; gap: .35rem; padding: .22rem .55rem; border-radius: 99px;
+  background: var(--card); border: 1px solid var(--accent); color: var(--accent); font: 700 .6rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  box-shadow: 0 .2rem .8rem rgba(0,0,0,.3); pointer-events: none; opacity: 0; transform: translateY(.3rem); transition: opacity .15s ease, transform .15s ease; }
+.write-badge svg { width: .85rem; height: .85rem; }
+.write-badge.on { opacity: 1; transform: none; }
 .toasts { position: absolute; left: 0; right: 0; bottom: 3.6rem; display: flex; flex-direction: column; align-items: center; gap: .35rem; pointer-events: none; z-index: 8; }
 .toast {
   background: var(--toast-bg, rgba(15,20,25,.92)); color: var(--toast-ink, #fff); padding: .5rem .9rem; border-radius: .7rem;
@@ -288,6 +292,22 @@ textarea.f { resize: none; line-height: 1.6; }
 .webnav input.url:focus { border-color: var(--accent); color: var(--ink); }
 .webnav input.url::placeholder { color: var(--muted); }
 .webwrap > .doc { position: absolute; inset: 0; }
+/* Carpeta de imágenes y PDF: barra para cambiar de carpeta y selector dentro del kneeboard. */
+.folderwrap { display: flex; flex-direction: column; }
+.folderwrap > .doc { flex: 1; min-height: 0; overflow: hidden; }
+.foldernav .folderbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: .4rem; background: var(--card); border: 1px solid var(--line); border-radius: .35rem; padding: .22rem .5rem; cursor: pointer; color: var(--ink); }
+.foldernav .folderbtn svg { width: .95rem; height: .95rem; flex: none; color: var(--accent); }
+.foldernav .folderbtn .url { color: var(--ink); }
+.dirpath { font: .72rem var(--font-mono); color: var(--muted); word-break: break-all; margin-bottom: .2rem; }
+.dirlist { display: flex; flex-direction: column; gap: .25rem; margin-top: .5rem; max-height: 55vh; overflow: auto; }
+.dirrow { display: flex; align-items: center; gap: .6rem; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: .5rem; padding: .45rem .6rem; cursor: pointer; color: var(--ink); }
+.dirrow:hover { border-color: var(--accent); }
+.dirrow svg { width: 1.1rem; height: 1.1rem; flex: none; color: var(--accent); }
+.dirrow span { display: flex; flex-direction: column; min-width: 0; }
+.dirrow b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dirrow small { color: var(--muted); font-size: .7rem; }
+.dirrecent { margin-top: .7rem; }
+.dirrecent .lbl { font: .62rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .3rem; }
 .webwrap { position: absolute; top: 2.9rem; left: 0; right: 0; bottom: 0; }
 .webwrap webview, .webwrap video { width: 100%; height: 100%; display: flex; background: #fff; }
 .webwrap video { background: #000; object-fit: contain; }

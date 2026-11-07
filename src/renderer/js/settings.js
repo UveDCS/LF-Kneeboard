@@ -121,7 +121,7 @@ R.bienvenida = async () => {
 };
 
 R.general = () => {
-  main.append(h('h1', 'Aspecto'), h('p.lead', 'Elige cómo se ve tu kneeboard. El tema se aplica al momento, también en el visor.'));
+  main.append(h('h1', 'Aspecto'), h('p.lead', 'Elige cómo se ve tu kneeboard. El tema se aplica al momento, también en el visor. Cada tema tiene su variante Noche: la luna del kneeboard (o la acción «Modo noche») cambia entre los dos.'));
   const grid = h('div.themes');
   for (const t of THEMES) {
     grid.append(h('button.theme', { className: `theme${C.theme === t.id ? ' sel' : ''}`, onclick: async () => { await patch({ theme: t.id }); render(); } },
@@ -131,7 +131,6 @@ R.general = () => {
   main.append(grid,
     h('h2', 'Opciones'),
     h('div.card',
-      chk('Modo noche', 'Atenúa y tiñe de rojo cualquier tema. Acción «Modo noche» para cambiarlo en vuelo.', C.night, (v) => patch({ night: v })),
       chk('Dos kneeboards', 'Un segundo kneeboard independiente (por ejemplo, radios a la izquierda y plan a la derecha).', C.dual, (v) => patch({ dual: v })),
       chk('Iniciar con Windows', 'Se abre oculto al encender el PC (en la bandeja), listo para cuando entres en DCS: sácalo con tu tecla.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
       chk('Siempre encima de DCS', 'Recomendado si juegas en ventana o pantalla completa sin bordes.', C.alwaysOnTop, (v) => patch({ alwaysOnTop: v })),
@@ -206,7 +205,7 @@ Las pestañas que ya tienes conservan su nombre y sus ajustes, y tus PDF, webs y
       C = await kb.applyTemplate(tp.id);
       render();
     } }, h('b', tp.label), h('span', tp.desc)))),
-    h('div.small.muted', 'Cambian qué pestañas hay, su orden y cuáles van fijas en la barra.')));
+    h('div.small.muted', 'Todas traen todos los tipos de pestaña: cambian el orden y cuáles van fijas en la barra (el resto, en la cuadrícula). Tus presets también se completan con los tipos que les falten, sin fijar.')));
   const adv = !!C.tabsAdvanced;
   main.append(h('h2', 'Tus pestañas'));
   const card = h('div.card');
@@ -258,7 +257,7 @@ Las pestañas que ya tienes conservan su nombre y sus ajustes, y tus PDF, webs y
     const type = TAB_TYPES[t.type] || { label: t.type };
     const opts = h('div.opts');
     if (t.type === 'folder' || t.type === 'pdf') {
-      const p = h('input.f.grow', { value: t.path || '', placeholder: t.type === 'pdf' ? 'Ruta del PDF' : 'Carpeta con imágenes', onchange: (e) => { t.path = e.target.value; save(); } });
+      const p = h('input.f.grow', { value: t.path || '', placeholder: t.type === 'pdf' ? 'Ruta del PDF' : 'Carpeta con imágenes y PDF (también se elige desde el kneeboard)', onchange: (e) => { t.path = e.target.value; save(); } });
       opts.append(p, h('button.btn.small', { onclick: async () => {
         const r = await kb.openDialog(t.type === 'pdf' ? { properties: ['openFile'], filters: [{ name: 'PDF', extensions: ['pdf'] }] } : { properties: ['openDirectory'] });
         if (r[0]) { t.path = r[0]; p.value = r[0]; save(); }

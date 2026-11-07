@@ -4,7 +4,7 @@
 /* =====================================================================
    TABLET — tableta táctica con bisel de aluminio oscuro
    ===================================================================== */
-body[data-theme='tablet'] {
+body:is([data-theme='tablet'],[data-theme='tablet-noche']) {
   --frame-bg: linear-gradient(145deg, #2c3138 0%, #0c0e11 48%, #1b1f24 100%);
   --frame-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 .12rem .25rem rgba(255,255,255,.07), 0 .8rem 2rem rgba(0,0,0,.55);
   --frame-pad: 1.7rem 1.15rem 1.5rem;
@@ -26,15 +26,15 @@ body[data-theme='tablet'] {
   --doc-bg: #080d13;
   --map-bg: #111b25;
 }
-body[data-theme='tablet'] .deco-a { top: .62rem; left: 50%; width: .62rem; height: .62rem; margin-left: -.31rem; border-radius: 50%;
+body:is([data-theme='tablet'],[data-theme='tablet-noche']) .deco-a { top: .62rem; left: 50%; width: .62rem; height: .62rem; margin-left: -.31rem; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #4a6178, #0b0e12 60%); box-shadow: 0 0 0 .14rem #191d22; }
-body[data-theme='tablet'] .deco-b { bottom: .6rem; left: 50%; width: 4rem; height: .26rem; margin-left: -2rem; border-radius: 1rem; background: rgba(255,255,255,.16); }
-body[data-theme='tablet'] .deco-c { right: .18rem; top: 16%; width: .26rem; height: 3.2rem; border-radius: .2rem; background: linear-gradient(90deg, #3a4149, #20252b); }
+body:is([data-theme='tablet'],[data-theme='tablet-noche']) .deco-b { bottom: .6rem; left: 50%; width: 4rem; height: .26rem; margin-left: -2rem; border-radius: 1rem; background: rgba(255,255,255,.16); }
+body:is([data-theme='tablet'],[data-theme='tablet-noche']) .deco-c { right: .18rem; top: 16%; width: .26rem; height: 3.2rem; border-radius: .2rem; background: linear-gradient(90deg, #3a4149, #20252b); }
 
 /* =====================================================================
    LIBRETA — cuaderno de espiral, papel rayado y boli azul
    ===================================================================== */
-body[data-theme='libreta'] {
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) {
   --frame-bg: transparent;
   --frame-pad: 1.9rem .35rem .4rem;
   --frame-radius: 0;
@@ -72,19 +72,19 @@ body[data-theme='libreta'] {
   --toast-bg: #1e3a8a;
   --map-bg: #e9e4d2;
 }
-body[data-theme='libreta'] .h1 { font-size: 2rem; }
-body[data-theme='libreta'] .h2 { font-family: 'Caveat', cursive; font-size: 1.45rem; }
-body[data-theme='libreta'] .view { padding-left: 3.2rem; }
-body[data-theme='libreta'] .view.flush { padding-left: 0; }
-body[data-theme='libreta'] input.f, body[data-theme='libreta'] textarea.f { border-bottom: 1.5px solid rgba(30,58,138,.35); border-radius: 0; font-size: 1.05rem; }
-body[data-theme='libreta'] .deco-a {
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .h1 { font-size: 2rem; }
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .h2 { font-family: 'Caveat', cursive; font-size: 1.45rem; }
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .view { padding-left: 3.2rem; }
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .view.flush { padding-left: 0; }
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) input.f, body:is([data-theme='libreta'],[data-theme='libreta-noche']) textarea.f { border-bottom: 1.5px solid rgba(30,58,138,.35); border-radius: 0; font-size: 1.05rem; }
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .deco-a {
   top: .05rem; left: 1rem; right: 1rem; height: 2.55rem;
   background: radial-gradient(ellipse .42rem 1.15rem at 50% 50%, transparent 52%, #6b7280 56%, #f3f4f6 66%, #9ca3af 74%, #4b5563 80%, transparent 84%);
   background-size: 1.4rem 100%;
   background-repeat: repeat-x;
   filter: drop-shadow(0 .12rem .1rem rgba(0,0,0,.35));
 }
-body[data-theme='libreta'] .deco-b {
+body:is([data-theme='libreta'],[data-theme='libreta-noche']) .deco-b {
   top: 1.95rem; left: 1rem; right: 1rem; height: .8rem; z-index: 2;
   background: radial-gradient(circle .27rem at 50% 50%, #2a2a2a 62%, transparent 70%);
   background-size: 1.4rem 100%;
@@ -94,7 +94,7 @@ body[data-theme='libreta'] .deco-b {
 /* =====================================================================
    PORTAPAPELES — tablero de madera prensada con pinza metálica
    ===================================================================== */
-body[data-theme='portapapeles'] {
+body:is([data-theme='portapapeles'],[data-theme='portapapeles-noche']) {
   --frame-bg:
     repeating-linear-gradient(7deg, rgba(0,0,0,.045) 0 2px, transparent 2px 6px),
     repeating-linear-gradient(-3deg, rgba(255,255,255,.035) 0 1px, transparent 1px 7px),
@@ -119,17 +119,17 @@ body[data-theme='portapapeles'] {
   --doc-bg: #f1f1ec;
   --map-bg: #dde3e8;
 }
-body[data-theme='portapapeles'] .deco-a {
+body:is([data-theme='portapapeles'],[data-theme='portapapeles-noche']) .deco-a {
   top: .45rem; left: 50%; width: 42%; height: 3.6rem; transform: translateX(-50%);
   border-radius: .7rem .7rem 1.4rem 1.4rem;
   background: linear-gradient(180deg, #fafafa 0%, #c4c8ce 30%, #8a9099 52%, #d5d8dc 78%, #9aa0a8 100%);
   box-shadow: 0 .35rem .7rem rgba(0,0,0,.45), inset 0 1px 0 #fff, inset 0 -.2rem .3rem rgba(0,0,0,.2);
 }
-body[data-theme='portapapeles'] .deco-b {
+body:is([data-theme='portapapeles'],[data-theme='portapapeles-noche']) .deco-b {
   top: 1.05rem; left: 50%; width: 5rem; height: 1rem; transform: translateX(-50%); border-radius: 1rem;
   background: #5d3c21; box-shadow: inset 0 .2rem .35rem rgba(0,0,0,.6);
 }
-body[data-theme='portapapeles'] .deco-c {
+body:is([data-theme='portapapeles'],[data-theme='portapapeles-noche']) .deco-c {
   z-index: 0; bottom: .75rem; left: 1.3rem; right: 1.3rem; height: .9rem; border-radius: 0 0 .25rem .25rem;
   background: repeating-linear-gradient(180deg, #f4f4ef 0 .18rem, #d6d6cf .18rem .25rem);
   box-shadow: 0 .2rem .4rem rgba(0,0,0,.3);
@@ -138,7 +138,7 @@ body[data-theme='portapapeles'] .deco-c {
 /* =====================================================================
    TÁCTICO — kneeboard de nailon con velcro y ficha plastificada
    ===================================================================== */
-body[data-theme='tactico'] {
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) {
   --frame-bg:
     repeating-linear-gradient(45deg, rgba(0,0,0,.1) 0 2px, transparent 2px 4px),
     repeating-linear-gradient(-45deg, rgba(255,255,255,.045) 0 2px, transparent 2px 4px),
@@ -169,29 +169,29 @@ body[data-theme='tactico'] {
   --doc-bg: #e3dfcf;
   --map-bg: #c9c6b2;
 }
-body[data-theme='tactico'] .bar, body[data-theme='tactico'] .tabsbar {
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) .bar, body:is([data-theme='tactico'],[data-theme='tactico-noche']) .tabsbar {
   --muted: rgba(233,229,199,.62); --ink: #e9e5c7; --card: rgba(255,255,255,.07); --line: rgba(233,229,199,.22);
   color: #e9e5c7;
 }
-body[data-theme='tactico'] .deco-a { inset: .55rem; border: 2px dashed rgba(230,226,192,.42); border-radius: .9rem; }
-body[data-theme='tactico'] .deco-b {
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) .deco-a { inset: .55rem; border: 2px dashed rgba(230,226,192,.42); border-radius: .9rem; }
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) .deco-b {
   top: .45rem; left: 1.1rem; right: 1.1rem; height: 1.95rem; border-radius: .35rem;
   background:
     radial-gradient(circle at 50% 50%, rgba(0,0,0,.35) 0 1px, transparent 1.6px) 0 0 / .28rem .28rem,
     linear-gradient(180deg, #3e4523, #2f3419);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 0 .1rem .2rem rgba(0,0,0,.35);
 }
-body[data-theme='tactico'] .deco-c {
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) .deco-c {
   top: .78rem; left: 50%; transform: translateX(-50%); padding: .1rem .7rem; border-radius: .2rem;
   background: #2a2e18; border: 1px dashed rgba(233,229,199,.4);
   font: .78rem 'Share Tech Mono', monospace; letter-spacing: .3em; color: #d8d3ad;
 }
-body[data-theme='tactico'] .deco-c::after { content: 'KNEEBOARD'; }
+body:is([data-theme='tactico'],[data-theme='tactico-noche']) .deco-c::after { content: 'KNEEBOARD'; }
 
 /* =====================================================================
    MFD — pantalla multifunción de fósforo verde con botones OSB
    ===================================================================== */
-body[data-theme='mfd'] {
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) {
   --frame-bg: linear-gradient(160deg, #3b3f43 0%, #18191b 42%, #2b2e31 100%);
   --frame-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 1.6rem rgba(0,0,0,.65), 0 .8rem 2rem rgba(0,0,0,.6);
   --frame-pad: 2.3rem 2.5rem;
@@ -224,15 +224,15 @@ body[data-theme='mfd'] {
   --doc-bg: #000;
   --map-bg: #021208;
 }
-body[data-theme='mfd'] .screen { text-shadow: 0 0 .35rem rgba(69,255,146,.5); }
-body[data-theme='mfd'] .deco-a, body[data-theme='mfd'] .deco-b {
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .screen { text-shadow: 0 0 .35rem rgba(69,255,146,.5); }
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .deco-a, body:is([data-theme='mfd'],[data-theme='mfd-noche']) .deco-b {
   top: 20%; bottom: 20%; width: 1.35rem;
   background: repeating-linear-gradient(180deg, #4d5156 0 1.4rem, transparent 1.4rem 3.1rem);
   border-radius: .2rem; filter: drop-shadow(0 .1rem .1rem rgba(0,0,0,.6));
 }
-body[data-theme='mfd'] .deco-a { left: .55rem; }
-body[data-theme='mfd'] .deco-b { right: .55rem; }
-body[data-theme='mfd'] .deco-c {
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .deco-a { left: .55rem; }
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .deco-b { right: .55rem; }
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .deco-c {
   top: .5rem; left: 24%; right: 24%; height: 1.25rem;
   background: repeating-linear-gradient(90deg, #4d5156 0 1.6rem, transparent 1.6rem 3.3rem);
   background-position: center;
@@ -242,7 +242,7 @@ body[data-theme='mfd'] .deco-c {
 /* =====================================================================
    DOSSIER — carpeta de cartulina, máquina de escribir y sello
    ===================================================================== */
-body[data-theme='dossier'] {
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) {
   --frame-bg:
     repeating-linear-gradient(93deg, rgba(120,80,20,.05) 0 1px, transparent 1px 4px),
     linear-gradient(180deg, #e6c994, #d3ae6e);
@@ -272,22 +272,22 @@ body[data-theme='dossier'] {
   --doc-shadow: 0 .15rem .5rem rgba(0,0,0,.3);
   --map-bg: #ddd3ba;
 }
-body[data-theme='dossier'] .deco-a {
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-a {
   top: .55rem; left: 1.3rem; padding: .25rem .9rem; background: #f7efd9; border: 1px solid rgba(70,55,30,.35);
   font: .78rem 'Special Elite', monospace; letter-spacing: .14em; color: #3a3328; box-shadow: 0 .1rem .2rem rgba(0,0,0,.15);
 }
-body[data-theme='dossier'] .deco-a::after { content: 'EXPEDIENTE · PLAN DE VUELO'; }
-body[data-theme='dossier'] .deco-b {
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-a::after { content: 'EXPEDIENTE · PLAN DE VUELO'; }
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-b {
   bottom: 4.4rem; right: 1.8rem; padding: .25rem .7rem; transform: rotate(-11deg);
   border: .22rem double rgba(159,28,28,.55); border-radius: .3rem;
   font: 1.25rem 'Special Elite', monospace; letter-spacing: .12em; color: rgba(159,28,28,.55); mix-blend-mode: multiply; opacity: .55;
 }
-body[data-theme='dossier'] .deco-b::after { content: 'CONFIDENCIAL'; }
-body[data-theme='dossier'] .deco-c {
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-b::after { content: 'CONFIDENCIAL'; }
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-c {
   top: .6rem; right: 38%; width: 1.15rem; height: 3.6rem; border: .2rem solid #a3a8b0; border-radius: 1rem;
   box-shadow: 0 .1rem .15rem rgba(0,0,0,.35);
 }
-body[data-theme='dossier'] .deco-c::after {
+body:is([data-theme='dossier'],[data-theme='dossier-noche']) .deco-c::after {
   content: ''; position: absolute; left: .15rem; right: .15rem; top: .45rem; bottom: .9rem; border: .18rem solid #b9bec5; border-radius: 1rem;
 }
 
@@ -321,4 +321,166 @@ body[data-theme='noche'] .doc img, body[data-theme='noche'] .doc canvas.page {
   filter: grayscale(1) invert(1) brightness(.55) sepia(1) hue-rotate(-50deg) saturate(5);
 }
 body[data-theme='noche'] .mapwrap .leaflet-tile-pane { filter: grayscale(1) brightness(.45) sepia(1) hue-rotate(-50deg) saturate(4); }
-body[data-theme='mfd'] .mapwrap .leaflet-tile-pane { filter: grayscale(1) brightness(.6) sepia(1) hue-rotate(80deg) saturate(3); }
+body:is([data-theme='mfd'],[data-theme='mfd-noche']) .mapwrap .leaflet-tile-pane { filter: grayscale(1) brightness(.6) sepia(1) hue-rotate(80deg) saturate(3); }
+
+/* =====================================================================
+   VARIANTES NOCHE — el mismo kneeboard (marco, adornos y letra) con superficies oscuras, poco brillo y el
+   acento apagado. La luna alterna entre cada tema y su variante. Las páginas (PDF, imágenes) y el mapa se
+   atenúan sin cambiar sus colores, para que las cartas se sigan leyendo igual.
+   ===================================================================== */
+body[data-theme$='-noche'] .doc img, body[data-theme$='-noche'] .doc canvas.page { filter: brightness(.72) contrast(.96); }
+body[data-theme$='-noche'] .mapwrap .leaflet-tile-pane { filter: brightness(.6) saturate(.85); }
+
+/* Tablet táctica · Noche: la pantalla casi negra y el texto sin blanco puro. */
+body[data-theme='tablet-noche'] {
+  --frame-bg: linear-gradient(145deg, #1a1d21 0%, #060708 48%, #101215 100%);
+  --frame-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 .8rem 2rem rgba(0,0,0,.6);
+  --screen-bg: radial-gradient(130% 90% at 0% 0%, #0c131c 0%, #06090d 60%, #040608 100%);
+  --screen-overlay: linear-gradient(118deg, rgba(255,255,255,.02) 0%, transparent 28%);
+  --ink: #b6c2d0;
+  --muted: #5f6d7d;
+  --line: rgba(130,150,175,.16);
+  --line-soft: rgba(130,150,175,.08);
+  --accent: #2c8fbd;
+  --accent-ink: #02141d;
+  --card: rgba(255,255,255,.03);
+  --bar-bg: rgba(3,5,8,.7);
+  --hl: rgba(44,143,189,.14);
+  --ok: #2aa77c;
+  --warn: #c99a2e;
+  --doc-bg: #030507;
+  --map-bg: #070c12;
+}
+
+/* Libreta · Noche: cuaderno de hojas negras, rayado azul tenue y tinta clara. */
+body[data-theme='libreta-noche'] {
+  --screen-bg:
+    linear-gradient(90deg, transparent 2.7rem, rgba(220,38,38,.32) 2.7rem, rgba(220,38,38,.32) calc(2.7rem + 2px), transparent calc(2.7rem + 2px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent calc(1.65rem - 1px), rgba(96,140,220,.16) calc(1.65rem - 1px), rgba(96,140,220,.16) 1.65rem),
+    radial-gradient(120% 90% at 50% 0%, #1d2027, #15171c);
+  --screen-shadow: 0 .5rem 1.4rem rgba(0,0,0,.5), inset 0 0 3rem rgba(0,0,0,.35);
+  --ink: #d3d9e6;
+  --muted: #7d8494;
+  --line: rgba(160,180,220,.2);
+  --line-soft: rgba(160,180,220,.1);
+  --accent: #e05252;
+  --accent-ink: #160404;
+  --accent-text: #f08080;
+  --card: rgba(255,255,255,.035);
+  --card-border: 1.5px dashed rgba(160,180,220,.22);
+  --bar-border: 2px solid rgba(220,38,38,.22);
+  --hl: rgba(250,204,21,.18);
+  --tab-sel-bg: rgba(250,204,21,.32);
+  --tab-sel-ink: #f3e9b5;
+  --ok: #3fae6a;
+  --warn: #d6a13a;
+  --field-bg: rgba(255,255,255,.03);
+  --toast-bg: #2a3350;
+  --doc-shadow: 0 .2rem .8rem rgba(0,0,0,.5);
+  --map-bg: #15171c;
+}
+body[data-theme='libreta-noche'] input.f, body[data-theme='libreta-noche'] textarea.f { border-bottom-color: rgba(160,180,220,.3); }
+body[data-theme='libreta-noche'] .deco-a { filter: drop-shadow(0 .12rem .1rem rgba(0,0,0,.5)) brightness(.7); }
+
+/* Portapapeles · Noche: madera oscura (nogal) y folios grafito. */
+body[data-theme='portapapeles-noche'] {
+  --frame-bg:
+    repeating-linear-gradient(7deg, rgba(0,0,0,.08) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-3deg, rgba(255,255,255,.02) 0 1px, transparent 1px 7px),
+    radial-gradient(ellipse at 28% 18%, #5a3f26, #3a2715 58%, #26190d);
+  --frame-shadow: inset 0 0 0 2px rgba(0,0,0,.4), inset 0 .2rem .4rem rgba(255,255,255,.06), 0 .8rem 2rem rgba(0,0,0,.6);
+  --screen-bg: linear-gradient(180deg, #1e2024, #191b1f);
+  --screen-shadow: 0 .25rem .8rem rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+  --ink: #d5d8de;
+  --muted: #7b818b;
+  --line: rgba(255,255,255,.09);
+  --accent: #6d8ef0;
+  --accent-ink: #070d22;
+  --card: #23262b;
+  --card-shadow: 0 .05rem .2rem rgba(0,0,0,.3);
+  --bar-bg: #23262b;
+  --hl: rgba(109,142,240,.16);
+  --ok: #3fae6a;
+  --warn: #d6a13a;
+  --doc-bg: #141518;
+  --map-bg: #15181c;
+}
+body[data-theme='portapapeles-noche'] .deco-a { filter: brightness(.55); }
+body[data-theme='portapapeles-noche'] .deco-b { background: #26190d; }
+body[data-theme='portapapeles-noche'] .deco-c { filter: brightness(.25); }
+
+/* Kneeboard táctico · Noche: nailon casi negro, ficha oscura y texto color arena. */
+body[data-theme='tactico-noche'] {
+  --frame-bg:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.025) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg, #2d3220 0%, #222616 60%, #1b1e11 100%);
+  --screen-bg: linear-gradient(180deg, #1c1f15, #171a11);
+  --screen-overlay: linear-gradient(118deg, rgba(255,255,255,.05) 0%, transparent 22%, transparent 72%, rgba(255,255,255,.03) 100%);
+  --screen-shadow: 0 0 0 .2rem rgba(255,255,255,.06), 0 .2rem .6rem rgba(0,0,0,.5);
+  --ink: #d8d3ad;
+  --muted: #8b8768;
+  --line: rgba(216,211,173,.16);
+  --accent: #c2741f;
+  --accent-ink: #1a0d02;
+  --card: rgba(255,255,255,.035);
+  --bar-bg: #15170d;
+  --bar-ink: #c9c4a0;
+  --hl: rgba(194,116,31,.16);
+  --ok: #7a9a36;
+  --warn: #c2741f;
+  --doc-bg: #12140c;
+  --map-bg: #1a1c13;
+}
+body[data-theme='tactico-noche'] .bar, body[data-theme='tactico-noche'] .tabsbar {
+  --muted: rgba(201,196,160,.55); --ink: #c9c4a0; --line: rgba(201,196,160,.18); color: #c9c4a0;
+}
+body[data-theme='tactico-noche'] .deco-a { border-color: rgba(201,196,160,.22); }
+body[data-theme='tactico-noche'] .deco-b { filter: brightness(.6); }
+body[data-theme='tactico-noche'] .deco-c { background: #15170d; border-color: rgba(201,196,160,.25); color: #8b8768; }
+
+/* MFD · Noche: el fósforo con el brillo bajado, como el mando de brillo del MFD de noche. */
+body[data-theme='mfd-noche'] {
+  --frame-bg: linear-gradient(160deg, #222427 0%, #0d0e0f 42%, #18191b 100%);
+  --screen-bg: radial-gradient(ellipse at center, #021309 0%, #000502 72%, #000 100%);
+  --ink: #2fb366;
+  --muted: #18703d;
+  --line: rgba(47,179,102,.2);
+  --line-soft: rgba(47,179,102,.1);
+  --accent: #2fb366;
+  --accent-ink: #000d05;
+  --accent-text: #c7a43a;
+  --card: rgba(47,179,102,.04);
+  --hl: rgba(47,179,102,.12);
+  --ok: #2fb366;
+  --warn: #c7a43a;
+  --toast-ink: #2fb366;
+}
+body[data-theme='mfd-noche'] .screen { text-shadow: 0 0 .25rem rgba(47,179,102,.35); }
+body[data-theme='mfd-noche'] .deco-a, body[data-theme='mfd-noche'] .deco-b, body[data-theme='mfd-noche'] .deco-c { filter: drop-shadow(0 .1rem .1rem rgba(0,0,0,.6)) brightness(.6); }
+
+/* Dossier · Noche: carpeta de cuero oscuro, papel sepia oscuro y tinta de máquina clara. */
+body[data-theme='dossier-noche'] {
+  --frame-bg:
+    repeating-linear-gradient(93deg, rgba(0,0,0,.08) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #4a3a22, #3a2d19);
+  --frame-shadow: inset 0 0 0 1px rgba(0,0,0,.45), 0 .8rem 2rem rgba(0,0,0,.6);
+  --screen-bg: radial-gradient(130% 100% at 50% 0%, #26211a, #1d1913);
+  --screen-shadow: 0 .2rem .6rem rgba(0,0,0,.5), inset 0 0 2.2rem rgba(0,0,0,.35);
+  --ink: #e0d4ba;
+  --muted: #8f8470;
+  --line: rgba(224,212,186,.16);
+  --accent: #c0453a;
+  --accent-ink: #1a0503;
+  --card: rgba(255,255,255,.03);
+  --bar-border: 1px solid rgba(224,212,186,.2);
+  --hl: rgba(192,69,58,.14);
+  --ok: #7f9a3a;
+  --warn: #c7883a;
+  --doc-bg: #17140f;
+  --doc-shadow: 0 .15rem .5rem rgba(0,0,0,.5);
+  --map-bg: #1d1913;
+}
+body[data-theme='dossier-noche'] .deco-a { background: #2c261d; border-color: rgba(224,212,186,.2); color: #b9ad94; }
+body[data-theme='dossier-noche'] .deco-b { border-color: rgba(192,69,58,.5); color: rgba(192,69,58,.5); mix-blend-mode: normal; opacity: .45; }
+body[data-theme='dossier-noche'] .deco-c, body[data-theme='dossier-noche'] .deco-c::after { border-color: #5d6168; }

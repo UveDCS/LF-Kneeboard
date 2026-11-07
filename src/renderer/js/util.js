@@ -20,6 +20,9 @@ export function h(sel, attrs, ...children) {
     else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
     else if (k === 'dataset') Object.assign(el.dataset, v);
     else if (k === 'html') el.innerHTML = v;
+    // Un <textarea> no tiene atributo value: hay que darle el texto como propiedad o se dibuja vacío
+    // (y lo siguiente que escribas pisa lo guardado).
+    else if (k === 'value' && el.tagName === 'TEXTAREA') el.value = String(v);
     else if (k in el && typeof v !== 'string') el[k] = v;
     else el.setAttribute(k, v === true ? '' : v);
   }

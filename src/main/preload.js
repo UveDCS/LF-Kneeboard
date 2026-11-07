@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('kb', {
   setSize: (i, fraction) => ipcRenderer.send('view:setSize', i, fraction),
   coordsVisible: (on) => ipcRenderer.send('crosshair:coords', view, on),
   listFiles: (dir, kind) => ipcRenderer.invoke('fs:list', dir, kind),
+  listDirs: (dir) => ipcRenderer.invoke('fs:dirs', dir),
   fileUrl: (p) => ipcRenderer.invoke('fs:url', p),
   thumb: (p) => ipcRenderer.invoke('fs:thumb', p),
   dcsKneeboard: (aircraft) => ipcRenderer.invoke('fs:dcsKneeboard', aircraft),

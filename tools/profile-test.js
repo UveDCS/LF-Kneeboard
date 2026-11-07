@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { Config, TEMPLATES, defaultTabs, templateTabs, presetTabs } = require('../src/main/config');
+const { nightPair, Config, TEMPLATES, defaultTabs, templateTabs, presetTabs } = require('../src/main/config');
 const profile = require('../src/main/profile');
 
 let fails = 0;
@@ -14,8 +14,12 @@ const ok = (cond, msg) => {
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lfkb-perfil-'));
 
 // ------------------------------------------------------------------ plantillas
-const def = defaultTabs();
-ok(def.filter((t) => t.fav).length === 7, `Pestañas de fábrica: 7 favoritas de ${def.length}`);
+const sen = defaultTabs();
+ok(sen.filter((t) => t.fav).map((t) => t.type).join(',') === 'library,notes' && sen[0].type === 'library' && sen[1].type === 'notes', 'De fábrica, perfil Sencillo: Piernógrafo y Bloc, los dos fijos y primeros');
+ok(sen.length === 14 && new Set(sen.map((t) => t.type)).size === 14, 'y las 14 clases de pestaña disponibles en la cuadrícula');
+ok(TEMPLATES.every((tp) => new Set(templateTabs(tp.id, []).map((t) => t.type)).size === 14), 'Todas las plantillas traen todos los tipos de pestaña');
+const def = templateTabs('completa', []);
+ok(def.filter((t) => t.fav).length === 7, `Plantilla Completa: 7 favoritas de ${def.length}`);
 const mine = [...def, { id: 'pdf1', type: 'pdf', title: 'NATOPS', icon: 'pdf', path: 'C:\\x.pdf', phases: [] }];
 mine.find((t) => t.type === 'radios').title = 'Mis radios';
 const heli = templateTabs('helicoptero', mine);
@@ -23,8 +27,19 @@ ok(heli[0].type === 'map' && heli[0].fav, 'Helicóptero: el mapa va primero y fi
 ok(heli.find((t) => t.type === 'radios').title === 'Mis radios', 'La plantilla conserva el nombre que le pusiste a una pestaña');
 ok(heli.find((t) => t.type === 'radios').id === mine.find((t) => t.type === 'radios').id, 'y su identificador (no se pierden sus datos)');
 ok(heli[heli.length - 1].type === 'pdf' && heli[heli.length - 1].path === 'C:\\x.pdf', 'Tus PDF se quedan al final');
-ok(!heli.some((t) => t.type === 'lesson'), 'Helicóptero no trae la lección');
+ok(heli.some((t) => t.type === 'lesson' && !t.fav), 'Helicóptero trae la lección en la cuadrícula, sin fijar');
 ok(TEMPLATES.every((tp) => templateTabs(tp.id, []).every((t) => t.title && t.icon)), 'Todas las plantillas generan pestañas con nombre e icono');
+
+// ------------------------------------------------------------------ variantes Noche
+ok(nightPair('tactico') === 'tactico-noche' && nightPair('tactico-noche') === 'tactico', 'La luna: Kneeboard táctico ↔ Kneeboard táctico · Noche');
+ok(['tablet', 'libreta', 'portapapeles', 'mfd', 'dossier'].every((t) => nightPair(nightPair(t)) === t), 'Todos los temas vuelven a sí mismos tras dos toques');
+ok(nightPair('noche') === 'tablet', 'Desde «Noche (rojo)», la luna vuelve a la Tablet');
+const dirN = path.join(tmp, 'noche');
+fs.mkdirSync(dirN);
+fs.writeFileSync(path.join(dirN, 'config.json'), JSON.stringify({ version: 5, theme: 'dossier', night: true, tabs: [{ id: 'a', type: 'library', title: 'Piernógrafo', icon: 'mission', fav: true, phases: [] }, { id: 'w', type: 'web', title: 'Web', icon: 'web', fav: false, phases: [] }] }));
+const cN = new Config(dirN).get();
+ok(cN.theme === 'dossier-noche' && cN.night === false, 'El modo noche antiguo (filtro rojo) pasa a la variante Noche del tema');
+ok(cN.tabs.length === 15 && cN.tabs[0].id === 'a' && cN.tabs[1].type === 'web' && cN.tabs.filter((t) => t.fav).length === 1, 'v6: tus pestañas se completan con los tipos que faltan, en la cuadrícula');
 
 // ------------------------------------------------------------------ migración v4 (favoritas)
 const dir3 = path.join(tmp, 'v3');
@@ -32,7 +47,7 @@ fs.mkdirSync(dir3);
 const old = { version: 3, tabs: def.map(({ fav, ...t }) => t).concat([{ id: 'w', type: 'web', title: 'Web', icon: 'web', phases: [] }]) };
 fs.writeFileSync(path.join(dir3, 'config.json'), JSON.stringify(old));
 const c3 = new Config(dir3).get();
-ok(c3.version === 5, 'La configuración v3 se migra a v5');
+ok(c3.version === 6, 'La configuración v3 se migra a v6');
 ok(c3.tabs.filter((t) => t.fav).map((t) => t.type).join(',') === 'dcs-kneeboard,library,cards,flightplan,radios,notes,map,web',
   'Migración: favoritas las de siempre y tus pestañas propias');
 const dtcTab = c3.tabs.find((t) => t.type === 'dtc');
@@ -45,6 +60,11 @@ ok(applied.length === mine.length && applied.every((t, i) => t.id === mine[i].id
 applied[0].phases.push('taxi');
 ok(!preset.tabs[0].phases.includes('taxi'), 'Preset: aplicarlo no cambia el preset guardado');
 ok(presetTabs(null).length === 0, 'Preset inexistente: sin pestañas');
+const small = { id: 'p2', name: 'Corto', tabs: mine.filter((t) => t.type === 'library' || t.type === 'pdf').map((t) => ({ ...t, fav: true })) };
+const curTabs = templateTabs('completa', []);
+const ap2 = presetTabs(small, curTabs);
+ok(new Set(ap2.map((t) => t.type)).size === 15 && ap2.filter((t) => t.fav).length === 2, 'Preset corto: trae todos los tipos, pero fijas solo las suyas');
+ok(ap2.find((t) => t.type === 'notes').id === curTabs.find((t) => t.type === 'notes').id, 'y reutiliza el Bloc que ya tenías (no se pierden tus notas)');
 
 // ------------------------------------------------------------------ perfil
 const ud = path.join(tmp, 'pc1');

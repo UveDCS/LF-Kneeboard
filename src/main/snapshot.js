@@ -510,7 +510,7 @@ async function run({ cfg, dcs, views, vr, broadcast, openSettings, updater, inje
     await shot('notes-9line');
     // Todos los temas sobre el plan de vuelo y el bloc
     const fp = tabs.findIndex((t) => t.type === 'flightplan');
-    for (const theme of ['tablet', 'libreta', 'portapapeles', 'tactico', 'mfd', 'dossier', 'noche']) {
+    for (const theme of ['tablet', 'libreta', 'portapapeles', 'tactico', 'mfd', 'dossier'].flatMap((t) => [t, `${t}-noche`]).concat('noche')) {
       cfg.patch({ theme });
       broadcast('config', cfg.get());
       await goTab(fp);
