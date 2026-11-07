@@ -367,6 +367,33 @@ table.tbl.md td { font-family: var(--font-ui); }
 
 /* Índice de páginas */
 #overlay.wide .ov-panel { height: 100%; }
+
+/* Posición en VR: panel pegado abajo para que la página siga a la vista mientras colocas el kneeboard.
+   Botones grandes para el lápiz de la tableta dentro del visor (el estado «pulsado» lo pone el JS: los
+   eventos del lápiz son sintéticos y no activan :active). */
+#overlay.place { align-items: flex-end; background: none; padding: 0 .6rem .6rem; pointer-events: none; }
+#overlay.place .ov-panel { pointer-events: auto; box-shadow: 0 -.6rem 2rem rgba(0,0,0,.45); }
+.vp-head { gap: .4rem; padding: .5rem .6rem; }
+.vp-head b { flex: 1; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vp-head b small { font-weight: 600; color: var(--muted); font-size: .85rem; }
+.vp-act { display: inline-flex; align-items: center; gap: .35rem; height: 3.2rem; padding: 0 .65rem; font-size: .95rem; }
+.vp-act .ico { width: 1.3rem; height: 1.3rem; }
+.vp-body { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: 'mover girar' 'tamano girar'; gap: .45rem; align-items: start; padding: .5rem .6rem .3rem; }
+.vp-grp { border: 1px solid var(--line-soft, var(--line)); border-radius: .7rem; padding: .25rem .45rem .35rem; background: color-mix(in srgb, var(--card) 60%, transparent); }
+.vp-grp.mover { grid-area: mover; } .vp-grp.girar { grid-area: girar; } .vp-grp.tamano { grid-area: tamano; }
+.vp-grp-t { font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text, var(--accent)); margin: .1rem 0 0 .1rem; }
+.vp-row { display: grid; grid-template-columns: 3.6rem 1fr 3.6rem; grid-template-rows: auto 3.4rem; align-items: center; column-gap: .3rem; padding: .25rem 0 .35rem; }
+.vp-row + .vp-row { border-top: 1px solid var(--line-soft, var(--line)); }
+.vp-lb { grid-column: 1 / -1; font-size: 1.05rem; font-weight: 600; margin-bottom: .2rem; }
+.vp-st { width: 3.6rem; height: 3.4rem; border-radius: .6rem; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; touch-action: none; transition: transform .08s ease, background-color .08s ease; }
+.vp-st .ico { width: 1.7rem; height: 1.7rem; stroke-width: 2.2; pointer-events: none; }
+.vp-st.pressed { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: scale(.94); box-shadow: 0 0 0 .25rem var(--hl); }
+.vp-st:disabled { opacity: .35; border-style: dashed; cursor: default; }
+.vp-val { text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; line-height: 1.05; }
+.vp-val small { display: block; font-family: var(--font-ui); font-size: .78rem; font-weight: 600; color: var(--muted); min-height: 1em; }
+.vp-val.limit small { color: var(--warn, var(--accent)); }
+.vp-foot { display: flex; gap: .4rem; align-items: center; padding: .35rem .8rem .55rem; font-size: .85rem; color: var(--muted); line-height: 1.35; }
+.vp-foot .ico { width: 1.1rem; height: 1.1rem; }
 .idx-chips { position: sticky; top: -.8rem; z-index: 2; margin: -.8rem -.8rem .4rem; padding: .6rem .8rem; background: var(--screen-bg); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .3rem; }
 .idx-chips small { opacity: .6; }
 .idx-head { display: flex; align-items: baseline; gap: .5rem; margin: .9rem 0 .4rem; padding-bottom: .25rem; border-bottom: 1px solid var(--line); scroll-margin-top: 3.2rem; }

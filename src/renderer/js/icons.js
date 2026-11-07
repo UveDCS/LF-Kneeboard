@@ -79,6 +79,19 @@ const P = {
   cartridge: 'M5 2h11l3 3v17H5z M8 2v5h7V2 M8 12h8 M8 15.5h8 M8 19h5',
   preset: 'M3 4h18v4H3z M3 10h18v4H3z M3 16h11v4H3z M17 18h4 M19 16v4',
   update: 'M20 11a8 8 0 0 0-14.5-4.5L3 9 M3 3v6h6 M4 13a8 8 0 0 0 14.5 4.5L21 15 M21 21v-6h-6',
+  // Posición en VR: mover, y una flecha por sentido de cada eje.
+  place: 'M12 2v20 M2 12h20 M9 5l3-3 3 3 M9 19l3 3 3-3 M5 9l-3 3 3 3 M19 9l3 3-3 3',
+  up: 'M4 16l8-8 8 8',
+  down: 'M4 8l8 8 8-8',
+  nearer: 'M12 3v13 M6 10l6 6 6-6 M4 21h16',
+  farther: 'M12 21V8 M6 14l6-6 6 6 M4 3h16',
+  yawLeft: 'M9 4L4 9l5 5 M4 9h10a6 6 0 0 1 0 12h-3',
+  yawRight: 'M15 4l5 5-5 5 M20 9H10a6 6 0 0 0 0 12h3',
+  tiltUp: 'M3 19h18 M5 15l7-9 7 9',
+  tiltDown: 'M3 5h18 M5 9l7 9 7-9',
+  rollCw: 'M20 12a8 8 0 1 1-2.3-5.7 M18 2v5h-5',
+  rollCcw: 'M4 12a8 8 0 1 0 2.3-5.7 M6 2v5h5',
+  minus: 'M4 12h16',
 };
 
 // Icono por defecto de cada tipo de pestaña.

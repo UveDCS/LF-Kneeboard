@@ -10,7 +10,7 @@
     "start": "electron .",
     "native": "node tools/build-native.js",
     "data": "python tools/export_airports.py && python tools/export_weapons.py",
-    "test": "node tools/selftest.js && node tools/share-input-test.js && node tools/library-test.js && node tools/route-test.js && node tools/profile-test.js && node tools/dtc-test.js",
+    "test": "node tools/selftest.js && node tools/share-input-test.js && node tools/library-test.js && node tools/route-test.js && node tools/profile-test.js && node tools/dtc-test.js && node tools/vr-place-test.js",
     "dist": "electron-builder --win nsis --publish never",
     "test:hook": "node tools/hook-test.js",
     "test:tableta": "node tools/tablet-test.js",

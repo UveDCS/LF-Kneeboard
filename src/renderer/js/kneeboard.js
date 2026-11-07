@@ -5,6 +5,7 @@ import { TAB_TYPES } from './tabs/index.js';
 import { THEMES } from './themes.js';
 import { icon, tabIcon } from './icons.js';
 import { BOOKMARK_TYPES, bmType } from './bookmarks.js';
+import { openVrPlace } from './vrplace.js';
 
 const kb = window.kb;
 const Geo = window.Geo;
@@ -504,6 +505,7 @@ function openIndex() {
 
 // ------------------------------------------------------------------ ventana superpuesta (menús)
 function openOverlay(title, ...content) {
+  if (placeOpen) closeOverlay(); // otro menú sustituye al panel de Posición en VR
   const ov = $('overlay');
   clear(ov).append(h('div.ov-panel',
     h('div.ov-head', h('b', title), h('span.bar-spacer'), h('button.btn.small', { onclick: closeOverlay, title: 'Cerrar' }, icon('close'))),
@@ -515,6 +517,22 @@ function closeOverlay() {
   $('overlay').hidden = true;
   $('overlay').classList.remove('wide');
   if (indexOpen) { indexOpen.io.disconnect(); indexOpen = null; }
+  if (placeOpen) {
+    placeOpen.dispose();
+    placeOpen = null;
+    setGaze(false);
+    renderChrome();
+  }
+}
+
+// Posición en VR (ver vrplace.js). Mientras está abierto, el kneeboard se ve opaco para juzgar bien la colocación.
+let placeOpen = null;
+function toggleVrPlace() {
+  if (placeOpen) { closeOverlay(); return; }
+  closeOverlay();
+  placeOpen = openVrPlace({ kb, S, ov: $('overlay'), onDone: closeOverlay });
+  setGaze(false);
+  renderChrome();
 }
 
 function openAllTabs() {
@@ -631,6 +649,8 @@ function renderChrome() {
   $('inkBtn').style.display = inst && inst.inkKey ? '' : 'none';
   $('inkBtn').classList.toggle('on', $('content').classList.contains('inking'));
   $('dualBtn').classList.toggle('on', !!S.config.dual);
+  $('vrPlaceBtn').style.display = S.config.vr.enabled ? '' : 'none';
+  $('vrPlaceBtn').classList.toggle('on', !!placeOpen);
   $('nightBtn').classList.toggle('on', !!S.config.night);
 }
 
@@ -751,7 +771,7 @@ function applyLook() {
 
 function setGaze(g) {
   const c = S.config.vr;
-  document.documentElement.style.setProperty('--gaze-opacity', S.vrActive ? String(g ? c.opacityGaze : c.opacityIdle) : '1');
+  document.documentElement.style.setProperty('--gaze-opacity', S.vrActive && !placeOpen ? String(g ? c.opacityGaze : c.opacityIdle) : '1');
 }
 
 // ------------------------------------------------------------------ redimensionar (ventana transparente)
@@ -848,6 +868,8 @@ async function main() {
   $('settingsBtn').append(icon('settings'));
   $('dualBtn').append(icon('dual'));
   $('dualBtn').onclick = () => kb.action('toggle_dual');
+  $('vrPlaceBtn').append(icon('place'));
+  $('vrPlaceBtn').onclick = toggleVrPlace;
   $('nightBtn').append(icon('moon'));
   $('nightBtn').onclick = () => kb.action('toggle_night');
   $('bmListBtn').append(icon('bookmarks'));
@@ -925,6 +947,10 @@ async function main() {
       show();
     } else renderChrome();
     each((i) => i.onConfig && i.onConfig(c));
+    if (placeOpen) {
+      if (!c.vr.enabled) closeOverlay();
+      else placeOpen.refresh();
+    }
   });
   kb.on('store-changed', (name, data) => {
     if (name === 'wpnames') { S.wpNames = data || {}; each((i) => i.onConfig && i.onConfig(S.config)); return; }
@@ -986,7 +1012,7 @@ async function main() {
   kb.on('share-status', (s) => { S.share = s; renderChrome(); each((i) => i.onShareStatus && i.onShareStatus(s)); });
   kb.on('share-roster', (m) => { S.share.members = m; renderChrome(); });
   kb.on('share-live', (item) => each((i) => i.onShareLive && i.onShareLive(item)));
-  kb.on('vr-active', (a) => { S.vrActive = a; setGaze(false); renderChrome(); });
+  kb.on('vr-active', (a) => { S.vrActive = a; setGaze(false); renderChrome(); if (placeOpen) placeOpen.refresh(); });
   kb.on('gaze', setGaze);
   kb.on('write-mode', () => setTimeout(renderChrome, 50));
 

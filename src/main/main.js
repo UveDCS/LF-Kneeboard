@@ -12,6 +12,7 @@ const { Share, lanAddresses } = require('./share');
 const integ = require('./integration');
 const focus = require('./focus');
 const { radiosFromDtc } = require('./mission-model');
+const VrPlacement = require('../shared/vr-placement');
 const DTC = require('./dtc');
 const { Library } = require('./library');
 const { Voice } = require('./voice');
@@ -71,6 +72,9 @@ let quitting = false;
 const inbox = [];
 const timers = { running: false, startedAt: 0, acc: 0, push: null };
 let forcedZoom = false;
+// Panel «Posición en VR» abierto en cada kneeboard, y la posición en vivo mientras se coloca (se guarda al soltar).
+const placing = [false, false];
+const placeOverride = [null, null];
 let updater = null;
 let updateWin = null;      // aviso de versión nueva
 let noticeFor = null;      // versión de la que ya se avisó en esta sesión
@@ -198,6 +202,13 @@ function createView(i) {
     },
   });
   win.setAspectRatio(ASPECT);
+  // Si la página se recarga con el panel «Posición en VR» abierto, no se queda en pausa «Ampliar al mirarlo».
+  win.webContents.on('did-start-loading', () => {
+    if (!placing[i] && !placeOverride[i]) return;
+    placing[i] = false;
+    placeOverride[i] = null;
+    updatePlacement(i);
+  });
   if (c.alwaysOnTop) win.setAlwaysOnTop(true, 'screen-saver');
   win.loadURL(`app://kb/src/renderer/kneeboard.html?view=${i}`);
   win.once('ready-to-show', () => {
@@ -257,17 +268,7 @@ function applyWindowState(i) {
 
 function updatePlacement(i) {
   if (!vr || !vr.ok) return;
-  const c = cfg.get();
-  const v = c.views[i].vr;
-  const visible = c.vr.enabled && !c.hidden && (i === 0 || c.dual);
-  vr.setPlacement(i, {
-    visible,
-    pos: v.pos,
-    rot: v.rot,
-    width: forcedZoom ? v.width * c.vr.zoomScale : v.width,
-    zoomScale: c.vr.zoomScale,
-    gazeZoom: c.vr.gazeZoom && !forcedZoom,
-  });
+  vr.setPlacement(i, VrPlacement.placementFor(cfg.get(), i, { forcedZoom, placing: placing[i], override: placeOverride[i] }));
 }
 
 // Las imágenes para el visor solo se capturan mientras DCS está en VR con la capa conectada: capturar cada
@@ -597,6 +598,13 @@ async function doAction(action) {
       if (vr) vr.recenter();
       toast('VR recentrado');
       break;
+    case 'reset_vr_place':
+      placeOverride.fill(null);
+      cfg.resetVrPlacement();
+      views.forEach((_, i) => updatePlacement(i));
+      broadcast('config', cfg.get());
+      toast('Posición en VR restablecida');
+      break;
     case 'toggle_zoom':
       forcedZoom = !forcedZoom;
       views.forEach((_, i) => updatePlacement(i));
@@ -864,7 +872,10 @@ function registerIpc() {
     const before = cfg.get();
     const share0 = JSON.stringify(before.share);
     // La pestaña y página de cada kneeboard las guarda el propio kneeboard: no se pisan desde Ajustes.
-    if (Array.isArray(p.views)) p.views = p.views.map((v, i) => ({ ...v, state: (before.views[i] || {}).state || v.state }));
+    if (Array.isArray(p.views)) {
+      p.views = p.views.map((v, i) => ({ ...v, state: (before.views[i] || {}).state || v.state }));
+      placeOverride.fill(null); // la posición en vivo del panel ya queda guardada
+    }
     if (p.startWithWindows !== undefined) syncAutostart(!!p.startWithWindows);
     if (p.tabs && !('activePreset' in p)) p.activePreset = null; // pestañas cambiadas a mano: ya no es el preset
     cfg.patch(p);
@@ -883,6 +894,20 @@ function registerIpc() {
     broadcast('config', c);
     updateTray();
     return c;
+  });
+
+  // Panel «Posición en VR» del kneeboard: abierto o cerrado, y la posición en vivo mientras se pulsa una flecha.
+  // La vista previa solo mueve el panel en el visor; se guarda con config:patch al soltar.
+  ipcMain.on('vr:placing', (e, i, on) => {
+    if (i !== 0 && i !== 1) return;
+    placing[i] = !!on;
+    if (!on) placeOverride[i] = null;
+    updatePlacement(i);
+  });
+  ipcMain.on('vr:preview', (e, i, v) => {
+    if ((i !== 0 && i !== 1) || !v || !Array.isArray(v.pos) || !Array.isArray(v.rot)) return;
+    placeOverride[i] = { pos: v.pos.slice(0, 3).map(Number), rot: v.rot.slice(0, 3).map(Number), width: Number(v.width) };
+    updatePlacement(i);
   });
 
   ipcMain.on('view:state', (e, i, state) => {

@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld('kb', {
   integrationInstall: (what) => ipcRenderer.invoke('integration:install', what),
   integrationUninstall: (what) => ipcRenderer.invoke('integration:uninstall', what),
   recenter: () => ipcRenderer.invoke('vr:recenter'),
+  vrPlacing: (on) => ipcRenderer.send('vr:placing', view, on),
+  vrPreview: (v) => ipcRenderer.send('vr:preview', view, v),
   vrOpenLog: () => ipcRenderer.invoke('vr:openlog'),
   timer: (cmd) => ipcRenderer.invoke('timer', cmd),
   messagesClear: () => ipcRenderer.invoke('messages:clear'),

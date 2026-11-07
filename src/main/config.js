@@ -13,6 +13,7 @@ const ACTIONS = [
   { id: 'toggle_write', label: 'Modo escritura (dar foco al kneeboard)' },
   { id: 'switch_view', label: 'Cambiar de kneeboard activo (doble)' },
   { id: 'recenter_vr', label: 'Recentrar en VR' },
+  { id: 'reset_vr_place', label: 'Restablecer la posición en VR' },
   { id: 'toggle_zoom', label: 'Zoom fijo en VR' },
   { id: 'toggle_night', label: 'Modo noche' },
   { id: 'share_page', label: 'Enviar página actual al vuelo' },
@@ -193,6 +194,13 @@ class Config {
     }
     this.save();
     return this.data;
+  }
+
+  // Vuelve a la colocación en VR de fábrica (por si el kneeboard se ha quedado fuera de la vista).
+  resetVrPlacement() {
+    const def = defaults().views;
+    const views = this.data.views.map((v, i) => ({ ...v, vr: def[i].vr }));
+    return this.patch({ views });
   }
 
   save(now = false) {
