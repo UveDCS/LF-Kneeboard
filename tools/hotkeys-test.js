@@ -42,6 +42,19 @@ ok(handledByBinding(shift, key(PGDN, { shiftKey: true })), 'Mayús+AvPág asigna
 ok(!handledByBinding(shift, key(PGDN)), 'Mayús+AvPág asignada pero pulsada sin Mayús → la ventana pasa página');
 ok(!handledByBinding(factory, key(PGDN, { shiftKey: true })), 'AltGr+AvPág asignada pero pulsada con Mayús → la ventana pasa página');
 
+// Cada modificador, izquierdo y derecho, por separado (códigos que guarda el lector de mandos al asignar)
+const MODS = [
+  [160, 'Mayús izquierda', { shiftKey: true }], [161, 'Mayús derecha', { shiftKey: true }],
+  [162, 'Ctrl izquierdo', { ctrlKey: true }], [163, 'Ctrl derecho', { ctrlKey: true }],
+  [164, 'Alt izquierdo', { altKey: true }], [165, 'AltGr', { altKey: true }],
+];
+for (const [vk, name, held] of MODS) {
+  const b = { next_page: [[`kbd:${vk}`, 'kbd:34']] };
+  ok(handledByBinding(b, key(PGDN, held)), `${name}+AvPág pulsada con ${name} → no la usa la ventana`);
+  const other = held.shiftKey ? { ctrlKey: true } : { shiftKey: true };
+  ok(!handledByBinding(b, key(PGDN, other)), `${name}+AvPág pulsada con otro modificador → la ventana pasa página`);
+}
+
 // Lo que no es teclado no cuenta
 ok(!handledByBinding({ next_page: [['joy:{ABC}:3']] }, key(PGDN)), 'Un botón del mando no le quita teclas a la ventana');
 ok(!handledByBinding({ next_page: [['joy:{ABC}:3', 'kbd:34']] }, key(PGDN)), 'Botón del mando + AvPág: sin saber si el botón está pulsado, la ventana sigue con AvPág');

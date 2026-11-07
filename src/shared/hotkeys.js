@@ -8,13 +8,15 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  // Modificadores (códigos virtuales de Windows) y cómo se ven en un KeyboardEvent. AltGr es Alt derecho (165):
-  // con teclados como el español, Chromium no lo marca como Alt ni Ctrl sino con getModifierState('AltGraph').
+  // Modificadores (códigos virtuales de Windows) y cómo se ven en un KeyboardEvent. El lector de mandos guarda
+  // siempre el izquierdo o el derecho, nunca los genéricos 16/17/18 (native/input-helper/input.c).
+  // AltGr es Alt derecho (165): con teclados como el español, Chromium no lo marca como Alt ni Ctrl sino con
+  // getModifierState('AltGraph').
   const altGraph = (ev) => !!(ev.altKey || (typeof ev.getModifierState === 'function' && ev.getModifierState('AltGraph')));
   const MODIFIER = {
-    16: (ev) => ev.shiftKey, 160: (ev) => ev.shiftKey, 161: (ev) => ev.shiftKey,
-    17: (ev) => ev.ctrlKey, 162: (ev) => ev.ctrlKey, 163: (ev) => ev.ctrlKey,
-    18: (ev) => ev.altKey, 164: (ev) => ev.altKey, 165: altGraph,
+    160: (ev) => ev.shiftKey, 161: (ev) => ev.shiftKey,
+    162: (ev) => ev.ctrlKey, 163: (ev) => ev.ctrlKey,
+    164: (ev) => ev.altKey, 165: altGraph,
   };
 
   // ¿Esta pulsación dispara alguna asignación de teclado? El lector de mandos dispara una combinación al
@@ -24,7 +26,7 @@
     const code = `kbd:${ev.keyCode}`;
     for (const list of Object.values(bindings || {})) {
       for (const combo of list || []) {
-        if (!combo.length || combo[combo.length - 1] !== code) continue;
+        if (combo[combo.length - 1] !== code) continue;
         const rest = combo.slice(0, -1);
         if (rest.every((c) => {
           const m = /^kbd:(\d+)$/.exec(c);
