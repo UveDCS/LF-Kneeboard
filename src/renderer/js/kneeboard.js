@@ -922,6 +922,9 @@ async function main() {
   document.addEventListener('visibilitychange', updateCoordsFlag);
   document.addEventListener('keydown', (e) => {
     if (e.target.closest('input, textarea, webview, [contenteditable]')) return;
+    // Una tecla asignada en Controles ya la atiende el lector de mandos aunque esta ventana tenga el foco:
+    // usarla también aquí pasaba dos páginas por pulsación (src/shared/hotkeys.js).
+    if (window.Hotkeys.handledByBinding(S.config.bindings, e)) return;
     if (e.key === 'PageDown' || e.key === 'ArrowRight') setPage(curPage() + 1, { manual: true });
     if (e.key === 'PageUp' || e.key === 'ArrowLeft') setPage(curPage() - 1, { manual: true });
     if (/^[0-9]$/.test(e.key)) openGoto(e.key);
