@@ -493,6 +493,53 @@ async function writeCheck() {
   console.log(`[escritura] foco ${focused}, aviso ${on} | antes ${before} | después ${after} | ${before === after ? 'los botones no se mueven' : 'SE MUEVEN'}`);
 }
 
+// Prueba de la cuadrícula de pestañas (LFKB_SNAPSHOT + LFKB_TABS_CHECK): presets por defecto separados de Mis presets.
+async function tabsCheck() {
+  const win = views[0];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const js = (c) => win.webContents.executeJavaScript(c, true);
+  const shot = async (name) => fs.writeFileSync(path.join(process.env.LFKB_SNAPSHOT, name), (await win.webContents.capturePage()).toPNG());
+  const rows = () => js(`[...document.querySelectorAll('.preset-chips')].map((r) => [...r.children].map((c) => c.textContent + (c.classList.contains('sel') ? '*' : '')).join(' | ')).join(' // ')`);
+  const open = async () => { await js(`document.getElementById('allTabs').click()`); await wait(500); };
+  const close = async () => { await js(`document.querySelector('.ov-head button').click()`); await wait(300); };
+  await wait(3000);
+  cfg.patch({ firstRun: false, tabPresets: [{ id: 'p1', name: 'Casual', tabs: cfg.get().tabs.slice(0, 3) }, { id: 'p2', name: 'Misión', tabs: cfg.get().tabs.slice(0, 5) }] });
+  broadcast('config', cfg.get());
+  await wait(300);
+  await open();
+  console.log('[pestañas] al abrir:', await rows());
+  await shot('pestanas.png');
+  await js(`[...document.querySelectorAll('.preset-chips .chip')].find((c) => c.textContent === 'Caza').click()`);
+  await wait(700);
+  const fav = () => cfg.get().tabs.filter((t) => t.fav).map((t) => t.type).join(',');
+  console.log(`[pestañas] tras Caza: ${cfg.get().tabs.length} pestañas, fijas ${fav()}`);
+  await open();
+  console.log('[pestañas] reabrir:', await rows());
+  await js(`[...document.querySelectorAll('.preset-chips .chip')].find((c) => c.textContent === 'Casual').click()`);
+  await wait(700);
+  await open();
+  console.log('[pestañas] tras Casual:', await rows());
+  await js(`document.querySelector('.favbtn').click()`);
+  await wait(400);
+  await close();
+  await open();
+  console.log('[pestañas] tras tocar una estrella:', await rows());
+  // Ajustes: elegir algo abajo del todo no vuelve arriba; cambiar de sección, sí.
+  openSettings('pestanas');
+  await wait(2000);
+  const s = settingsWin.webContents;
+  const top = () => s.executeJavaScript(`document.getElementById('main').scrollTop`, true);
+  await s.executeJavaScript(`document.getElementById('main').scrollTop = 99999`, true);
+  await wait(200);
+  const antes = await top();
+  await s.executeJavaScript(`[...document.querySelectorAll('label.chk')].find((l) => /Opciones avanzadas/.test(l.textContent)).querySelector('input').click()`, true);
+  await wait(800);
+  const despues = await top();
+  await s.executeJavaScript(`[...document.querySelectorAll('nav button')].find((b) => /Controles/.test(b.textContent)).click()`, true);
+  await wait(1000);
+  console.log(`[pestañas] scroll de Ajustes: antes ${Math.round(antes)}, tras elegir ${Math.round(despues)}, tras cambiar de sección ${Math.round(await top())}`);
+}
+
 function startFrames(i) {
   const win = views[i];
   if (!win || win.isDestroyed() || !vr || !vr.ok) return;
@@ -673,7 +720,7 @@ function sendToView(i, channel, payload) {
 function applyPreset(id) {
   const p = (cfg.get().tabPresets || []).find((x) => x.id === id);
   if (!p) return null;
-  cfg.patch({ tabs: presetTabs(p, cfg.get().tabs), activePreset: p.id });
+  cfg.patch({ tabs: presetTabs(p, cfg.get().tabs), activePreset: p.id, activeTemplate: null });
   voice.apply();
   broadcast('config', cfg.get());
   toast(`Pestañas: ${p.name}`);
@@ -995,6 +1042,7 @@ function registerIpc() {
     }
     if (p.startWithWindows !== undefined) syncAutostart(!!p.startWithWindows);
     if (p.tabs && !('activePreset' in p)) p.activePreset = null; // pestañas cambiadas a mano: ya no es el preset
+    if (p.tabs && !('activeTemplate' in p)) p.activeTemplate = null;
     cfg.patch(p);
     const c = cfg.get();
     if (p.dual !== undefined || p.hidden !== undefined || p.vr || p.overlayOpacity !== undefined || p.clickThrough !== undefined || p.views) {
@@ -1305,8 +1353,11 @@ function registerIpc() {
   ipcMain.handle('tabs:applyPreset', (e, id) => applyPreset(id));
   ipcMain.handle('tabs:templates', () => TEMPLATES.map(({ id, label, desc }) => ({ id, label, desc })));
   ipcMain.handle('tabs:template', (e, id) => {
-    cfg.patch({ tabs: templateTabs(id, cfg.get().tabs) });
+    cfg.patch({ tabs: templateTabs(id, cfg.get().tabs), activeTemplate: id, activePreset: null });
+    voice.apply();
     broadcast('config', cfg.get());
+    const tp = TEMPLATES.find((t) => t.id === id);
+    if (tp) toast(`Pestañas: ${tp.label}`);
     return cfg.get();
   });
   ipcMain.handle('capture:sources', async () => {
@@ -1614,9 +1665,10 @@ app.whenReady().then(() => {
   if (process.env.LFKB_PERF) setTimeout(() => perfCheck().then(() => app.exit(0)), 6000);
   else if (process.env.LFKB_SNAP_UPDATE) updateNoticeCheck().then(() => app.exit(0));
   else if (process.env.LFKB_NOTES_CHECK) notesCheck().then(() => app.exit(0));
+  else if (process.env.LFKB_TABS_CHECK) tabsCheck().catch((e) => console.log('[pestañas] FALLO', e.message)).then(() => app.exit(0));
   else if (process.env.LFKB_WRITE_CHECK) writeCheck().catch((e) => console.log('[escritura] FALLO', e.message)).then(() => app.exit(0));
   else if (process.env.LFKB_FOLDER_CHECK) folderCheck(process.env.LFKB_FOLDER_CHECK).catch((e) => console.log('[carpeta] FALLO', e.message)).then(() => app.exit(0));
-  else if (process.env.LFKB_SNAPSHOT && !process.env.LFKB_SNAP_UPDATE && !process.env.LFKB_NOTES_CHECK && !process.env.LFKB_FOLDER_CHECK && !process.env.LFKB_WRITE_CHECK) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
+  else if (process.env.LFKB_SNAPSHOT && !process.env.LFKB_SNAP_UPDATE && !process.env.LFKB_NOTES_CHECK && !process.env.LFKB_FOLDER_CHECK && !process.env.LFKB_WRITE_CHECK && !process.env.LFKB_TABS_CHECK) require('./snapshot').run({ cfg, dcs, views, vr, broadcast, updater, injectShare: (item) => share.emit('item', item), openSettings: () => { openSettings(); return settingsWin; } });
 });
 
 function flushStores() {

@@ -160,6 +160,7 @@ function defaults() {
     clickThrough: false,
     alwaysOnTop: true,
     overlayOpacity: 1,
+    activeTemplate: null, // preset por defecto en uso (el resaltado en la cuadrícula de pestañas)
     stowAnim: 'slide',
     hidden: false,
     views: [
@@ -211,6 +212,7 @@ class Config {
       }
     } catch {
       /* primera ejecución */
+      this.data.activeTemplate = TEMPLATES[0].id;
     }
     this.timer = null;
   }

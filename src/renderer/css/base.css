@@ -508,4 +508,5 @@ ol.rwr { margin: .25rem 0 .2rem 1.2rem; padding: 0; font-size: .74rem; line-heig
 
 /* Presets de pestañas en la cuadrícula */
 .preset-chips { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-top: .8rem; padding-top: .6rem; border-top: 1px solid var(--line); }
-.preset-chips .label { margin-right: .2rem; }
+.preset-chips .label { margin-right: .2rem; min-width: 9.5rem; }
+.preset-chips + .preset-chips { margin-top: .45rem; padding-top: 0; border-top: 0; }

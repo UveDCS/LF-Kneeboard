@@ -539,7 +539,8 @@ function toggleVrPlace() {
   renderChrome();
 }
 
-function openAllTabs() {
+async function openAllTabs() {
+  const templates = await kb.tabTemplates();
   const grid = h('div.tabgrid');
   const draw = () => clear(grid).append(...tabs().map((t, i) => h('div.tabtile-wrap',
     h('button.tabtile', { className: `tabtile${i === tabIndex ? ' sel' : ''}${t.fav ? ' fav' : ''}`, onclick: () => switchTab(i, { manual: true }) },
@@ -557,8 +558,11 @@ function openAllTabs() {
   draw();
   const presets = S.config.tabPresets || [];
   openOverlay('Pestañas', grid,
+    h('div.preset-chips',
+      h('span.label', 'Presets por defecto'),
+      ...templates.map((tp) => h('button.chip', { className: `chip${S.config.activeTemplate === tp.id ? ' sel' : ''}`, title: tp.desc, onclick: () => { kb.applyTemplate(tp.id); closeOverlay(); } }, tp.label))),
     presets.length ? h('div.preset-chips',
-      h('span.label', 'Presets'),
+      h('span.label', 'Mis presets'),
       ...presets.map((p) => h('button.chip', { className: `chip${S.config.activePreset === p.id ? ' sel' : ''}`, onclick: () => { kb.applyPreset(p.id); closeOverlay(); } }, p.name))) : null,
     h('div.muted', { style: { fontSize: '.75rem', marginTop: '.7rem', lineHeight: 1.4 } },
       'La estrella fija la pestaña en la barra de abajo; el resto se abre desde aquí. Guarda tus juegos de pestañas como presets en Ajustes > Pestañas.'));

@@ -26,7 +26,8 @@ const SECTIONS = [
   { id: 'acerca', icon: 'info', label: 'Acerca de' },
 ];
 
-const main = document.getElementById('main');
+const mainEl = document.getElementById('main');
+let main = mainEl; // mientras se repinta, una página aparte (ver render)
 const patch = async (p) => { C = await kb.patchConfig(p); return C; };
 
 function nav() {
@@ -172,7 +173,7 @@ R.pestanas = async () => {
     const list = same ? presets.map((p) => (p === same ? { ...p, tabs: snapshot(), at: Date.now() } : p))
       : [...presets, { id: `p${Date.now().toString(36)}`, name, tabs: snapshot(), at: Date.now() }];
     await savePresets(list);
-    if (!same) await patch({ activePreset: list[list.length - 1].id });
+    if (!same) await patch({ activePreset: list[list.length - 1].id, activeTemplate: null });
     render();
   };
   nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPreset(); });
@@ -197,7 +198,7 @@ R.pestanas = async () => {
     })) : h('div.muted.small', 'Todavía no tienes ninguno.'),
     h('div.row', { style: { marginTop: '.6rem' } }, nameIn, h('button.btn.primary', { onclick: addPreset }, icon('plus'), ' Guardar las pestañas actuales'))));
   const templates = await kb.tabTemplates();
-  main.append(h('h2', 'Plantillas por tipo de vuelo'), h('div.card',
+  main.append(h('h2', 'Presets por defecto'), h('div.card',
     h('div.tpls', templates.map((tp) => h('button.tpl', { onclick: async () => {
       if (!confirm(`¿Aplicar la plantilla «${tp.label}»?
 
@@ -792,9 +793,31 @@ R.acerca = () => {
     h('div.row', h('button.btn.danger', { onclick: () => kb.quit() }, 'Cerrar LF Kneeboard')));
 };
 
-async function render() {
-  clear(main);
-  await (R[section] || R.general)();
+// La sección se monta aparte y sustituye a la anterior ya terminada, sin mover el scroll: al elegir algo abajo
+// del todo te quedas donde estabas. Solo al cambiar de sección se vuelve arriba.
+let rendering = null;
+let renderAgain = false;
+let shownSection = null;
+function render() {
+  if (rendering) { renderAgain = true; return rendering; }
+  rendering = (async () => {
+    do {
+      renderAgain = false;
+      const top = shownSection === section ? mainEl.scrollTop : 0;
+      const stage = document.createElement('div');
+      main = stage;
+      try {
+        const built = section;
+        await (R[built] || R.general)();
+        mainEl.replaceChildren(...stage.childNodes);
+        shownSection = built;
+        mainEl.scrollTop = top;
+      } finally {
+        main = mainEl;
+      }
+    } while (renderAgain);
+  })().finally(() => { rendering = null; });
+  return rendering;
 }
 
 (async function start() {

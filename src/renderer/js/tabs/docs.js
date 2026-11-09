@@ -189,7 +189,7 @@ export const folder = {
       if (dir === now.path) return;
       const recent = [now.path, ...(now.recent || [])].filter((r, i, a) => r && r !== dir && a.indexOf(r) === i).slice(0, 6);
       const list = (ctx.S.config.tabs || []).map((x) => (x.id === tab.id ? { ...x, path: dir, recent } : x));
-      ctx.kb.patchConfig({ tabs: list, activePreset: ctx.S.config.activePreset || null });
+      ctx.kb.patchConfig({ tabs: list, activePreset: ctx.S.config.activePreset || null, activeTemplate: ctx.S.config.activeTemplate || null });
     }
     async function pickInWindows() {
       const [d] = await ctx.kb.openDialog({ title: 'Carpeta para esta pestaña', properties: ['openDirectory'], defaultPath: tab.path || undefined });
@@ -417,7 +417,7 @@ export const web = {
         return;
       }
       const list = (ctx.S.config.tabs || []).map((x) => (x.id === tab.id ? { ...x, url: next } : x));
-      ctx.kb.patchConfig({ tabs: list, activePreset: ctx.S.config.activePreset || null });
+      ctx.kb.patchConfig({ tabs: list, activePreset: ctx.S.config.activePreset || null, activeTemplate: ctx.S.config.activeTemplate || null });
     }
     async function openFile() {
       const [f] = await ctx.kb.openDialog({
