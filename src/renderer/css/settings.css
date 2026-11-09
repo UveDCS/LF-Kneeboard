@@ -111,6 +111,40 @@ kbd { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var
 .capture-keys { font-family: 'JetBrains Mono', monospace; font-size: 15px; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; min-height: 52px; }
 .capture-hint { color: var(--muted); font-size: 12px; }
 
+.ask-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.libtabs { display: inline-flex; gap: 2px; padding: 3px; margin: 2px 0 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.libtabs button { background: none; border: 0; border-radius: 7px; padding: 6px 18px; cursor: pointer; color: var(--muted); font-weight: 600; }
+.libtabs button:hover { color: var(--ink); }
+.libtabs button.sel { background: rgba(56,189,248,.14); color: var(--accent); }
+
+/* Matriz: juegos × aviones */
+.mx-tools { margin-bottom: 10px; }
+.mx-wrap { width: fit-content; max-width: 100%; overflow: auto; max-height: calc(100vh - 330px); min-height: 220px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.mx { border-collapse: separate; border-spacing: 0; }
+.mx th { position: sticky; background: var(--panel); font-weight: 400; z-index: 1; }
+.mx thead th { top: 0; z-index: 2; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+.mx tbody th { left: 0; border-right: 1px solid var(--line); }
+.mx-corner { left: 0; z-index: 3 !important; border-right: 1px solid var(--line); padding: 10px 12px; font: 700 10.5px 'JetBrains Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mx-corner span { display: flex; }
+.mx-corner span:last-child { justify-content: flex-end; }
+.mx-col button { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 38px; padding: 10px 0 7px; background: none; border: 0; border-radius: 6px 6px 0 0; cursor: pointer; color: var(--ink); }
+.mx-col button:hover, .mx-col.hot button { background: var(--panel2); color: var(--accent); }
+.mx-col small { color: var(--muted); font: 400 10.5px 'JetBrains Mono', monospace; }
+.mx-name { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 12px; white-space: nowrap; max-height: 150px; overflow: hidden; text-overflow: ellipsis; }
+.mx-row button { display: flex; align-items: center; gap: 10px; width: 270px; padding: 5px 12px 5px 8px; background: none; border: 0; cursor: pointer; text-align: left; color: var(--ink); }
+.mx-row button:hover { background: var(--panel2); }
+.mx-row img, .mx-noimg { width: 26px; height: 35px; flex: none; object-fit: cover; object-position: top; background: var(--panel2); border-radius: 3px; }
+.mx-set { min-width: 0; }
+.mx-set b { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-set small { color: var(--muted); font-size: 11px; }
+.mx tr.off .mx-set b { color: var(--muted); font-weight: 400; }
+.mx td { padding: 3px 5px; text-align: center; border-bottom: 1px solid rgba(38,50,64,.5); }
+.mx tbody tr:hover td { background: rgba(56,189,248,.04); }
+.mx-cell { width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); cursor: pointer; color: var(--accent-ink); }
+.mx-cell:hover { border-color: var(--accent); }
+.mx-cell.on { background: var(--accent); border-color: var(--accent); }
+.mx-cell svg { width: 16px; height: 16px; }
+
 .lib { display: grid; grid-template-columns: 260px 1fr; gap: 14px; align-items: start; }
 .libsets { display: flex; flex-direction: column; gap: 4px; max-height: 70vh; overflow: auto; }
 .libset { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; cursor: pointer; }

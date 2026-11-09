@@ -71,4 +71,9 @@ function focusDcs() {
   return forceForeground(dcsWindow());
 }
 
-module.exports = { focusWindow, focusDcs, dcsWindow, dcsRect };
+function foreground() {
+  const a = load();
+  return a ? a.GetForegroundWindow() : 0;
+}
+
+module.exports = { focusWindow, focusDcs, dcsWindow, dcsRect, foreground, bringToFront: forceForeground };

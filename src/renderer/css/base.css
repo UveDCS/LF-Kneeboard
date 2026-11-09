@@ -36,7 +36,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Guardar y sacar el kneeboard. Guardado queda casi transparente (.001, que en pantalla es 0) y no a 0:
    con opacidad 0 Chromium deja de pintarlo y al sacarlo tiene que pintarlo entero de golpe, con DCS
    ocupando la tarjeta gráfica (los tirones del principio). Sin escala: cambiarla obliga a repintar. */
-body.kb-out #kb { opacity: .001; transform: translateY(4%); transition: opacity .14s ease, transform .16s ease-in; }
+body.kb-out #kb { opacity: .001; transform: translateY(4%); transition: opacity .14s ease, transform .16s ease-in; pointer-events: none; }
 body.kb-in #kb { animation: kbIn .24s cubic-bezier(.2, .8, .25, 1); }
 @keyframes kbIn { from { opacity: .001; transform: translateY(4%); } }
 body.kb-out.kb-parked #kb { transition: none; }

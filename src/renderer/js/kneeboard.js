@@ -130,6 +130,16 @@ function setPage(n, { manual = false } = {}) {
   persist();
 }
 
+// Página siguiente / anterior: de la última se pasa a la primera y al revés. La pizarra (endless) no da la vuelta:
+// crece al pasar de la última.
+function stepPage(dir) {
+  const inst = curInst();
+  const count = pageCount(inst);
+  if (inst && inst.endless) return setPage(curPage() + dir, { manual: true });
+  if (count < 2) return;
+  setPage((curPage() + dir + count) % count, { manual: true });
+}
+
 function show() {
   const t = curTab();
   for (const [id, c] of instances) c.inst.el.classList.toggle('hidden', !t || id !== t.id);
@@ -576,6 +586,7 @@ function openGoto(initial = '') {
   const ind = $('pageInd');
   const input = h('input.goto', { type: 'number', min: 1, max: count, value: initial, placeholder: `1–${count}` });
   ind.replaceChildren(input);
+  kb.activate(true); // para escribir el número hace falta el teclado
   input.focus();
   if (initial) input.setSelectionRange && input.select();
   const done = (go) => {
@@ -738,8 +749,8 @@ function onAction(a) {
     case 'open_index': if (indexOpen) closeOverlay(); else openIndex(); break;
     case 'next_section': stepSection(1); break;
     case 'prev_section': stepSection(-1); break;
-    case 'next_page': setPage(curPage() + 1, { manual: true }); break;
-    case 'prev_page': setPage(curPage() - 1, { manual: true }); break;
+    case 'next_page': stepPage(1); break;
+    case 'prev_page': stepPage(-1); break;
     case 'next_tab': stepTab(1); break;
     case 'prev_tab': stepTab(-1); break;
     case 'next_bookmark': cycleBookmark(1); break;
@@ -887,8 +898,8 @@ async function main() {
   $('idxBtn').onclick = openIndex;
 
   $('allTabs').onclick = openAllTabs;
-  $('prevPage').onclick = () => setPage(curPage() - 1, { manual: true });
-  $('nextPage').onclick = () => setPage(curPage() + 1, { manual: true });
+  $('prevPage').onclick = () => stepPage(-1);
+  $('nextPage').onclick = () => stepPage(1);
   $('pageInd').onclick = () => { if (!$('pageInd').querySelector('input')) openGoto(); };
   $('bmBtn').onclick = openBookmarkMenu;
   $('bmListBtn').onclick = openBookmarkList;
@@ -918,8 +929,10 @@ async function main() {
   window.addEventListener('pointerup', () => { if (drag && drag.moved) bar.addEventListener('click', (e) => e.stopPropagation(), { capture: true, once: true }); drag = null; });
   bar.addEventListener('scroll', updateTabArrows);
 
-  // Solo un clic de verdad activa la ventana: el lápiz de la tableta (eventos sintéticos) no le quita el foco a DCS.
-  document.addEventListener('pointerdown', (e) => { if (e.isTrusted) kb.activate(); }, true);
+  // Un clic no le quita el foco a DCS (con DCS a pantalla completa lo sacaba de ella): la ventana solo se activa
+  // al pulsar un campo de texto, porque sin foco el teclado no escribiría. El lápiz (eventos sintéticos) tampoco.
+  const typingTarget = 'textarea, select, [contenteditable=""], [contenteditable="true"], input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=button])';
+  document.addEventListener('pointerdown', (e) => { if (e.isTrusted) kb.activate(!!e.target.closest(typingTarget)); }, true);
   kb.on('tablet', onTabletPen);
   window.addEventListener('focus', renderChrome);
   window.addEventListener('blur', renderChrome);
@@ -929,8 +942,8 @@ async function main() {
     // Una tecla asignada en Controles ya la atiende el lector de mandos aunque esta ventana tenga el foco:
     // usarla también aquí pasaba dos páginas por pulsación (src/shared/hotkeys.js).
     if (window.Hotkeys.handledByBinding(S.config.bindings, e)) return;
-    if (e.key === 'PageDown' || e.key === 'ArrowRight') setPage(curPage() + 1, { manual: true });
-    if (e.key === 'PageUp' || e.key === 'ArrowLeft') setPage(curPage() - 1, { manual: true });
+    if (e.key === 'PageDown' || e.key === 'ArrowRight') stepPage(1);
+    if (e.key === 'PageUp' || e.key === 'ArrowLeft') stepPage(-1);
     if (/^[0-9]$/.test(e.key)) openGoto(e.key);
     if (e.key === 'Escape') { if (!$('overlay').hidden) closeOverlay(); else kb.focusDcs(); }
   });

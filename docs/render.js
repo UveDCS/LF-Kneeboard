@@ -7,6 +7,7 @@ const path = require('path');
 const SRC = path.join(__dirname, 'src');
 const JOBS = [
   { name: 'guia', html: 'guia.html', pdf: path.join(__dirname, 'LF Kneeboard - Guía de uso.pdf') },
+  { name: 'rapida', html: 'guia-rapida.html', pdf: path.join(__dirname, 'LF Kneeboard - Guía rápida.pdf') },
   { name: 'interno', html: 'interno.html', pdf: path.join(__dirname, 'LF Kneeboard - Cómo funciona por dentro.pdf') },
   { name: 'anuncio-1', html: 'anuncio-1.html', png: path.join(__dirname, '..', 'discord', 'anuncio', '1-lf-kneeboard.png'), w: 1600, h: 900 },
   { name: 'anuncio-2', html: 'anuncio-2.html', png: path.join(__dirname, '..', 'discord', 'anuncio', '2-dtc-y-plan.png'), w: 1600, h: 900 },

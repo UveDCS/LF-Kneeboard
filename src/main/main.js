@@ -189,6 +189,9 @@ function createView(i) {
     resizable: true,
     alwaysOnTop: c.alwaysOnTop,
     skipTaskbar: true,
+    // No se activa al hacer clic: activarla le quitaba el foco a DCS y lo sacaba de la pantalla completa.
+    // Solo se vuelve activable para escribir (takeFocus) y deja de serlo al perder el foco.
+    focusable: false,
     show: false,
     title: `LF Kneeboard ${i + 1}`,
     hasShadow: false,
@@ -202,6 +205,7 @@ function createView(i) {
     },
   });
   win.setAspectRatio(ASPECT);
+  win.on('blur', () => releaseFocus(win));
   // Si la página se recarga con el panel «Posición en VR» abierto, no se queda en pausa «Ampliar al mirarlo».
   win.webContents.on('did-start-loading', () => {
     if (!placing[i] && !placeOverride[i]) return;
@@ -235,6 +239,27 @@ function createView(i) {
   });
   views[i] = win;
   return win;
+}
+
+// Dar el teclado al kneeboard (modo escritura o clic en un campo de texto).
+function takeFocus(win) {
+  if (!win.__canFocus) {
+    win.__canFocus = true;
+    win.setFocusable(true);
+    win.setSkipTaskbar(true); // setFocusable lo cambia en Windows
+  }
+  focus.focusWindow(win);
+}
+
+// Al perder el foco vuelve a no activarse con los clics. setFocusable(false) intenta además poner delante la
+// ventana que tenga debajo, que puede no ser la que acaba de ganar el foco: se le devuelve.
+function releaseFocus(win) {
+  if (!win.__canFocus || win.isDestroyed()) return;
+  win.__canFocus = false;
+  const fg = focus.foreground();
+  win.setFocusable(false);
+  win.setSkipTaskbar(true);
+  if (fg && focus.foreground() !== fg) focus.bringToFront(fg);
 }
 
 function applyWindowState(i) {
@@ -484,7 +509,7 @@ async function writeCheck() {
   const pos = () => js(`['nightBtn','dualBtn','autoPill','vrPlaceBtn'].map((id) => { const r = document.getElementById(id).getBoundingClientRect(); return id + ':' + Math.round(r.x); }).join(' ')`);
   await wait(3000);
   const before = await pos();
-  win.focus(); win.webContents.focus();
+  takeFocus(win); win.webContents.focus();
   await wait(500);
   const focused = await js('document.hasFocus()');
   const on = await js(`document.getElementById('writeBadge').classList.contains('on')`);
@@ -565,12 +590,25 @@ function startFrames(i) {
 // es transparente) y después se ocultan. Al volver a sacarlo, la página entra de nuevo con su animación,
 // igual que la primera vez, sin que aparezca un instante la imagen de cuando se guardó.
 let hideTimer = null;
+// La ventana se aparca sin que el ratón salga de ella, así que seguía «teniéndolo encima»: la etiqueta del
+// elemento se quedaba flotando en la pantalla y, al cambiar de página guardado, salía la de la página nueva.
+// Con #kb sin eventos (body.kb-out) este movimiento cae en el fondo, que no tiene etiqueta.
+function forgetHover(win) {
+  if (!win || win.isDestroyed()) return;
+  win.webContents.sendInputEvent({ type: 'mouseMove', x: 0, y: 0 });
+  win.webContents.sendInputEvent({ type: 'mouseLeave', x: 0, y: 0 });
+}
+
 function setHidden(h) {
   clearTimeout(hideTimer);
   cfg.patch({ hidden: h });
   broadcast('visibility', !h);
-  if (h) hideTimer = setTimeout(() => views.forEach((_, i) => applyWindowState(i)), 170);
-  else views.forEach((_, i) => applyWindowState(i));
+  if (h) {
+    hideTimer = setTimeout(() => views.forEach((w, i) => {
+      forgetHover(w);
+      applyWindowState(i);
+    }), 170);
+  } else views.forEach((_, i) => applyWindowState(i));
   broadcast('config', cfg.get());
   updateTray();
 }
@@ -727,8 +765,12 @@ function applyPreset(id) {
   return cfg.get();
 }
 
+// Con el kneeboard guardado, los mandos de navegación no hacen nada (una seta asignada seguía pasando páginas).
+const NAV_ACTION = /^((next|prev)_(page|tab|bookmark|section|wp)|next_preset|open_index|share_page)(_2)?$/;
+
 async function doAction(action) {
   const c = cfg.get();
+  if (c.hidden && NAV_ACTION.test(action)) return;
   switch (action) {
     case 'next_preset': {
       const list = c.tabPresets || [];
@@ -783,7 +825,7 @@ async function doAction(action) {
         broadcast('write-mode', false);
       } else if (w) {
         if (c.hidden) setHidden(false);
-        focus.focusWindow(w);
+        takeFocus(w);
         broadcast('write-mode', true);
       }
       break;
@@ -1111,11 +1153,13 @@ function registerIpc() {
     vs[i].bounds = win.getBounds();
     cfg.patch({ views: vs });
   });
-  ipcMain.handle('view:activate', (e, i) => {
+  ipcMain.handle('view:activate', (e, i, typing) => {
     if (activeView !== i) {
       activeView = i;
       broadcast('active-view', i);
     }
+    // Solo para escribir: un clic normal no activa la ventana (ver createView).
+    if (typing && views[i] && !views[i].isDestroyed() && !views[i].isFocused()) takeFocus(views[i]);
   });
 
   ipcMain.handle('fs:list', (e, dir, kind) => listFiles(dir, kind));
@@ -1299,6 +1343,8 @@ function registerIpc() {
   ipcMain.handle('library:create', (e, name, aircrafts) => { library.createSet(name, aircrafts); return libChanged(); });
   ipcMain.handle('library:rename', (e, dir, name) => { library.renameSet(dir, name); return libChanged(); });
   ipcMain.handle('library:meta', (e, dir, p) => { library.writeMeta(dir, p); return libChanged(); });
+  // Varios juegos de una vez (Matriz): un solo aviso, para que el kneeboard no recargue una vez por juego.
+  ipcMain.handle('library:metaMany', (e, items) => { for (const it of items) library.writeMeta(it.dir, it.patch); return libChanged(); });
   ipcMain.handle('library:import', (e, dir, files) => { library.importFiles(dir, files); return libChanged(); });
   ipcMain.handle('library:savePages', (e, setName, base, dataUrls, opts = {}) => {
     const dir = library.setDir(setName);

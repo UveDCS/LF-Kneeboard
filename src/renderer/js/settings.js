@@ -555,10 +555,14 @@ R.biblioteca = async () => {
         alert(`Añadidas ${res.added} páginas al .miz. Copia de seguridad: ${res.backup}`);
       } }, 'Meter en un .miz…'),
       h('span.grow'),
-      h('button.btn', { onclick: async () => { const n = prompt('Nombre del juego nuevo'); if (n) { await kb.library.create(n, []); libSel = n; render(); } } }, '+ Juego'),
+      h('button.btn', { onclick: () => newSet(st) }, '+ Juego'),
       h('button.btn', { onclick: () => importPdf() }, 'Importar PDF…')) : null,
     h('div.small.muted', { id: 'libProgress' })));
   if (!st.root) return;
+
+  main.append(h('div.libtabs',
+    [['juegos', 'Juegos', 'Crea juegos y ajusta sus páginas'], ['matriz', 'Matriz', 'Qué juego sale en qué avión, de un vistazo']].map(([id, label, hint]) => h('button', { className: libTab === id ? 'sel' : '', title: hint, onclick: () => { libTab = id; render(); } }, label))));
+  if (libTab === 'matriz') { libMatrix(st); return; }
 
   const set = st.sets.find((s) => s.name === libSel) || st.sets.find((s) => s.pages.length) || st.sets[0];
   libSel = set ? set.name : null;
@@ -601,6 +605,155 @@ R.biblioteca = async () => {
   main.append(h('div.lib', list, editor));
 };
 let libSel = null;
+let libTab = 'juegos';
+
+// Pedir un texto: window.prompt() no existe en Electron (lanza un error y el botón no hacía nada).
+function askText({ title, placeholder, action, check }) {
+  return new Promise((done) => {
+    const input = h('input.f', { placeholder, style: { width: '100%' } });
+    const err = h('div.small', { style: { color: 'var(--bad)', minHeight: '1.4em' } });
+    const close = (v) => { box.remove(); done(v); };
+    const ok = () => {
+      const v = input.value.trim();
+      const problem = v ? check(v) : 'Escribe un nombre.';
+      if (problem) { err.textContent = problem; input.focus(); return; }
+      close(v);
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') ok();
+      if (e.key === 'Escape') close(null);
+    });
+    const box = h('div.capture', h('div.capture-box',
+      h('div.capture-title', title), input, err,
+      h('div.ask-actions', h('button.btn', { onclick: () => close(null) }, 'Cancelar'), h('button.btn.primary', { onclick: ok }, action))));
+    document.body.append(box);
+    input.focus();
+  });
+}
+
+async function newSet(st) {
+  const clean = (s) => s.replace(/[<>:"/\\|?*]/g, '').trim();
+  const typed = await askText({
+    title: 'Juego nuevo',
+    placeholder: 'Nombre (p. ej. «2. Emergencias»)',
+    action: 'Crear juego',
+    check: (v) => {
+      const c = clean(v);
+      if (!c || /^\.+$/.test(c)) return 'Ese nombre no sirve para una carpeta.';
+      if (st.sets.some((s) => s.name.toLowerCase() === c.toLowerCase())) return `Ya tienes un juego «${c}».`;
+      return null;
+    },
+  });
+  if (!typed) return;
+  await kb.library.create(clean(typed), []);
+  libSel = clean(typed);
+  libTab = 'juegos';
+  render();
+}
+
+// Matriz: una fila por juego y una columna por avión, como la pestaña Matrix de KneeboardManager.
+let matrixAll = false;
+let matrixFilter = '';
+const matrixExtra = new Set();
+
+function libMatrix(st) {
+  const sets = st.sets.map((s) => ({ ...s, on: new Set(s.aircrafts) }));
+  const inUse = new Set(sets.flatMap((s) => s.aircrafts));
+  const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  const cols = [...new Set(matrixAll ? [...st.aircraft, ...inUse] : [...inUse, ...matrixExtra])].sort(byName);
+  const save = (list) => kb.library.metaMany(list.map((s) => ({ dir: s.dir, patch: { aircrafts: [...s.on] } })));
+  let undo = null;
+
+  const undoBtn = h('button.btn.small', { hidden: true, onclick: async () => {
+    if (!undo) return;
+    for (const u of undo) u.s.on = new Set(u.prev);
+    const list = undo.map((u) => u.s);
+    undo = null;
+    undoBtn.hidden = true;
+    paint();
+    await save(list);
+  } }, 'Deshacer');
+
+  // Cambio de toda una fila o columna: si ya están todos, los quita; si no, los pone. Se puede deshacer.
+  const setMany = async (rows, columns) => {
+    const allOn = rows.every((s) => columns.every((a) => s.on.has(a)));
+    undo = rows.map((s) => ({ s, prev: [...s.on] }));
+    for (const s of rows) for (const a of columns) { if (allOn) s.on.delete(a); else s.on.add(a); }
+    undoBtn.hidden = false;
+    paint();
+    await save(rows);
+  };
+
+  const cells = [];
+  const colHeads = new Map();
+  const rowsOf = [];
+  const visibleRows = () => rowsOf.filter((r) => !r.tr.hidden).map((r) => r.s);
+  const paint = () => {
+    for (const c of cells) {
+      const on = c.s.on.has(c.a);
+      c.el.classList.toggle('on', on);
+      c.el.setAttribute('aria-pressed', String(on));
+      c.el.replaceChildren(on ? icon('check') : '');
+    }
+    for (const [a, el] of colHeads) el.textContent = String(sets.filter((s) => s.on.has(a)).length);
+    for (const r of rowsOf) r.tr.classList.toggle('off', !r.s.on.size);
+  };
+
+  const headRow = h('tr', h('th.mx-corner', h('span', 'Juego'), h('span', 'Avión')), cols.map((a) => {
+    const n = h('small');
+    colHeads.set(a, n);
+    return h('th.mx-col', h('button', { title: `${a}: poner o quitar en todos los juegos de la lista`, onclick: () => setMany(visibleRows(), [a]) }, h('span.mx-name', a), n));
+  }));
+  const body = h('tbody');
+  sets.forEach((s) => {
+    const active = s.pages.filter((p) => !p.disabled);
+    const img = h('img', { alt: '' });
+    if (active[0]) kb.thumb(active[0].path).then((u) => { if (u) img.src = u; });
+    const tr = h('tr', h('th.mx-row',
+      h('button', { title: `${s.name}: poner o quitar en todos los aviones de la tabla`, onclick: () => setMany([s], cols) },
+        active[0] ? img : h('span.mx-noimg'),
+        h('span.mx-set', h('b', s.name), h('small', `${active.length}/${s.pages.length} págs.`)))),
+    cols.map((a) => {
+      const el = h('button.mx-cell', { title: `${s.name} · ${a}`, onclick: async () => {
+        if (s.on.has(a)) s.on.delete(a); else s.on.add(a);
+        undo = null;
+        undoBtn.hidden = true;
+        paint();
+        await save([s]);
+      } });
+      cells.push({ el, s, a });
+      return h('td', el);
+    }));
+    rowsOf.push({ tr, s });
+    body.append(tr);
+  });
+  const applyFilter = () => {
+    const q = matrixFilter.trim().toLowerCase();
+    for (const r of rowsOf) r.tr.hidden = !!q && !r.s.name.toLowerCase().includes(q);
+  };
+  const addCol = h('select.f', { onchange: (e) => { if (e.target.value) { matrixExtra.add(e.target.value); render(); } } },
+    h('option', { value: '' }, 'Añadir columna de avión…'), st.aircraft.filter((a) => !cols.includes(a)).map((a) => h('option', { value: a }, a)));
+
+  main.append(h('div.row.mx-tools',
+    h('input.f.grow', { placeholder: 'Buscar juego…', value: matrixFilter, oninput: (e) => { matrixFilter = e.target.value; applyFilter(); } }),
+    matrixAll ? null : addCol,
+    h('button.btn.small', { className: `btn small${matrixAll ? ' primary' : ''}`, onclick: () => { matrixAll = !matrixAll; render(); } }, 'Todos los aviones'),
+    undoBtn));
+  if (!sets.length) main.append(h('div.card.muted', 'La biblioteca está vacía: crea un juego o importa un PDF.'));
+  else if (!cols.length) main.append(h('div.card.muted', 'Todavía no hay aviones en ninguna columna. Añade uno en el desplegable de arriba.'));
+  else {
+    const tbl = h('table.mx', h('thead', headRow), body);
+    tbl.addEventListener('pointerover', (e) => {
+      tbl.querySelectorAll('.hot').forEach((x) => x.classList.remove('hot'));
+      const td = e.target.closest('td');
+      if (td) headRow.cells[td.cellIndex].classList.add('hot');
+    });
+    tbl.addEventListener('pointerleave', () => tbl.querySelectorAll('.hot').forEach((x) => x.classList.remove('hot')));
+    main.append(h('div.mx-wrap', tbl), h('p.small.muted', 'Un clic en un cuadro pone o quita ese juego en ese avión. Un clic en el nombre de un avión o de un juego afecta a toda su columna o fila.'));
+  }
+  applyFilter();
+  paint();
+}
 
 async function importPdf() {
   const r = await kb.openDialog({ properties: ['openFile'], filters: [{ name: 'PDF', extensions: ['pdf'] }] });

@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>LF Kneeboard — Guía rápida</title>
+<style>
+@import url('../../node_modules/@fontsource/inter/300.css');
+@import url('../../node_modules/@fontsource/inter/400.css');
+@import url('../../node_modules/@fontsource/inter/500.css');
+@import url('../../node_modules/@fontsource/inter/600.css');
+@import url('../../node_modules/@fontsource/jetbrains-mono/400.css');
+@import url('../../node_modules/@fontsource/jetbrains-mono/700.css');
+:root { --bg:#e9e7e1; --card:#fff; --line:#d3d0c7; --ink:#15171a; --soft:#3b3d40; --muted:#716f67; --accent:#ffb000;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif; }
+* { box-sizing:border-box; }
+html,body { margin:0; padding:0; }
+body { font-family:var(--sans); color:var(--ink); background:var(--bg); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+img { display:block; }
+@page { size:A4; margin:0; }
+.page { width:210mm; height:297mm; padding:11mm 14mm 13mm; position:relative; overflow:hidden; background:var(--bg); display:flex; flex-direction:column; break-after:page; }
+.page:last-child { break-after:auto; }
+.head, .foot { display:flex; justify-content:space-between; font:400 7pt var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.head { padding-bottom:2.4mm; border-bottom:1px solid var(--line); margin-bottom:6mm; }
+.foot { position:absolute; left:14mm; right:14mm; bottom:6.5mm; }
+h1 { font-weight:300; font-size:56pt; letter-spacing:-.035em; line-height:.98; margin:0; }
+h2 { font-weight:500; font-size:21pt; letter-spacing:-.02em; line-height:1.08; margin:0 0 2mm; }
+h3 { font-weight:600; font-size:10.4pt; letter-spacing:-.005em; margin:0 0 1.2mm; }
+p { margin:0 0 2.2mm; font-size:9.6pt; line-height:1.48; color:var(--soft); }
+b, strong { font-weight:600; color:var(--ink); }
+.kick, .label { font:700 7pt var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 1.6mm; }
+.lead { font-size:10.4pt; line-height:1.45; color:var(--soft); margin:0; max-width:150mm; }
+.step { display:grid; grid-template-columns:24mm 1fr; align-items:start; margin-bottom:5.5mm; }
+.num { font-weight:300; font-size:68pt; line-height:.84; letter-spacing:-.05em; }
+.step.cont .num { color:#b5b2a8; }
+code { font:400 .9em var(--mono); background:#f1efe9; border:1px solid var(--line); border-radius:1mm; padding:0 1mm; white-space:nowrap; }
+.card code, .white code { background:#f4f2ed; }
+kbd { font:700 7.6pt var(--mono); background:var(--card); border:1px solid var(--line); border-bottom-width:2px; border-radius:1mm; padding:.1mm 1.3mm; white-space:nowrap; }
+.btnname { font-weight:600; color:var(--ink); }
+
+.fig { margin:0; min-width:0; }
+.shot { position:relative; border-radius:2.6mm; overflow:visible; background:#0d131a; box-shadow:0 0 0 1px rgba(21,23,26,.22); }
+.shot img { width:100%; height:100%; border-radius:2.6mm; }
+.fig figcaption { font:400 7.4pt var(--mono); color:var(--muted); line-height:1.4; margin-top:1.8mm; }
+.hl { position:absolute; display:block; border:1.4pt solid var(--accent); border-radius:1.1mm; box-shadow:0 0 0 .6pt rgba(0,0,0,.45); }
+.pin { position:absolute; width:5.6mm; height:5.6mm; transform:translate(-50%,-50%); border-radius:50%; background:var(--accent); color:#15171a; font:700 8.4pt/5.6mm var(--mono); text-align:center; box-shadow:0 0 0 .7pt #15171a; }
+.pin.s { position:static; transform:none; flex:none; width:5.2mm; height:5.2mm; font-size:8pt; line-height:5.2mm; margin-top:.1mm; }
+.pin.i { position:static; transform:none; display:inline-block; width:4.4mm; height:4.4mm; font-size:7pt; line-height:4.4mm; margin:0 .4mm; vertical-align:-.9mm; box-shadow:0 0 0 .5pt #15171a; }
+.keys { list-style:none; margin:0; padding:0; }
+.keys li { display:flex; gap:2.8mm; font-size:9.5pt; line-height:1.44; color:var(--soft); padding-bottom:2.7mm; }
+.keys li:last-child { padding-bottom:0; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:3mm; padding:4mm 4.4mm; }
+.card p:last-child { margin-bottom:0; }
+.pill { display:inline-block; font:700 6.8pt var(--mono); letter-spacing:.08em; text-transform:uppercase; padding:.5mm 2mm; border-radius:5mm; background:var(--accent); color:#15171a; margin-right:1.4mm; vertical-align:.3mm; }
+.note { background:var(--card); border:1px solid var(--line); border-radius:3mm; padding:3mm 4.2mm; font-size:9.1pt; line-height:1.45; color:var(--soft); }
+.grow { flex:1; min-height:0; }
+.gap { height:4.5mm; flex:none; }
+.gap.s { height:3mm; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4.5mm; }
+.side { display:grid; grid-template-columns:76mm 1fr; gap:6mm; align-items:start; }
+.side.r { grid-template-columns:1fr 66mm; }
+
+table { width:100%; border-collapse:collapse; font-size:8.9pt; }
+th { text-align:left; font:700 6.8pt var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:0 2mm 1.6mm 0; border-bottom:1px solid var(--line); }
+td { padding:1.75mm 2mm 1.75mm 0; border-bottom:1px solid #e9e7e1; line-height:1.36; color:var(--soft); vertical-align:top; }
+tr:last-child td { border-bottom:0; }
+td:first-child { color:var(--ink); font-weight:500; white-space:nowrap; }
+
+.tree { font:400 8.5pt/1.75 var(--mono); color:var(--soft); }
+.tree .r { display:grid; grid-template-columns:1fr auto; gap:3mm; }
+.tree b { font-weight:700; }
+.tree em { font-style:normal; font:700 6.6pt var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); align-self:center; }
+.tree .i1 { padding-left:4.5mm; } .tree .i2 { padding-left:9mm; }
+.tree .off { color:#9a978d; }
+
+.cover .hero { display:grid; grid-template-columns:1fr 88mm; gap:8mm; align-items:start; margin-top:3mm; }
+.cover .sub { font-size:12.6pt; line-height:1.42; color:var(--soft); margin:6mm 0 0; max-width:90mm; }
+.toc { list-style:none; margin:9mm 0 0; padding:0; border-top:1px solid var(--line); }
+.toc li { display:grid; grid-template-columns:9mm 1fr auto; align-items:baseline; font-size:10.2pt; font-weight:500; padding:2.25mm 0; border-bottom:1px solid var(--line); }
+.toc li span:first-child, .toc li span:last-child { font:400 8pt var(--mono); color:var(--muted); }
+.defs { display:grid; grid-template-columns:repeat(4,1fr); gap:3.5mm; }
+.defs .card { padding:3.2mm 3.5mm; }
+.defs h3 { font-size:9.6pt; }
+.defs p { font-size:8.5pt; line-height:1.4; margin:0; }
+.startrow { display:grid; grid-template-columns:104mm 1fr; gap:4mm; align-items:stretch; }
+.stack { display:grid; gap:2.6mm; }
+.stack .card { padding:2.5mm 3.4mm; }
+.stack h3 { font-size:9.6pt; margin-bottom:.6mm; }
+.stack p { font-size:8.7pt; line-height:1.38; margin:0; }
+.start { display:grid; grid-template-columns:repeat(3,1fr); gap:3.5mm; }
+.start .card { padding:3.2mm 3.5mm; }
+.start p { font-size:8.8pt; line-height:1.42; margin:0; }
+</style>
+</head>
+<body>
+<section class="page cover">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  
+<div class="hero">
+  <div>
+    <p class="kick">Cómo empezar</p>
+    <h1>Guía<br>rápida</h1>
+    <p class="sub">De la instalación a tener tus páginas organizadas, tus botones asignados y las emergencias a un toque.</p>
+    <ul class="toc">
+      <li><span>1</span><span>Crea la carpeta de juegos</span><span>p. 2</span></li>
+      <li><span>2</span><span>Organiza los juegos en Ajustes</span><span>p. 3</span></li>
+      <li><span>3</span><span>Asigna página, pestaña y marcador</span><span>p. 6</span></li>
+      <li><span>4</span><span>Usa marcadores dentro del juego</span><span>p. 7</span></li>
+      <li><span>5</span><span>Añade pestañas nuevas</span><span>p. 9</span></li>
+    </ul>
+  </div>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-piernografo.jpg" alt=""><i class="hl" style="left:91.52%;top:93.50%;width:4.78%;height:3.45%"></i><b class="pin" style="left:93.92%;top:93.50%;margin:-3.6mm 0 0 0.0mm">2</b><i class="hl" style="left:3.69%;top:93.50%;width:4.78%;height:3.45%"></i><b class="pin" style="left:6.08%;top:93.50%;margin:-3.6mm 0 0 0.0mm">3</b></div></figure>
+</div>
+<div class="grow"></div>
+<p class="label">Antes de empezar</p>
+<div class="startrow">
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1400/810"><img src="../img/rapida/bienvenida-200-0-1000-690.jpg" alt=""><i class="hl" style="left:4.16%;top:89.06%;width:16.50%;height:6.78%"></i><b class="pin" style="left:4.16%;top:92.45%;margin:0.0mm 0 0 -3.6mm">1</b></div></figure>
+  <div class="stack">
+    <div class="card"><h3>Instala y abre</h3><p>La primera vez sale la Bienvenida: deja las dos casillas marcadas y pulsa <span class="btnname">Instalar y empezar</span><b class="pin i">1</b>.</p></div>
+    <div class="card"><h3>Sácalo y guárdalo</h3><p><kbd>AltGr</kbd> + <kbd>K</kbd> lo muestra y lo oculta. Hacer clic en él no saca a DCS de pantalla completa; solo escribir en un campo de texto.</p></div>
+    <div class="card"><h3>Abre Ajustes</h3><p>Con su icono<b class="pin i">2</b> o desde el icono de la bandeja de Windows.</p></div>
+  </div>
+</div>
+<div class="gap"></div>
+<p class="label">Cuatro palabras</p>
+<div class="defs">
+  <div class="card"><h3>Juego</h3><p>Una carpeta con páginas en imagen. Por ejemplo, «Emergencias».</p></div>
+  <div class="card"><h3>Piernógrafo</h3><p>La pestaña con todas las páginas del avión que vuelas.</p></div>
+  <div class="card"><h3>Marcador</h3><p>Una señal en una página para volver a ella al momento.</p></div>
+  <div class="card"><h3>Pestaña</h3><p>Cada herramienta del kneeboard. Todas están en la cuadrícula<b class="pin i">3</b>.</p></div>
+</div>
+<div class="gap s"></div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>01 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step"><div class="num">1</div><div><p class="kick">Paso 1 de 5</p><h2>Crea la carpeta de juegos</h2><p class="lead">Todas tus páginas viven en una sola carpeta, y dentro de ella cada subcarpeta es un juego. Se configura en <b>Ajustes › Piernógrafo</b>.</p></div></div>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1749/561"><img src="../img/rapida/lib-vacia-0-0-1000-478.jpg" alt=""><i class="hl" style="left:0.80%;top:87.45%;width:18.60%;height:10.46%"></i><b class="pin" style="left:19.40%;top:92.68%;margin:0.0mm 0 0 3.6mm">1</b><i class="hl" style="left:36.62%;top:62.52%;width:32.27%;height:6.77%"></i><b class="pin" style="left:36.62%;top:65.91%;margin:0.0mm 0 0 -3.6mm">2</b><i class="hl" style="left:79.89%;top:50.14%;width:6.88%;height:9.71%"></i><b class="pin" style="left:83.33%;top:50.14%;margin:-3.6mm 0 0 0.0mm">3</b><i class="hl" style="left:87.80%;top:50.14%;width:7.51%;height:9.71%"></i><b class="pin" style="left:91.56%;top:50.14%;margin:-3.6mm 0 0 0.0mm">4</b></div></figure>
+<div class="gap"></div>
+<div class="two">
+  <div>
+    <ol class="keys"><li><b class="pin s">1</b><div>Entra en la sección <b>Piernógrafo</b> de Ajustes.</div></li><li><b class="pin s">2</b><div><b>Crear en…</b> es lo más directo: crea la carpeta en <code>Documentos\LF Kneeboard\Biblioteca</code> con un primer juego, «Mis páginas».</div></li><li><b class="pin s">3</b><div><b>Elegir…</b> sirve si prefieres otra carpeta, por ejemplo una compartida con tu escuadrón.</div></li><li><b class="pin s">4</b><div><b>Detectar</b> busca en el Escritorio y en Documentos una biblioteca de KneeboardManager. Es el mismo formato, y si hay una al abrir la app por primera vez, se usa sola.</div></li></ol>
+  </div>
+  <div class="card tree">
+    <p class="label">Así queda por dentro</p>
+    <div class="r"><span><b>Biblioteca</b></span><em>La carpeta</em></div>
+    <div class="r i1"><span><b>1. Normal</b></span><em>Un juego</em></div>
+    <div class="r i2"><span>01 Puesta en marcha.png</span><em>Una página</em></div>
+    <div class="r i2"><span>02 Rodaje.png</span></div>
+    <div class="r i2"><span>…</span></div>
+    <div class="r i1"><span><b>2. Emergencias</b></span><em>Otro juego</em></div>
+    <div class="r i2"><span>01 Fallo de motor.png</span></div>
+    <div class="r i2"><span>…</span></div>
+    <div class="r i1"><span><b>3. Aeródromos Nellis</b></span></div>
+  </div>
+</div>
+<div class="gap"></div>
+<div class="note"><span class="pill">Consejo</span><b>Empieza los nombres por un número.</b> Los juegos y sus páginas salen por orden alfabético: sin numerar, «Emergencias» saldría antes que «Normal».</div>
+<div class="gap s"></div>
+<div class="note"><span class="pill">Formatos</span>Las páginas tienen que ser imágenes: PNG, JPG, WEBP, BMP o GIF. Un PDF se convierte con un botón, como verás en el paso 2.</div>
+<div class="gap s"></div>
+<div class="note"><span class="pill">No lo borres</span>Cada juego guarda en su carpeta un archivo <code>kneeboard.json</code> con sus aviones, sus páginas desactivadas y su orden.</div>
+<div class="gap"></div>
+<div class="card">
+  <p class="label">Un reparto que funciona</p>
+  <table>
+    <tr><th>Juego</th><th>Qué lleva</th><th>Aviones</th></tr>
+    <tr><td>1. Normal</td><td>Listas de comprobación de cada vuelo</td><td>Solo ese avión</td></tr>
+    <tr><td>2. Emergencias</td><td>Procedimientos de emergencia</td><td>Solo ese avión</td></tr>
+    <tr><td>3. Aeródromos Nellis</td><td>Planos y cartas que sirven para todos</td><td>Todos los que vueles allí</td></tr>
+  </table>
+</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>02 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step"><div class="num">2</div><div><p class="kick">Paso 2 de 5</p><h2>Organiza los juegos</h2><p class="lead">Aquí llenas cada juego de páginas y decides en qué aviones sale. Primero, crear y llenar.</p></div></div>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1770/1353"><img src="../img/rapida/lib-juego-0-0-1000-960.jpg" alt=""><i class="hl" style="left:75.27%;top:25.93%;width:7.16%;height:4.03%"></i><b class="pin" style="left:78.85%;top:29.96%;margin:3.6mm 0 0 0.0mm">1</b><i class="hl" style="left:83.45%;top:25.93%;width:11.07%;height:4.03%"></i><b class="pin" style="left:88.99%;top:29.96%;margin:3.6mm 0 0 0.0mm">2</b><i class="hl" style="left:23.05%;top:39.60%;width:22.03%;height:20.11%"></i><b class="pin" style="left:23.05%;top:49.65%;margin:0.0mm 0 0 -3.6mm">3</b><i class="hl" style="left:66.52%;top:42.05%;width:11.88%;height:2.81%"></i><b class="pin" style="left:72.46%;top:42.05%;margin:-3.6mm 0 0 0.0mm">4</b><i class="hl" style="left:47.85%;top:41.45%;width:17.65%;height:4.03%"></i><b class="pin" style="left:47.85%;top:43.46%;margin:0.0mm 0 0 -3.6mm">5</b></div></figure>
+<div class="gap"></div>
+<ol class="keys"><li><b class="pin s">1</b><div><b>+ Juego</b> pide el nombre y crea su carpeta. Empieza el nombre por un número para decidir el orden.</div></li><li><b class="pin s">2</b><div><b>Importar PDF…</b> crea un juego nuevo con el nombre del PDF y convierte cada hoja en una imagen.</div></li><li><b class="pin s">3</b><div><b>Lista de juegos.</b> Selecciona uno para editarlo. Debajo ves las páginas activas del total y en cuántos aviones se usa; «inactivo» significa que aún no tiene ninguno.</div></li><li><b class="pin s">4</b><div><b>Importar imágenes…</b> copia al juego seleccionado las imágenes que elijas.</div></li><li><b class="pin s">5</b><div><b>Renombrar:</b> escribe en este campo. <b>Papelera</b>, al lado, envía el juego a la papelera de Windows.</div></li></ol>
+<div class="gap"></div>
+<div class="note"><span class="pill">A mano</span>También puedes pulsar <b>Abrir</b> y crear la subcarpeta en el Explorador, con sus imágenes dentro. Cambia a otra sección de Ajustes y vuelve para verla: una subcarpeta vacía no se muestra.</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>03 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step cont"><div class="num">2</div><div><p class="kick">Paso 2 de 5 · continuación</p><h2>Asigna aviones y ajusta páginas</h2><p class="lead">Un juego solo sale en los aviones que le asignes. Las páginas que no quieras se desactivan sin borrarlas.</p></div></div>
+<div class="side" style="grid-template-columns:112mm 1fr">
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:923/802"><img src="../img/rapida/lib-juego-463-377-985-946.jpg" alt=""><i class="hl" style="left:30.79%;top:12.19%;width:28.39%;height:6.24%"></i><b class="pin" style="left:59.18%;top:15.31%;margin:0.0mm 0 0 3.6mm">1</b><i class="hl" style="left:25.66%;top:62.01%;width:21.15%;height:35.35%"></i><b class="pin" style="left:46.81%;top:79.69%;margin:0.0mm 0 0 3.6mm">2</b><i class="hl" style="left:2.88%;top:24.79%;width:21.15%;height:35.35%"></i><b class="pin" style="left:2.88%;top:24.79%;margin:0.0mm 0 0 0.0mm">3</b></div></figure>
+  <div>
+    <ol class="keys"><li><b class="pin s">1</b><div><b>Mándalo a cada avión</b> con «Añadir avión…», una vez por módulo. El mismo juego puede ir a todos los que quieras. La <b>×</b> lo quita de ese avión.</div></li><li><b class="pin s">2</b><div><b>Desactivar una página:</b> haz clic en ella y queda como «desactivada». Otro clic la recupera. El archivo sigue en su carpeta.</div></li><li><b class="pin s">3</b><div><b>Cambiar el orden:</b> arrastra la página a su nuevo sitio.</div></li></ol>
+  </div>
+</div>
+<div class="gap"></div>
+<div class="side r" style="grid-template-columns:1fr 56mm">
+  <div>
+    <div class="card">
+      <h3>Dos vistas para lo mismo</h3>
+      <p><b>Juegos</b> es esta, para trabajar con un juego y sus páginas. <b>Matriz</b>, en la página siguiente, enseña todos los juegos y todos los aviones a la vez.</p>
+    </div>
+    <div class="gap s"></div>
+    <div class="note"><span class="pill">Ojo</span>El Piernógrafo enseña las páginas <b>del avión que vuelas</b>. Si está vacío, entra en una misión, o carga un .miz en <b>Ajustes › Misión y curso</b> para prepararlo antes.</div>
+  </div>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-piernografo.jpg" alt=""><i class="hl" style="left:22.76%;top:3.70%;width:4.82%;height:2.09%"></i><b class="pin" style="left:25.17%;top:3.70%;margin:-3.6mm 0 0 0.0mm">4</b></div><figcaption><b style="font-weight:700;color:var(--ink)">4 · Resultado en el F-16.</b> 9 páginas: 5 de Normal (una desactivada) y 4 de Emergencias. Aeródromos no sale: no tiene aviones.</figcaption></figure>
+</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>04 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step cont"><div class="num">2</div><div><p class="kick">Paso 2 de 5 · continuación</p><h2>La Matriz: juegos por aviones</h2><p class="lead">Con muchos juegos y muchos módulos, la pestaña <b>Matriz</b> te deja repartirlos de un vistazo: una fila por juego y una columna por avión.</p></div></div>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1770/1230"><img src="../img/rapida/lib-matriz-0-0-1000-1000.jpg" alt=""><i class="hl" style="left:30.81%;top:37.40%;width:6.71%;height:4.02%"></i><b class="pin" style="left:37.52%;top:39.41%;margin:0.0mm 0 0 3.6mm">1</b><i class="hl" style="left:53.42%;top:65.58%;width:2.37%;height:3.41%"></i><b class="pin" style="left:55.79%;top:67.29%;margin:0.0mm 0 0 3.6mm">2</b><i class="hl" style="left:46.30%;top:53.81%;width:3.22%;height:10.11%"></i><b class="pin" style="left:47.91%;top:53.81%;margin:-3.6mm 0 0 0.0mm">3</b><i class="hl" style="left:23.19%;top:64.25%;width:22.88%;height:6.16%"></i><b class="pin" style="left:23.19%;top:64.25%;margin:0.0mm 0 0 0.0mm">4</b><i class="hl" style="left:67.06%;top:43.76%;width:18.42%;height:4.07%"></i><b class="pin" style="left:76.27%;top:43.76%;margin:-3.6mm 0 0 0.0mm">5</b></div></figure>
+<div class="gap"></div>
+<ol class="keys"><li><b class="pin s">1</b><div><b>Matriz</b> está junto a <b>Juegos</b>, debajo de los botones de la carpeta.</div></li><li><b class="pin s">2</b><div><b>Un clic en un cuadro</b> pone o quita ese juego en ese avión, y se guarda al momento.</div></li><li><b class="pin s">3</b><div><b>Un clic en el nombre de un avión</b> pone o quita toda su columna. Si te equivocas, sale <b>Deshacer</b> arriba.</div></li><li><b class="pin s">4</b><div><b>Un clic en el nombre de un juego</b> hace lo mismo con toda su fila.</div></li><li><b class="pin s">5</b><div>Salen los aviones que ya usas. Añade otro con este desplegable o pulsa <b>Todos los aviones</b>.</div></li></ol>
+<div class="gap"></div>
+    <div class="card">
+      <h3>¿Y los botones de arriba?</h3>
+      <p>Son opcionales: el Piernógrafo lee tus juegos directamente.</p>
+      <table>
+        <tr><td>Aplicar al kneeboard de DCS</td><td>Copia las páginas activas también al kneeboard propio de DCS.</td></tr>
+        <tr><td>Quitar de DCS</td><td>Borra solo esas copias, las que empiezan por «LFK».</td></tr>
+        <tr><td>Meter en un .miz…</td><td>Las incluye en una misión y deja copia de seguridad.</td></tr>
+      </table>
+    </div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>05 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step"><div class="num">3</div><div><p class="kick">Paso 3 de 5</p><h2>Asigna tus botones</h2><p class="lead">En <b>Ajustes › Controles</b> eliges qué tecla o botón del HOTAS hace cada acción. Funcionan aunque DCS tenga el foco.</p></div></div>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1770/991"><img src="../img/rapida/controles-0-0-1000-870.jpg" alt=""><i class="hl" style="left:82.96%;top:35.08%;width:6.38%;height:3.83%"></i><i class="hl" style="left:82.96%;top:49.22%;width:6.38%;height:3.83%"></i><i class="hl" style="left:82.96%;top:63.00%;width:6.38%;height:3.83%"></i><b class="pin" style="left:89.34%;top:64.92%;margin:0.0mm 0 0 3.6mm">1</b><i class="hl" style="left:82.96%;top:82.06%;width:6.38%;height:3.83%"></i></div><figcaption>Página y Pestaña traen teclas de fábrica; Marcador y Juego hay que asignarlos. Aquí solo salen las filas de esta guía: la lista completa es más larga.</figcaption></figure>
+<div class="gap"></div>
+<div class="side">
+  <div>
+    <figure class="fig " style=""><div class="shot" style="aspect-ratio:974/593"><img src="../img/rapida/controles-asignar-250-280-800-800.jpg" alt=""><i class="hl" style="left:8.47%;top:7.18%;width:73.96%;height:70.26%"></i><b class="pin" style="left:8.47%;top:7.18%;margin:0.0mm 0 0 0.0mm">2</b></div></figure>
+    <div class="gap s"></div>
+    <ol class="keys"><li><b class="pin s">1</b><div>Pulsa <b>+ Asignar</b> en la fila de la acción.</div></li><li><b class="pin s">2</b><div>Pulsa la tecla o el botón. Se guarda <b>al soltar</b>; si no pulsas nada en 10 segundos, se cancela.</div></li></ol>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>Acción</th><th>Qué hace</th></tr>
+      <tr><td>Página siguiente / anterior</td><td>Pasa de hoja. De la última vuelve a la primera.</td></tr>
+      <tr><td>Pestaña siguiente / anterior</td><td>Recorre las pestañas fijas en la barra.</td></tr>
+      <tr><td>Marcador siguiente / anterior</td><td>Salta entre las páginas marcadas de la pestaña.</td></tr>
+      <tr><td>Juego siguiente / anterior</td><td>Salta al principio del otro juego.</td></tr>
+      <tr><td>Índice de páginas</td><td>Abre las miniaturas por juegos.</td></tr>
+    </table>
+  </div>
+</div>
+<div class="gap"></div>
+<div class="note"><span class="pill">Combinaciones</span>Mantén un modificador (AltGr o un botón de cambio del HOTAS) y pulsa el otro. Una acción admite varias asignaciones y la <b>×</b> quita cada una.</div>
+<div class="gap s"></div>
+<div class="note"><span class="pill">Consejo</span>Usa botones que no tengas asignados en DCS: el kneeboard no se los quita al simulador, así que harían las dos cosas.</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>06 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step"><div class="num">4</div><div><p class="kick">Paso 4 de 5</p><h2>Marca tus páginas</h2><p class="lead">Con un juego para uso normal y otro para emergencias, marca la primera página de cada uno y tendrás los dos a un salto. El marcador va en una página, no en el juego entero.</p></div></div>
+<div class="three">
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-piernografo.jpg" alt=""><i class="hl" style="left:28.78%;top:3.59%;width:3.86%;height:2.31%"></i><b class="pin" style="left:30.71%;top:3.59%;margin:-3.6mm 0 0 0.0mm">1</b></div><figcaption>En el Piernógrafo, ve a la página y pulsa el icono de marcador.</figcaption></figure>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-bm-menu.jpg" alt=""><i class="hl" style="left:6.06%;top:26.29%;width:43.45%;height:3.72%"></i><b class="pin" style="left:6.06%;top:28.15%;margin:0.0mm 0 0 -3.6mm">2</b></div><figcaption>Elige el tipo. Para este juego, Emergencias.</figcaption></figure>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-marcada.jpg" alt=""><i class="hl" style="left:28.78%;top:3.59%;width:6.89%;height:2.31%"></i><b class="pin" style="left:32.22%;top:3.59%;margin:-3.6mm 0 0 0.0mm">3</b></div><figcaption>El icono se rellena y enseña el tipo: EMG.</figcaption></figure>
+</div>
+<div class="gap"></div>
+<div class="two">
+  <div>
+    <ol class="keys"><li><b class="pin s">1</b><div>Abre la página que quieres marcar. Para llegar a ella usa <b>Página siguiente</b> o el índice.</div></li><li><b class="pin s">2</b><div>Elige el tipo. Los tipos son <b>Tierra, Rodaje, Salida, En ruta, Misión, Aproximación, Emergencias y General</b>.</div></li><li><b class="pin s">3</b><div>La página ya está marcada. Para quitarlo, vuelve a pulsar el icono y elige <b>Quitar el marcador</b>.</div></li></ol>
+  </div>
+  <div class="card">
+    <h3>El ejemplo de esta guía</h3>
+    <table>
+      <tr><th>Página</th><th>Juego</th><th>Marcador</th></tr>
+      <tr><td>1 · Puesta en marcha</td><td>Normal</td><td>General</td></tr>
+      <tr><td>3 · Despegue</td><td>Normal</td><td>Salida</td></tr>
+      <tr><td>6 · Fallo de motor</td><td>Emergencias</td><td>Emergencias</td></tr>
+    </table>
+  </div>
+</div>
+<div class="gap"></div>
+<div class="side r" style="grid-template-columns:1fr 52mm">
+  <div>
+    <div class="card">
+      <h3>La pestaña Misión</h3>
+      <p>Reúne solo las páginas que has marcado, en el orden del Piernógrafo: tres en este ejemplo, en vez de nueve. Está en la cuadrícula, y en el paso 5 ves cómo fijarla en la barra.</p>
+      <p>Si quieres que una página salga ahí sin marcarla, usa <b>Añadir a la pestaña Misión</b> en ese mismo menú.</p>
+    </div>
+    <div class="gap s"></div>
+    <div class="note"><span class="pill">Por avión</span>Cada módulo tiene sus propios marcadores: lo que marques en el F-16 no cambia los del F/A-18. Se guardan aunque cierres el programa o DCS.</div>
+  </div>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-mision.jpg" alt=""><i class="hl" style="left:17.02%;top:3.70%;width:4.82%;height:2.09%"></i><b class="pin" style="left:19.43%;top:3.70%;margin:-3.6mm 0 0 0.0mm">4</b></div><figcaption>La pestaña Misión, con 3 páginas.</figcaption></figure>
+</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>07 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step cont"><div class="num">4</div><div><p class="kick">Paso 4 de 5 · continuación</p><h2>Pasa de un marcador a otro</h2><p class="lead">Hay varias formas de llegar a la página que necesitas. Para una emergencia, lo más rápido es un botón del HOTAS.</p></div></div>
+<div class="three">
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-marcada.jpg" alt=""><i class="hl" style="left:22.76%;top:3.70%;width:4.82%;height:2.09%"></i><b class="pin" style="left:25.17%;top:3.70%;margin:-3.6mm 0 0 0.0mm">1</b><i class="hl" style="left:41.92%;top:3.59%;width:3.86%;height:2.31%"></i><b class="pin" style="left:43.85%;top:3.59%;margin:-3.6mm 0 0 0.0mm">2</b></div><figcaption>Página 6/9: «Marcador siguiente» te ha traído a Emergencias.</figcaption></figure>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-bm-lista.jpg" alt=""><i class="hl" style="left:6.06%;top:13.02%;width:87.88%;height:5.03%"></i><b class="pin" style="left:93.94%;top:13.02%;margin:0.0mm 0 0 0.0mm">3</b></div><figcaption>La lista de marcadores, con su filtro por tipo.</figcaption></figure>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-indice.jpg" alt=""><i class="hl" style="left:4.32%;top:11.77%;width:91.36%;height:4.22%"></i><b class="pin" style="left:95.68%;top:11.77%;margin:0.0mm 0 0 0.0mm">4</b></div><figcaption>El índice agrupa las páginas por juego.</figcaption></figure>
+</div>
+<div class="gap"></div>
+<ol class="keys"><li><b class="pin s">1</b><div><b>Marcador siguiente / anterior</b> (el botón del paso 3). Recorre por orden las páginas marcadas de la pestaña y al final vuelve a la primera. En el ejemplo: 1 → 3 → 6 → 1.</div></li><li><b class="pin s">2</b><div><b>Icono de lista.</b> Abre todos los marcadores del avión; toca uno para ir a su página.</div></li><li><b class="pin s">3</b><div><b>Filtro por tipo.</b> Toca «Emergencias» y en la lista quedan solo esas páginas.</div></li><li><b class="pin s">4</b><div><b>Índice.</b> Miniaturas de todas las páginas por juego, con su marcador. Con el índice abierto, <b>Página siguiente / anterior</b> salta de juego.</div></li></ol>
+<div class="gap"></div>
+<div class="side r" style="grid-template-columns:1fr 62mm">
+  <div>
+    <div class="card">
+      <h3>Normal y Emergencias con un solo botón</h3>
+      <p>Marca solo la primera página de cada juego y asigna <b>Marcador siguiente</b> a un botón. Cada pulsación te lleva de un juego al otro, estés en la hoja que estés.</p>
+    </div>
+    <div class="gap s"></div>
+    <div class="card">
+      <h3>Sin marcar nada: Juego siguiente</h3>
+      <p>La acción <b>Juego siguiente / anterior</b> salta al principio del otro juego, y un aviso te dice dónde has caído. Con más de dos juegos, cada pulsación avanza uno y, tras el último, vuelve al primero.</p>
+    </div>
+  </div>
+  <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/816"><img src="../img/rapida/kb-juego-toast-0-500-1000-1000.jpg" alt=""><i class="hl" style="left:37.64%;top:77.83%;width:24.73%;height:6.20%"></i></div><figcaption>El aviso de «Juego siguiente».</figcaption></figure>
+</div>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>08 / 09</span></footer>
+</section><section class="page">
+  <header class="head"><span>LF Kneeboard</span><span>Guía rápida</span></header>
+  <div class="step"><div class="num">5</div><div><p class="kick">Paso 5 de 5</p><h2>Añade pestañas nuevas</h2><p class="lead">El preset <b>Sencillo</b> solo fija el Piernógrafo y el Bloc, pero el resto no se ha perdido: está en la cuadrícula. Para tener una a mano, fíjala en la barra.</p></div></div>
+<div class="side" style="grid-template-columns:60mm 1fr">
+  <div>
+    <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/1632"><img src="../img/rapida/kb-cuadricula.jpg" alt=""><i class="hl" style="left:65.91%;top:29.88%;width:2.82%;height:2.04%"></i><b class="pin" style="left:65.91%;top:30.90%;margin:0.0mm 0 0 -3.6mm">2</b><i class="hl" style="left:6.06%;top:54.65%;width:87.88%;height:3.28%"></i><b class="pin" style="left:50.00%;top:57.93%;margin:3.6mm 0 0 0.0mm">3</b></div><figcaption>La cuadrícula, con la estrella de Mapa.</figcaption></figure>
+  </div>
+  <div>
+    <h3>Una pestaña que ya está en la cuadrícula</h3>
+    <ol class="keys"><li><b class="pin s">1</b><div>Abre la cuadrícula con su botón, abajo a la izquierda en la barra del kneeboard.</div></li><li><b class="pin s">2</b><div>Pulsa la <b>estrella</b> de la pestaña. Ya sale en la barra, sin tocar nada más.</div></li><li><b class="pin s">3</b><div>Aquí cambias de preset de un toque: los <b>Presets por defecto</b> y, cuando guardes alguno, <b>Mis presets</b>.</div></li></ol>
+    <div class="gap"></div>
+    <figure class="fig " style=""><div class="shot" style="aspect-ratio:1176/98"><img src="../img/rapida/kb-barra-mapa-0-925-1000-985.jpg" alt=""><i class="hl" style="left:3.69%;top:16.67%;width:4.78%;height:57.43%"></i><b class="pin" style="left:6.08%;top:16.67%;margin:-3.6mm 0 0 0.0mm">1</b><i class="hl" style="left:36.40%;top:20.04%;width:4.87%;height:50.70%"></i><b class="pin" style="left:38.84%;top:20.04%;margin:-3.6mm 0 0 0.0mm">4</b></div></figure>
+    <p style="margin-top:2mm;font-size:8.8pt"><b class="pin i">4</b> Mapa, ya fija junto a Piernógrafo y Bloc.</p>
+  </div>
+</div>
+<div class="gap"></div>
+<h3>Una pestaña que no está: carpeta, PDF, web, ventana o carta</h3>
+<p>Estos tipos no vienen en ningún preset, y también puedes añadir una segunda pestaña de un tipo que ya tengas. Se hace en <b>Ajustes › Pestañas</b>, al final de la página.</p>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1425/375"><img src="../img/rapida/pest-anadir-195-625-1000-930.jpg" alt=""><i class="hl" style="left:4.41%;top:85.07%;width:37.97%;height:13.33%"></i><b class="pin" style="left:23.40%;top:85.07%;margin:-3.6mm 0 0 0.0mm">5</b><i class="hl" style="left:43.64%;top:84.47%;width:13.89%;height:14.53%"></i><b class="pin" style="left:50.59%;top:84.47%;margin:-3.6mm 0 0 0.0mm">6</b><i class="hl" style="left:86.56%;top:34.02%;width:6.63%;height:10.13%"></i><b class="pin" style="left:86.56%;top:39.09%;margin:0.0mm 0 0 -3.6mm">7</b></div></figure>
+<div class="gap s"></div>
+<div class="three" style="gap:4mm">
+  <div><ol class="keys"><li><b class="pin s">5</b><div>Elige el tipo de pestaña en el desplegable.</div></li></ol></div>
+  <div><ol class="keys"><li><b class="pin s">6</b><div>Pulsa <b>Añadir pestaña</b>. Sale la última y ya fija.</div></li></ol></div>
+  <div><ol class="keys"><li><b class="pin s">7</b><div>Si lo pide, indica el archivo o la carpeta con <b>Elegir…</b></div></li></ol></div>
+</div>
+<div class="gap"></div>
+<h3>Guarda tu barra como preset</h3>
+<p>Si aplicas otro preset se fijan las suyas, así que tu barra se perdería. Para conservarla, en <b>Ajustes › Pestañas</b> ponle nombre y pulsa <b>Guardar las pestañas actuales</b>. Saldrá en la cuadrícula, en <b>Mis presets</b>.</p>
+<figure class="fig " style=""><div class="shot" style="aspect-ratio:1425/99"><img src="../img/rapida/pest-presets-195-297-1000-378.jpg" alt=""><i class="hl" style="left:66.35%;top:20.39%;width:26.84%;height:59.22%"></i><b class="pin" style="left:66.35%;top:50.00%;margin:0.0mm 0 0 -3.6mm">8</b></div></figure>
+
+  <footer class="foot"><span>Versión 0.3.16</span><span>09 / 09</span></footer>
+</section>
+</body>
+</html>

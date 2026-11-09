@@ -493,7 +493,12 @@ export const web = {
       zoom = Math.max(0.3, Math.min(3, Math.round(z * 10) / 10));
       try { wv.setZoomFactor(zoom); } catch { /* aún cargando */ }
     }
-    wv.addEventListener('dom-ready', () => setZoom(zoom));
+    wv.addEventListener('dom-ready', () => {
+      setZoom(zoom);
+      // Un clic no activa el kneeboard: para escribir en un campo de la web hay que pedirlo desde dentro de ella.
+      wv.executeJavaScript(`document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) console.info('__lfkb_escribir__'); }, true)`).catch(() => {});
+    });
+    wv.addEventListener('console-message', (e) => { if (e.message === '__lfkb_escribir__') ctx.kb.activate(true); });
     wv.addEventListener('did-navigate', (e) => showUrl(e.url));
     wv.addEventListener('did-navigate-in-page', (e) => showUrl(e.url));
     wv.addEventListener('did-fail-load', (e) => {
