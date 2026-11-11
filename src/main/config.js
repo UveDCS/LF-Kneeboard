@@ -181,6 +181,8 @@ function defaults() {
     formats: {},
     library: { root: null },
     uiScale: 1,
+    // Dar la vuelta al pasar del último al primero (y al revés): páginas, pestañas, marcadores y juegos.
+    nav: { wrapPages: true, wrapTabs: true, wrapBookmarks: true, wrapSections: true },
     crosshair: 'auto',
     crosshairF10: false,
     integration: {},

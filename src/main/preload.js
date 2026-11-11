@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld('kb', {
   integrationStatus: () => ipcRenderer.invoke('integration:status'),
   integrationInstall: (what) => ipcRenderer.invoke('integration:install', what),
   integrationUninstall: (what) => ipcRenderer.invoke('integration:uninstall', what),
+  integrationPickDir: () => ipcRenderer.invoke('integration:pickDir'),
+  integrationSetDirs: (choice) => ipcRenderer.invoke('integration:setDirs', choice),
   recenter: () => ipcRenderer.invoke('vr:recenter'),
   vrPlacing: (on) => ipcRenderer.send('vr:placing', view, on),
   vrPreview: (v) => ipcRenderer.send('vr:preview', view, v),

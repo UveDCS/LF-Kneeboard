@@ -39,9 +39,12 @@ function readJson(file) {
 const stripPrefix = (name) => name.replace(/^[0-9A-Za-z]{1,3}\.\s+/, '');
 
 class Library {
-  constructor(cfg, userData, { savedGames = integ.savedGamesDirs } = {}) {
+  // documents / desktop: las carpetas reales de Windows (pueden estar en otro disco o en OneDrive).
+  constructor(cfg, userData, { savedGames = integ.savedGamesDirs, documents = null, desktop = null } = {}) {
     this.cfg = cfg;
     this.savedGames = savedGames;
+    this.documents = documents;
+    this.desktop = desktop;
     this.manifestFile = path.join(userData, 'library-applied.json');
   }
 
@@ -53,7 +56,8 @@ class Library {
   // Busca una biblioteca existente de KneeboardManager en Escritorio y Documentos.
   detect() {
     const home = os.homedir();
-    const bases = [path.join(home, 'Desktop'), path.join(home, 'Documents'), path.join(home, 'OneDrive', 'Desktop'), path.join(home, 'OneDrive', 'Documents')];
+    const bases = [...new Set([this.desktop, this.documents, path.join(home, 'Desktop'), path.join(home, 'Documents'), path.join(home, 'OneDrive', 'Desktop'), path.join(home, 'OneDrive', 'Documents')]
+      .filter(Boolean).map((p) => path.resolve(p)))];
     const found = [];
     const isLibrary = (dir) => safeReaddir(dir).filter((d) => d.isDirectory() && fs.existsSync(path.join(dir, d.name, 'kneeboard.json'))).length >= 1;
     const walk = (dir, depth) => {
@@ -70,7 +74,7 @@ class Library {
   }
 
   defaultRoot() {
-    return path.join(os.homedir(), 'Documents', 'LF Kneeboard', 'Biblioteca');
+    return path.join(this.documents || path.join(os.homedir(), 'Documents'), 'LF Kneeboard', 'Biblioteca');
   }
 
   ensureRoot() {

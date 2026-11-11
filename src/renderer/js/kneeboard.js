@@ -105,16 +105,25 @@ function switchTab(i, { manual = false } = {}) {
   persist();
 }
 
+// ¿Da la vuelta del último al primero? (Ajustes › Controles › Dar la vuelta; por defecto sí.)
+const wraps = (key) => !(S.config && S.config.nav && S.config.nav[key] === false);
+const edge = (text) => toast(text, 'info', 1200);
+
 // Pestaña siguiente/anterior: si hay favoritas, solo se recorren esas (como la barra);
 // desde una que no lo es se salta a la favorita más cercana en ese sentido.
 function stepTab(dir) {
   const list = tabs();
   if (!list.length) return;
-  if (!list.some((t) => t.fav)) return switchTab(tabIndex + dir, { manual: true });
-  for (let k = 1; k <= list.length; k++) {
-    const i = (((tabIndex + dir * k) % list.length) + list.length) % list.length;
-    if (list[i].fav) return switchTab(i, { manual: true });
+  const n = list.length;
+  const favs = list.some((t) => t.fav);
+  const wrap = wraps('wrapTabs');
+  for (let k = 1; k <= n; k++) {
+    const raw = tabIndex + dir * k;
+    if (!wrap && (raw < 0 || raw >= n)) break;
+    const i = ((raw % n) + n) % n;
+    if (!favs || list[i].fav) return switchTab(i, { manual: true });
   }
+  if (!wrap) edge(dir > 0 ? 'Es la última pestaña' : 'Es la primera pestaña');
 }
 
 function setPage(n, { manual = false } = {}) {
@@ -130,14 +139,17 @@ function setPage(n, { manual = false } = {}) {
   persist();
 }
 
-// Página siguiente / anterior: de la última se pasa a la primera y al revés. La pizarra (endless) no da la vuelta:
-// crece al pasar de la última.
+// Página siguiente / anterior: de la última se pasa a la primera y al revés (si está activado). La pizarra (endless)
+// no da la vuelta: crece al pasar de la última.
 function stepPage(dir) {
   const inst = curInst();
   const count = pageCount(inst);
   if (inst && inst.endless) return setPage(curPage() + dir, { manual: true });
   if (count < 2) return;
-  setPage((curPage() + dir + count) % count, { manual: true });
+  const n = curPage() + dir;
+  if (wraps('wrapPages')) return setPage((n + count) % count, { manual: true });
+  if (n < 0 || n >= count) return edge(dir > 0 ? 'Es la última página' : 'Es la primera página');
+  setPage(n, { manual: true });
 }
 
 function show() {
@@ -274,7 +286,9 @@ function cycleBookmark(dir) {
     return;
   }
   const p = curPage();
-  const next = dir > 0 ? list.find((b) => b.page > p) || list[0] : [...list].reverse().find((b) => b.page < p) || list[list.length - 1];
+  let next = dir > 0 ? list.find((b) => b.page > p) : [...list].reverse().find((b) => b.page < p);
+  if (!next && wraps('wrapBookmarks')) next = dir > 0 ? list[0] : list[list.length - 1];
+  if (!next) return edge(dir > 0 ? 'No hay más marcadores' : 'No hay marcadores antes');
   setPage(next.page, { manual: true });
 }
 
@@ -373,7 +387,11 @@ function stepSection(dir) {
   const p = curPage();
   const i = currentSection(secs, p);
   // Hacia atrás: si estás a mitad de un juego, primero vuelve a su primera página.
-  const target = dir > 0 ? secs[(i + 1) % secs.length] : p > secs[i].page ? secs[i] : secs[(i - 1 + secs.length) % secs.length];
+  const wrap = wraps('wrapSections');
+  const target = dir > 0
+    ? (i + 1 < secs.length ? secs[i + 1] : wrap ? secs[0] : null)
+    : (p > secs[i].page ? secs[i] : i > 0 ? secs[i - 1] : wrap ? secs[secs.length - 1] : null);
+  if (!target) return edge(dir > 0 ? 'Es el último juego' : 'Es el primer juego');
   setPage(target.page, { manual: true });
   if (indexOpen) indexOpen.render();
   else toast(`${target.group} · ${target.count} págs.`, 'info', 1500);

@@ -188,3 +188,11 @@ nav button.sel .ico { color: var(--accent); }
 .preset.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,.15); }
 .preset .ico { width: 18px; height: 18px; color: var(--accent); }
 .vrdiag { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--panel2); line-height: 1.45; }
+
+/* Carpetas de DCS (Integración DCS) */
+.dcsdir { padding-top: 10px; border-top: 1px solid var(--line); }
+.row + .row.dcsdir { margin-top: 10px; }
+.dirtag { font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 99px; padding: 4px 7px; min-width: 64px; text-align: center; }
+.dcsdir .mono { word-break: break-all; }
+.dcsdir + label.chk, .dcsdir + .warn { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }

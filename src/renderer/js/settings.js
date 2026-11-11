@@ -95,7 +95,11 @@ R.bienvenida = async () => {
       h('div.steps',
         h('div.step', h('div',
           h('b', 'Conectar con DCS'),
-          h('div.muted.small', dirs.length ? `Se copiará un archivo en ${dirs.map((d) => `${d}\\Scripts\\Hooks`).join(' y ')}. No se toca tu Export.lua, así que convive con DCS-BIOS, Tacview, SRS u OpenKneeboard.` : 'No encuentro la carpeta Saved Games\\DCS. Abre DCS una vez y vuelve aquí.'),
+          h('div.muted.small', dirs.length ? `Se copiará un archivo en ${dirs.map((d) => `${d}\\Scripts\\Hooks`).join(' y ')}. No se toca tu Export.lua, así que convive con DCS-BIOS, Tacview, SRS u OpenKneeboard.` : 'No encuentro la carpeta Saved Games\\DCS. Abre DCS una vez y vuelve aquí, o elígela tú en Integración DCS.'),
+          dirs.length ? null : h('button.btn.small', { style: { marginTop: '6px' }, onclick: async () => {
+            await patch({ firstRun: false });
+            go('dcs');
+          } }, 'Elegir la carpeta de DCS…'),
           chk('Instalar el script de DCS', null, hook, (v) => { hook = v; }))),
         h('div.step', h('div',
           h('b', 'Mostrarlo en el visor de VR'),
@@ -340,6 +344,15 @@ R.controles = async () => {
   }
   tbl.append(body);
   main.append(h('div.card', tbl));
+  // Qué pasa al pulsar «siguiente» en el último elemento (o «anterior» en el primero).
+  const N = C.nav || {};
+  const wrapChk = (key, label, desc) => chk(label, desc, N[key] !== false, (v) => patch({ nav: { [key]: v } }));
+  main.append(h('h2', 'Dar la vuelta'), h('p.small.muted', 'Al pulsar «siguiente» en el último (o «anterior» en el primero), con el HOTAS, el teclado o los botones del kneeboard. Si lo quitas, se queda donde está y te avisa.'),
+    h('div.card',
+      wrapChk('wrapPages', 'Páginas', 'De la última página a la primera, y al revés. La pizarra nunca da la vuelta: al pasar de la última, crece.'),
+      wrapChk('wrapTabs', 'Pestañas', 'De la última pestaña a la primera, y al revés.'),
+      wrapChk('wrapBookmarks', 'Marcadores', 'Del último marcador de la pestaña al primero, y al revés.'),
+      wrapChk('wrapSections', 'Juegos del Piernógrafo', 'Del último juego al primero, y al revés.')));
   const devs = INIT.devices || [];
   main.append(h('h2', 'Mandos detectados'), h('div.card', devs.length ? devs.map((d) => h('div.row', icon('gamepad'), d.name, h('span.mono.muted', d.id))) : h('div.muted', 'No se detecta ningún mando DirectInput. Los atajos de teclado funcionan igualmente.')));
 
@@ -845,14 +858,52 @@ R.compartir = () => {
       h('li', 'Servidor del escuadrón: en la carpeta relay/ hay un servidor de salas (node relay.js) para dejarlo siempre encendido, por ejemplo junto al servidor de DCS. Así nadie tiene que hacer de anfitrión.'))));
 };
 
+// Carpetas de DCS: las que se encuentran solas (Saved Games según Windows, aunque esté en otro disco) y las elegidas a mano.
+function dcsDirsCard(st) {
+  const D = st.dirs || { auto: true, detected: [], manual: [] };
+  const low = (p) => p.toLowerCase().replace(/[\\/]+$/, '');
+  const hooks = new Map(st.hooks.map((x) => [low(x.dir), x.state]));
+  const manual = D.manual.map((m) => m.dir);
+  const save = async (auto, dirs) => {
+    const r = await kb.integrationSetDirs({ auto, dirs });
+    if (r && r.error) alert(`Algo ha fallado: ${r.error}`);
+    render();
+  };
+  const pill = (txt, cls = '') => h('span', { className: `pillst ${cls}` }, txt);
+  const hookPill = (dir) => {
+    const s = hooks.get(low(dir));
+    return s === 'instalado' ? pill('script instalado', 'ok') : s === 'desactualizado' ? pill('script antiguo', 'warn') : pill('sin script');
+  };
+  const row = (tag, dir, ...rest) => h('div.row.dcsdir', h('span.dirtag', tag), h('span.mono.grow', dir), ...rest);
+  const card = h('div.card', h('div.row', h('b', 'Carpetas de DCS'), h('span.grow'),
+    h('button.btn.small', { onclick: async () => {
+      const pick = await kb.integrationPickDir();
+      if (!pick) return;
+      const add = pick.dirs.filter((d) => !manual.some((m) => low(m) === low(d)));
+      if (add.length) await save(D.auto, [...manual, ...add]);
+    } }, '+ Añadir carpeta…')));
+  const detected = D.auto ? D.detected.filter((d) => !manual.some((m) => low(m) === low(d))) : [];
+  for (const d of detected) card.append(row('Auto', d, hookPill(d)));
+  for (const m of D.manual) {
+    card.append(row('Elegida', m.dir,
+      !m.exists ? pill('no existe', 'warn') : !m.dcs ? pill('DCS aún no ha escrito aquí', 'warn') : hookPill(m.dir),
+      h('button.btn.small', { title: 'Dejar de usar esta carpeta (se quita el script de ella)', onclick: () => save(D.auto, manual.filter((x) => x !== m.dir)) }, 'Quitar')));
+  }
+  if (!detected.length && !D.manual.length) {
+    card.append(h('div.warn.small', D.auto
+      ? 'No encuentro ninguna carpeta de DCS. Si tu Saved Games está en otro sitio o DCS usa otra carpeta, añádela con «Añadir carpeta…».'
+      : 'No hay ninguna carpeta: activa «Buscarlas solas» o añade la tuya.'));
+  }
+  card.append(
+    chk('Buscarlas solas', `Busca DCS, DCS.openbeta… en Saved Games${D.windows ? ` (según Windows está en ${D.windows})` : ''} y en tu carpeta de usuario. Quítalo si solo quieres usar las que elijas.`, D.auto, (v) => save(v, manual)),
+    h('div.small.muted', 'Elige la carpeta de DCS, la que tiene Config, Logs y Scripts. Si eliges Saved Games entera, se añaden las de DCS que tenga dentro. Al quitar una carpeta se quita también el script de esa carpeta.'));
+  return card;
+}
+
 R.dcs = async () => {
   const st = await kb.integrationStatus();
   main.append(h('h1', 'Integración con DCS'), h('p.lead', 'El script de DCS envía al kneeboard tu posición, la misión y los mensajes, y devuelve las coordenadas del F10. Es un archivo en Scripts\\Hooks; no modifica Export.lua.'));
-  const card = h('div.card');
-  if (!st.hooks.length) card.append(h('div.warn', 'No encuentro ninguna carpeta Saved Games\\DCS.'));
-  for (const hk of st.hooks) {
-    card.append(h('div.row', h('span.mono.grow', hk.dir), h('span', { className: `pillst ${hk.state === 'instalado' ? 'ok ok' : 'warn warn'}` }, hk.state)));
-  }
+  const card = dcsDirsCard(st);
   card.append(h('div.row',
     h('button.btn.primary', { onclick: async () => { const r = await kb.integrationInstall({ hook: true }); if (r.error) alert(r.error); render(); } }, st.hooks.some((x) => x.state !== 'instalado') ? 'Instalar / actualizar' : 'Reinstalar'),
     h('button.btn.danger', { onclick: async () => { await kb.integrationUninstall({ hook: true }); render(); } }, 'Quitar de DCS')));

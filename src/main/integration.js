@@ -41,22 +41,91 @@ function installTo(dir, srcHook) {
 }
 const LAYER_KEY = 'HKCU\\SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit';
 
-function savedGamesDirs() {
-  const base = path.join(os.homedir(), 'Saved Games');
-  let dirs = [];
-  try {
-    dirs = fs.readdirSync(base, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && /^DCS(\.openbeta|\.release|\.server)?$/i.test(d.name))
-      .map((d) => path.join(base, d.name));
-  } catch {
-    /* sin Saved Games */
+// ------------------------------------------------------------------ carpetas de DCS
+// DCS escribe en Saved Games\DCS (o DCS.openbeta…). Saved Games puede estar en otro disco o llamarse distinto
+// («Ubicación» en sus propiedades): se pregunta a Windows dónde está. Además, el usuario puede elegir carpetas a mano.
+const SAVED_GAMES_ID = '{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4}';
+const STD_NAME = /^DCS(\.openbeta|\.release|\.server)?$/i;
+const DCS_NAME = /^DCS(\..+)?$/i;
+const choice = { auto: true, dirs: [] };
+let windowsCache;
+
+const isDir = (p) => {
+  try { return fs.statSync(p).isDirectory(); } catch { return false; } // sigue enlaces y junctions
+};
+// Carpeta en la que ya ha escrito DCS.
+const looksLikeDcs = (dir) => ['Config', 'Logs', 'Scripts', 'MissionEditor'].some((s) => isDir(path.join(dir, s)));
+const keyOf = (p) => {
+  try { return fs.realpathSync.native(p).toLowerCase(); } catch { return path.resolve(p).toLowerCase(); }
+};
+function uniq(list) {
+  const seen = new Set();
+  return list.filter((p) => { const k = keyOf(p); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+const expandEnv = (s) => s.replace(/%([^%]+)%/g, (all, v) => (process.env[v] !== undefined ? process.env[v] : all));
+
+// Saved Games según Windows. LFKB_SAVED_GAMES: otra carpeta, solo en las pruebas.
+function windowsSavedGames() {
+  if (process.env.LFKB_SAVED_GAMES !== undefined) return process.env.LFKB_SAVED_GAMES || null;
+  if (windowsCache !== undefined) return windowsCache;
+  windowsCache = null;
+  for (const key of ['User Shell Folders', 'Shell Folders']) {
+    try {
+      const out = reg(['query', `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\${key}`, '/v', SAVED_GAMES_ID]);
+      const m = /REG_(?:EXPAND_)?SZ\s+(.+?)\s*$/m.exec(out);
+      if (m) { windowsCache = path.resolve(expandEnv(m[1])); break; }
+    } catch { /* no está en el registro: la de siempre */ }
   }
-  return dirs;
+  return windowsCache;
 }
 
-function hookStatus(srcHook) {
+// Carpetas DCS* dentro de una Saved Games. Los nombres de siempre valen aunque DCS no haya escrito aún;
+// los demás (DCS.mi_servidor, de la opción -w) solo si DCS ya ha escrito en ellos.
+function scanBase(base) {
+  let names = [];
+  try { names = fs.readdirSync(base); } catch { return []; }
+  return names.filter((n) => DCS_NAME.test(n)).map((n) => path.join(base, n))
+    .filter((p) => isDir(p) && (STD_NAME.test(path.basename(p)) || looksLikeDcs(p)));
+}
+
+// La que dice Windows; la de tu usuario solo si Windows no dice nada (si la moviste, la vieja ya no la usa DCS).
+function savedGamesBases() {
+  const win = windowsSavedGames();
+  return [win && isDir(win) ? win : path.join(os.homedir(), 'Saved Games')].filter(isDir);
+}
+const detectedDirs = () => uniq(savedGamesBases().flatMap(scanBase));
+
+// Elección del usuario (config.integration): autoDetect (por defecto sí) y dcsDirs (carpetas elegidas a mano).
+function configure(integration = {}) {
+  choice.auto = integration.autoDetect !== false;
+  choice.dirs = Array.isArray(integration.dcsDirs) ? integration.dcsDirs.filter((d) => typeof d === 'string' && d) : [];
+}
+
+function savedGamesDirs() {
+  return uniq([...(choice.auto ? detectedDirs() : []), ...choice.dirs.filter(isDir)]);
+}
+
+// Lo que enseña Ajustes: dónde dice Windows que está Saved Games, qué se ha encontrado solo y qué se ha elegido.
+function dirsInfo() {
+  return {
+    windows: windowsSavedGames(),
+    auto: choice.auto,
+    detected: detectedDirs(),
+    manual: choice.dirs.map((dir) => ({ dir, exists: isDir(dir), dcs: isDir(dir) && looksLikeDcs(dir) })),
+  };
+}
+
+// Carpeta elegida en el diálogo: si es la propia Saved Games, se toman las DCS* que tenga dentro.
+function resolvePicked(dir) {
+  if (STD_NAME.test(path.basename(dir)) || looksLikeDcs(dir)) return { dirs: [dir], dcs: looksLikeDcs(dir) };
+  const inside = scanBase(dir);
+  if (inside.length) return { dirs: inside, dcs: true };
+  return { dirs: [dir], dcs: false };
+}
+
+function hookStatus(srcHook, dirs = savedGamesDirs()) {
   const src = fs.readFileSync(srcHook, 'utf8');
-  return savedGamesDirs().map((dir) => {
+  return dirs.map((dir) => {
     const dst = path.join(dir, 'Scripts', 'Hooks', HOOK_NAME);
     let state = 'no instalado';
     if (fs.existsSync(dst)) {
@@ -67,9 +136,9 @@ function hookStatus(srcHook) {
   });
 }
 
-function installHook(srcHook) {
+function installHook(srcHook, dirs = savedGamesDirs()) {
   const done = [];
-  for (const dir of savedGamesDirs()) {
+  for (const dir of dirs) {
     installTo(dir, srcHook);
     done.push(dir);
   }
@@ -90,11 +159,24 @@ function updateInstalledHooks(srcHook) {
   return updated;
 }
 
-function uninstallHook() {
-  for (const dir of savedGamesDirs()) {
+function uninstallHook(dirs = savedGamesDirs()) {
+  for (const dir of dirs) {
     fs.rmSync(path.join(dir, 'Scripts', 'Hooks', HOOK_NAME), { force: true });
     fs.rmSync(path.join(dir, MOD_REL), { recursive: true, force: true });
   }
+}
+
+// Lista de carpetas con el script puesto, para que el desinstalador lo quite también fuera de C:
+// (UTF-16LE sin BOM, una por línea: lo lee FileReadUTF16LE de NSIS). Se suman las de la lista anterior que aún lo tengan.
+function writeInstalledList(file) {
+  let prev = [];
+  try { prev = fs.readFileSync(file).toString('utf16le').split(/\r?\n/).filter(Boolean); } catch { /* primera vez */ }
+  const dirs = uniq([...savedGamesDirs(), ...prev]).filter((d) => fs.existsSync(path.join(d, 'Scripts', 'Hooks', HOOK_NAME)));
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, Buffer.from(dirs.map((d) => `${d}\r\n`).join(''), 'utf16le'));
+  } catch { /* sin permisos: el desinstalador limpia al menos la ruta de siempre */ }
+  return dirs;
 }
 
 function reg(args) {
@@ -192,5 +274,6 @@ function dtcDirs() {
 
 module.exports = {
   HOOK_NAME, MOD_REL, savedGamesDirs, hookStatus, installHook, installTo, modFiles, uninstallHook, updateInstalledHooks,
+  configure, dirsInfo, resolvePicked, windowsSavedGames, writeInstalledList,
   layerStatus, registerLayer, unregisterLayer, dcsKneeboardDirs, dtcDirs, layerLog, LAYER_LOG,
 };

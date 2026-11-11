@@ -41,6 +41,11 @@ function syncAutostart(on) {
   } catch (e) { console.error('Iniciar con Windows', e.message); }
 }
 
+// Carpetas de DCS con el script puesto, para que el desinstalador lo quite también si no están en C:.
+function saveHookList() {
+  try { integ.writeInstalledList(path.join(app.getPath('userData'), 'dcs-dirs.txt')); } catch { /* sin disco */ }
+}
+
 // Un fallo inesperado no debe sacar una ventana de error encima de DCS: se apunta y se sigue.
 process.on('uncaughtException', (err) => {
   try {
@@ -1098,6 +1103,7 @@ function registerIpc() {
     if (p.updates && updater) updater.start();
     if (p.voice || p.tabs) voice.apply();
     if (p.crosshair !== undefined) updateCrosshair();
+    if (p.integration) integ.configure(c.integration);
     broadcast('config', c);
     updateTray();
     return c;
@@ -1299,6 +1305,7 @@ function registerIpc() {
     hooks: integ.hookStatus(HOOK_SRC),
     layer: integ.layerStatus(LAYER_MANIFEST),
     savedGames: integ.savedGamesDirs(),
+    dirs: integ.dirsInfo(),
     dcsConnected: dcs.connected(),
     routeSources: dcs.sources || null,
     vrActive: vr ? vr.active : false,
@@ -1317,6 +1324,7 @@ function registerIpc() {
     } catch (err) {
       res.error = err.message;
     }
+    saveHookList();
     return res;
   });
   ipcMain.handle('integration:uninstall', (e, what) => {
@@ -1324,7 +1332,35 @@ function registerIpc() {
     if (what.layer) cfg.patch({ integration: { layer: false } });
     if (what.hook) integ.uninstallHook();
     if (what.layer) integ.unregisterLayer(LAYER_MANIFEST);
+    saveHookList();
     return true;
+  });
+  // Carpetas de DCS elegidas a mano.
+  ipcMain.handle('integration:pickDir', async (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const r = await dialog.showOpenDialog(win, {
+      title: 'Carpeta de DCS dentro de Saved Games (la que tiene Config, Logs, Scripts…)',
+      properties: ['openDirectory'],
+      defaultPath: integ.windowsSavedGames() || undefined,
+    });
+    return r.canceled || !r.filePaths[0] ? null : integ.resolvePicked(r.filePaths[0]);
+  });
+  // Cambia qué carpetas se usan: el script se quita de las que dejan de usarse y se pone en las nuevas (si está activado).
+  ipcMain.handle('integration:setDirs', (e, { auto, dirs }) => {
+    const before = integ.savedGamesDirs();
+    cfg.patch({ integration: { autoDetect: auto !== false, dcsDirs: Array.isArray(dirs) ? dirs : [] } });
+    integ.configure(cfg.get().integration);
+    const after = integ.savedGamesDirs();
+    const has = (list, d) => list.some((x) => path.resolve(x).toLowerCase() === path.resolve(d).toLowerCase());
+    const res = {};
+    try {
+      integ.uninstallHook(before.filter((d) => !has(after, d)));
+      if (cfg.get().integration.hook) res.hook = integ.installHook(HOOK_SRC, after.filter((d) => !has(before, d)));
+    } catch (err) {
+      res.error = err.message;
+    }
+    saveHookList();
+    return res;
   });
 
   ipcMain.handle('vr:recenter', () => vr && vr.recenter());
@@ -1542,6 +1578,7 @@ function listFiles(dir, kind = 'images') {
 // ------------------------------------------------------------------ arranque
 app.whenReady().then(() => {
   cfg = new Config(app.getPath('userData'));
+  integ.configure(cfg.get().integration);
   syncAutostart(cfg.get().startWithWindows);
   if (STARTED_AT_LOGIN && !cfg.get().hidden) cfg.patch({ hidden: true });
   registerProtocols();
@@ -1578,6 +1615,7 @@ app.whenReady().then(() => {
         integ.registerLayer(LAYER_MANIFEST);
         cfg.patch({ integration: { layer: true } });
       }
+      saveHookList();
     } catch (e) { console.error('Integración', e.message); }
     // DCS abierto pero sin datos: el script no está cargado (DCS se abrió antes de instalarlo) o estás en el menú.
     setInterval(() => {
@@ -1649,7 +1687,9 @@ app.whenReady().then(() => {
   });
   share.apply();
 
-  library = new Library(cfg, app.getPath('userData'));
+  // Documentos y Escritorio reales (pueden estar en otro disco o en OneDrive). Windows a veces no los da: entonces, los de siempre.
+  const winPath = (name) => { try { return app.getPath(name); } catch { return null; } };
+  library = new Library(cfg, app.getPath('userData'), { documents: winPath('documents'), desktop: winPath('desktop') });
   if (!cfg.get().library.root) {
     const found = library.detect();
     if (found.length) cfg.patch({ library: { root: found[0] } });
