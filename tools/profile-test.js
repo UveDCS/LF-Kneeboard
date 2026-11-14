@@ -16,8 +16,8 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lfkb-perfil-'));
 // ------------------------------------------------------------------ plantillas
 const sen = defaultTabs();
 ok(sen.filter((t) => t.fav).map((t) => t.type).join(',') === 'library,notes' && sen[0].type === 'library' && sen[1].type === 'notes', 'De fábrica, perfil Sencillo: Piernógrafo y Bloc, los dos fijos y primeros');
-ok(sen.length === 14 && new Set(sen.map((t) => t.type)).size === 14, 'y las 14 clases de pestaña disponibles en la cuadrícula');
-ok(TEMPLATES.every((tp) => new Set(templateTabs(tp.id, []).map((t) => t.type)).size === 14), 'Todas las plantillas traen todos los tipos de pestaña');
+ok(sen.length === 15 && new Set(sen.map((t) => t.type)).size === 15, 'y las 15 clases de pestaña disponibles en la cuadrícula');
+ok(TEMPLATES.every((tp) => new Set(templateTabs(tp.id, []).map((t) => t.type)).size === 15), 'Todas las plantillas traen todos los tipos de pestaña');
 const def = templateTabs('completa', []);
 ok(def.filter((t) => t.fav).length === 7, `Plantilla Completa: 7 favoritas de ${def.length}`);
 const mine = [...def, { id: 'pdf1', type: 'pdf', title: 'NATOPS', icon: 'pdf', path: 'C:\\x.pdf', phases: [] }];
@@ -39,7 +39,7 @@ fs.mkdirSync(dirN);
 fs.writeFileSync(path.join(dirN, 'config.json'), JSON.stringify({ version: 5, theme: 'dossier', night: true, tabs: [{ id: 'a', type: 'library', title: 'Piernógrafo', icon: 'mission', fav: true, phases: [] }, { id: 'w', type: 'web', title: 'Web', icon: 'web', fav: false, phases: [] }] }));
 const cN = new Config(dirN).get();
 ok(cN.theme === 'dossier-noche' && cN.night === false, 'El modo noche antiguo (filtro rojo) pasa a la variante Noche del tema');
-ok(cN.tabs.length === 15 && cN.tabs[0].id === 'a' && cN.tabs[1].type === 'web' && cN.tabs.filter((t) => t.fav).length === 1, 'v6: tus pestañas se completan con los tipos que faltan, en la cuadrícula');
+ok(cN.tabs.length === 16 && cN.tabs[0].id === 'a' && cN.tabs[1].type === 'web' && cN.tabs.filter((t) => t.fav).length === 1, 'v6/v7: tus pestañas se completan con los tipos que faltan, en la cuadrícula');
 
 // ------------------------------------------------------------------ migración v4 (favoritas)
 const dir3 = path.join(tmp, 'v3');
@@ -47,7 +47,7 @@ fs.mkdirSync(dir3);
 const old = { version: 3, tabs: def.map(({ fav, ...t }) => t).concat([{ id: 'w', type: 'web', title: 'Web', icon: 'web', phases: [] }]) };
 fs.writeFileSync(path.join(dir3, 'config.json'), JSON.stringify(old));
 const c3 = new Config(dir3).get();
-ok(c3.version === 6, 'La configuración v3 se migra a v6');
+ok(c3.version === 7, 'La configuración v3 se migra a v7');
 ok(c3.tabs.filter((t) => t.fav).map((t) => t.type).join(',') === 'dcs-kneeboard,library,cards,flightplan,radios,notes,map,web',
   'Migración: favoritas las de siempre y tus pestañas propias');
 const dtcTab = c3.tabs.find((t) => t.type === 'dtc');
@@ -63,7 +63,7 @@ ok(presetTabs(null).length === 0, 'Preset inexistente: sin pestañas');
 const small = { id: 'p2', name: 'Corto', tabs: mine.filter((t) => t.type === 'library' || t.type === 'pdf').map((t) => ({ ...t, fav: true })) };
 const curTabs = templateTabs('completa', []);
 const ap2 = presetTabs(small, curTabs);
-ok(new Set(ap2.map((t) => t.type)).size === 15 && ap2.filter((t) => t.fav).length === 2, 'Preset corto: trae todos los tipos, pero fijas solo las suyas');
+ok(new Set(ap2.map((t) => t.type)).size === 16 && ap2.filter((t) => t.fav).length === 2, 'Preset corto: trae todos los tipos, pero fijas solo las suyas');
 ok(ap2.find((t) => t.type === 'notes').id === curTabs.find((t) => t.type === 'notes').id, 'y reutiliza el Bloc que ya tenías (no se pierden tus notas)');
 
 // ------------------------------------------------------------------ perfil

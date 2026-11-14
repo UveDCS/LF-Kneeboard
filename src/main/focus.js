@@ -60,9 +60,12 @@ function dcsRect() {
   const a = load();
   const hwnd = dcsWindow();
   if (!a || !hwnd || a.IsIconic(hwnd)) return null;
-  const r = [0, 0, 0, 0];
+  // koffi rellena un objeto con los campos del RECT (con una lista dejaba el RECT en r[0] y todo salía NaN:
+  // la cruz acababa en la esquina superior izquierda en cuanto DCS estaba abierto).
+  const r = {};
   if (!a.GetWindowRect(hwnd, r)) return null;
-  const [left, top, right, bottom] = r;
+  const { left, top, right, bottom } = r;
+  if (![left, top, right, bottom].every(Number.isFinite)) return null;
   if (right - left < 200 || bottom - top < 200) return null;
   return { x: left, y: top, width: right - left, height: bottom - top };
 }

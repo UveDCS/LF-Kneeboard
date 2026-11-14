@@ -981,12 +981,30 @@ R.actualizar = async () => {
     out));
 };
 
+// Registros para pedir ayuda: un .zip solo con los registros, para mandarlo por Discord.
+function logsCard() {
+  const out = h('div.small.muted');
+  return h('div.card',
+    h('div.row', h('b', '¿Algo no funciona?'), h('span.grow'),
+      h('button.btn.primary', { onclick: async (e) => {
+        e.target.disabled = true;
+        const r = await kb.logsExport();
+        e.target.disabled = false;
+        if (!r) return;
+        out.textContent = r.error ? `No se ha podido guardar: ${r.error}`
+          : `Guardado con ${r.files.length} registro${r.files.length === 1 ? '' : 's'}${r.missing.length ? ` (no había: ${r.missing.join(', ')})` : ''}. Mándalo por Discord.`;
+      } }, 'Guardar los registros…')),
+    h('div.small.muted', 'Guarda en un .zip los registros del kneeboard (errores.log, vr.log, openxr-layer.log y las líneas «LF Kneeboard» de dcs.log), para mandarlos por Discord. Nada más: ni tu configuración ni datos de tu PC. En las rutas, tu nombre de usuario de Windows sale como «Piloto». Guárdalos justo después del fallo, sin volver a abrir el kneeboard ni DCS.'),
+    out);
+}
+
 R.acerca = () => {
   main.append(h('h1', 'Acerca de'),
     h('div.card',
       h('div', h('b', 'LF Kneeboard '), h('span.muted', INIT.version)),
       h('p.muted', 'Hecho para La Fundación. Código abierto (MIT).'),
       h('div.small.muted', `Datos: ${INIT.userData}`)),
+    logsCard(),
     h('h2', 'Créditos'),
     h('div.card.small.muted',
       h('div', 'Mapas: Leaflet (BSD-2). Teselas © Esri / Maxar, © OpenStreetMap, OpenTopoMap (CC-BY-SA), © CARTO.'),

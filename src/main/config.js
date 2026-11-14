@@ -82,6 +82,7 @@ const BUILTIN = {
   notes: ['Bloc', 'notes'],
   map: ['Mapa', 'map'],
   timers: ['Tiempos', 'timer'],
+  fuel: ['Combustible', 'fuel'],
   draw: ['Pizarra', 'board'],
   radiolog: ['Mensajes', 'messages'],
   shared: ['Compartido', 'inbox'],
@@ -151,7 +152,7 @@ function templateTabs(id, current) {
 
 function defaults() {
   return {
-    version: 6,
+    version: 7,
     firstRun: true,
     theme: 'tablet',
     night: false,
@@ -175,7 +176,7 @@ function defaults() {
     auto: { enabled: false, pauseSec: 45, approachNm: 15, targetNm: 8 },
     dcs: { appPort: 7788, hookPort: 7789 },
     share: { url: 'ws://127.0.0.1:7790', room: 'LF', callsign: '', host: false, hostPort: 7790, connect: false, notify: true },
-    plan: { fuelFlow: {}, reserveLb: {}, burnPerNm: {} },
+    plan: { fuelFlow: {}, reserveLb: {}, burnPerNm: {}, fuel: {}, sortie: {} },
     dtc: {},
     magvar: {},
     formats: {},
@@ -207,6 +208,7 @@ class Config {
       if ((saved.version || 1) < 4) migrateV4(this.data);
       if ((saved.version || 1) < 5) migrateV5(this.data);
       if ((saved.version || 1) < 6) migrateV6(this.data);
+      if ((saved.version || 1) < 7) migrateV7(this.data);
       // El «modo noche» antiguo (un filtro rojo encima de cualquier tema) pasa a ser la variante Noche del tema.
       if (this.data.night) {
         if (!isNightTheme(this.data.theme)) this.data.theme = nightPair(this.data.theme);
@@ -314,6 +316,12 @@ function migrateV5(data) {
 function migrateV6(data) {
   if (Array.isArray(data.tabs)) data.tabs = fillAllTypes(data.tabs.map((t) => ({ ...t })), []);
   data.version = 6;
+}
+
+// v7: pestaña Combustible (al final, sin fijar, como cualquier tipo nuevo).
+function migrateV7(data) {
+  if (Array.isArray(data.tabs)) data.tabs = fillAllTypes(data.tabs.map((t) => ({ ...t })), []);
+  data.version = 7;
 }
 
 // Preset de pestañas guardado por el piloto: copia de sus pestañas (con sus identificadores, para no perder datos).

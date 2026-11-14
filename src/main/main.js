@@ -18,6 +18,7 @@ const { Library } = require('./library');
 const { Voice } = require('./voice');
 const { Updater } = require('./updater');
 const profile = require('./profile');
+const report = require('./report');
 
 const ROOT = path.join(__dirname, '..', '..');
 const NATIVE = app.isPackaged ? path.join(process.resourcesPath, 'native') : path.join(ROOT, 'native', 'bin');
@@ -1312,6 +1313,27 @@ function registerIpc() {
     vrBridge: vr ? { ok: vr.ok, error: vr.error || null, elevated: vr.elevated } : null,
     layerLog: integ.layerLog(),
   }));
+  // Registros para pedir ayuda (Ajustes › Acerca de): un .zip solo con los registros.
+  ipcMain.handle('logs:export', async (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const d = new Date();
+    const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let dir = null;
+    try { dir = app.getPath('desktop'); } catch { try { dir = app.getPath('home'); } catch { /* sin carpeta */ } }
+    const r = await dialog.showSaveDialog(win, {
+      title: 'Guardar los registros de LF Kneeboard',
+      defaultPath: path.join(dir || '', `LF Kneeboard - registros ${stamp}.zip`),
+      filters: [{ name: 'Archivo zip', extensions: ['zip'] }],
+    });
+    if (r.canceled || !r.filePath) return null;
+    try {
+      const out = report.writeReport(r.filePath, { userData: app.getPath('userData'), layerLog: integ.LAYER_LOG, dcsDirs: integ.savedGamesDirs() });
+      shell.showItemInFolder(r.filePath);
+      return out;
+    } catch (err) {
+      return { error: err.message };
+    }
+  });
   ipcMain.handle('vr:openlog', () => {
     const f = fs.existsSync(integ.LAYER_LOG) ? integ.LAYER_LOG : path.join(app.getPath('userData'), 'vr.log');
     shell.showItemInFolder(f);

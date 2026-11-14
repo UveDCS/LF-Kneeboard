@@ -1,7 +1,7 @@
 {
   "name": "lf-kneeboard",
   "productName": "LF Kneeboard",
-  "version": "0.3.17",
+  "version": "0.3.18",
   "description": "Kneeboard para DCS World: VR y escritorio, páginas dinámicas de misión, bloc con coordenadas y pizarra compartida para el vuelo.",
   "author": "La Fundación",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "start": "electron .",
     "native": "node tools/build-native.js",
     "data": "python tools/export_airports.py && python tools/export_weapons.py",
-    "test": "node tools/selftest.js && node tools/share-input-test.js && node tools/library-test.js && node tools/route-test.js && node tools/profile-test.js && node tools/dtc-test.js && node tools/vr-place-test.js && node tools/hotkeys-test.js && node tools/savedgames-test.js",
+    "test": "node tools/selftest.js && node tools/share-input-test.js && node tools/library-test.js && node tools/route-test.js && node tools/profile-test.js && node tools/dtc-test.js && node tools/vr-place-test.js && node tools/hotkeys-test.js && node tools/savedgames-test.js && node tools/crosshair-test.js && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/fuel-test.js && node tools/report-test.js",
     "dist": "electron-builder --win nsis --publish never",
     "test:hook": "node tools/hook-test.js",
     "test:tableta": "node tools/tablet-test.js",

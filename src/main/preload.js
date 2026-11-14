@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld('kb', {
   vrPlacing: (on) => ipcRenderer.send('vr:placing', view, on),
   vrPreview: (v) => ipcRenderer.send('vr:preview', view, v),
   vrOpenLog: () => ipcRenderer.invoke('vr:openlog'),
+  logsExport: () => ipcRenderer.invoke('logs:export'),
   timer: (cmd) => ipcRenderer.invoke('timer', cmd),
   messagesClear: () => ipcRenderer.invoke('messages:clear'),
   kneeboardProbe: () => ipcRenderer.invoke('dcs:kbprobe'),
