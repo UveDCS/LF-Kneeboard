@@ -1445,10 +1445,47 @@ function registerIpc() {
   ipcMain.handle('timer', (e, cmd) => timerCmd(cmd));
   ipcMain.handle('messages:clear', () => { dcs.messages.length = 0; broadcast('messages-cleared'); });
   ipcMain.handle('dcs:kbprobe', () => dcs.request({ cmd: 'kbprobe' }, 4000));
+  // Paquete naval (.lfcvw): el texto lo prepara y lo comprueba la página (cvw-data.js); aquí solo los diálogos.
+  ipcMain.handle('cvw:export', async (e, text, name) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    let dir = '';
+    try { dir = app.getPath('documents'); } catch { /* sin Documentos */ }
+    const safe = String(name || 'Paquete naval').replace(/[<>:"/\\|?*\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Paquete naval';
+    const r = await dialog.showSaveDialog(win, {
+      title: 'Exportar el paquete naval',
+      defaultPath: path.join(dir, `${safe}.lfcvw`),
+      filters: [{ name: 'Paquete naval de LF Kneeboard', extensions: ['lfcvw'] }],
+    });
+    if (r.canceled || !r.filePath) return null;
+    try {
+      fs.writeFileSync(r.filePath, String(text), 'utf8');
+      return { file: r.filePath };
+    } catch (err) {
+      return { error: err.message };
+    }
+  });
+  ipcMain.handle('cvw:import', async (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const r = await dialog.showOpenDialog(win, {
+      title: 'Importar un paquete naval',
+      properties: ['openFile'],
+      filters: [{ name: 'Paquete naval de LF Kneeboard', extensions: ['lfcvw'] }, { name: 'Todos los archivos', extensions: ['*'] }],
+    });
+    if (r.canceled || !r.filePaths[0]) return null;
+    try {
+      const st = fs.statSync(r.filePaths[0]);
+      if (st.size > 5 * 1024 * 1024) return { error: 'El archivo es demasiado grande para ser un paquete naval.' };
+      return { text: fs.readFileSync(r.filePaths[0], 'utf8'), file: r.filePaths[0] };
+    } catch (err) {
+      return { error: err.message };
+    }
+  });
   ipcMain.handle('store:get', (e, name) => loadStore(name));
   ipcMain.on('store:set', (e, name, data) => {
     saveStore(name, data);
     for (const w of views) if (w && !w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('store-changed', name, data);
+    // El paquete naval también se edita en Ajustes: que no se quede con uno viejo si se importa desde la pestaña.
+    if (name === 'cvw' && settingsWin && !settingsWin.isDestroyed() && settingsWin.webContents !== e.sender) settingsWin.webContents.send('store-changed', name, data);
   });
   ipcMain.handle('tabs:reset', () => {
     cfg.patch({ tabs: defaultTabs() });

@@ -60,6 +60,8 @@ contextBridge.exposeInMainWorld('kb', {
   kneeboardProbe: () => ipcRenderer.invoke('dcs:kbprobe'),
   storeGet: (name) => ipcRenderer.invoke('store:get', name),
   storeSet: (name, data) => ipcRenderer.send('store:set', name, data),
+  cvwExport: (text, name) => ipcRenderer.invoke('cvw:export', text, name),
+  cvwImport: () => ipcRenderer.invoke('cvw:import'),
   resetTabs: () => ipcRenderer.invoke('tabs:reset'),
   tabTemplates: () => ipcRenderer.invoke('tabs:templates'),
   applyTemplate: (id) => ipcRenderer.invoke('tabs:template', id),

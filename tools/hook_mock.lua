@@ -74,6 +74,15 @@ Export = {
   LoGetEngineInfo = function() return { fuel_internal = 3500, fuel_external = 0 } end,
   LoGetMissionStartTime = function() return 50400 end,
   LoGetCameraPosition = function() return { p = { x = -282000, y = 40000, z = 646000 }, x = { x = 0, y = -1, z = 0 } } end,
+  -- Objetos del mundo: un tanquero copiado por un script, una AWACS, un caza (no se manda) y uno del otro bando.
+  LoGetWorldObjects = function()
+    return {
+      [101] = { Name = 'KC-135', GroupName = 'Texaco#001', UnitName = 'Texaco#001-01', CoalitionID = 2, LatLongAlt = { Lat = 42.5, Long = 43.1, Alt = 6700 }, Heading = 1.2 },
+      [102] = { Name = 'E-3A', GroupName = 'OVERLORD', UnitName = 'Overlord11', CoalitionID = 2, LatLongAlt = { Lat = 42.0, Long = 42.0, Alt = 9000 } },
+      [103] = { Name = 'F-16C_50', GroupName = 'Viper', UnitName = 'Viper11', CoalitionID = 2, LatLongAlt = { Lat = 42.2, Long = 42.6, Alt = 3000 } },
+      [104] = { Name = 'IL-78M', GroupName = 'Rojo', UnitName = 'Rojo11', CoalitionID = 1, LatLongAlt = { Lat = 43.0, Long = 44.0, Alt = 7000 } },
+    }
+  end,
 }
 
 package.preload['terrain'] = function()

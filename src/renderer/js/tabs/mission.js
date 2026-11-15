@@ -1,6 +1,7 @@
 // Páginas dinámicas generadas con la misión: plan de vuelo, radios, apoyo y tiempos.
 import { icon } from '../icons.js';
 import { h, clear, emptyState, hms, dur, deg, nm, ft, freq } from '../util.js';
+import { supportPos, supportPosNote } from '../support-pos.js';
 
 const KT = 1.943844;
 const LB = 2.20462;
@@ -465,19 +466,26 @@ export const support = {
           h('div.card-row', h('span.mono', `${Geo.fmtDDM(b.lat, true)}  ${Geo.fmtDDM(b.lon, false)}`), h('span.bar-spacer'), h('span.big', { style: { fontSize: '1.6rem' } }, fromBulls))));
       }
       if (!m.support.length) el.append(h('div.card.muted', 'La misión no tiene AWACS, tanqueros, barcos con TACAN ni JTAC de tu coalición.'));
-      for (const s of m.support) {
-        const rel = me && s.lat != null ? `${deg(Geo.norm360(Geo.bearingDeg(me, s) - mv))} · ${nm(Geo.distanceNm(me, s), 0)} nm` : null;
+      m.support.forEach((s, i) => {
+        // Posición en directo si DCS la da; la de la misión solo si no es una plantilla que copia un script.
+        const pos = supportPos(m, live, i);
+        const note = supportPosNote(s, pos);
+        // Altitud: la real si es en directo; la de la misión solo si no es una plantilla.
+        const altFt = pos && pos.src === 'live' && pos.altFt != null ? pos.altFt : (s.late ? null : s.altFt);
+        const rel = me && pos ? `${deg(Geo.norm360(Geo.bearingDeg(me, pos) - mv))} · ${nm(Geo.distanceNm(me, pos), 0)} nm` : null;
         el.append(h('div.card',
-          h('div.card-row', h('span', { style: { fontSize: '1.3rem', color: 'var(--accent-text, var(--accent))' } }, icon(KIND_ICON[s.kind] || 'target')), h('b', s.callsign), h('span.tag', s.kind), h('span.muted', s.type || ''), h('span.bar-spacer'), rel ? h('span.mono', rel) : null),
+          h('div.card-row', h('span', { style: { fontSize: '1.3rem', color: 'var(--accent-text, var(--accent))' } }, icon(KIND_ICON[s.kind] || 'target')), h('b', s.callsign), h('span.tag', s.kind), h('span.muted', s.type || ''), h('span.bar-spacer'),
+            note ? h('span.tag', { className: `tag ${pos ? 'sent' : ''}`, title: pos ? 'Posición que da DCS ahora mismo' : 'En la misión es una plantilla con activación retrasada: un script la copia en otro sitio y su posición no sirve. Si el servidor deja exportar objetos, saldrá en directo.' }, note) : null,
+            rel ? h('span.mono', rel) : null),
           h('div.kv', { style: { marginTop: '.35rem' } },
             h('span', 'Frecuencia'), h('span', s.freq || '—'),
             s.tacan ? h('span', 'TACAN') : null, s.tacan ? h('span', s.tacan) : null,
             s.icls ? h('span', 'ICLS') : null, s.icls ? h('span', s.icls) : null,
             s.link4 ? h('span', 'Link 4') : null, s.link4 ? h('span', s.link4) : null,
-            s.altFt ? h('span', 'Altitud') : null, s.altFt ? h('span', `${s.altFt.toLocaleString('es-ES')} ft${s.speedKt ? ` · ${s.speedKt} kt` : ''}`) : null,
-            s.lat != null ? h('span', 'Posición') : null, s.lat != null ? h('span', `${Geo.fmtDDM(s.lat, true, 1)}  ${Geo.fmtDDM(s.lon, false, 1)}`) : null,
+            altFt ? h('span', 'Altitud') : null, altFt ? h('span', `${altFt.toLocaleString('es-ES')} ft${s.speedKt && !(pos && pos.src === 'live') ? ` · ${s.speedKt} kt` : ''}`) : null,
+            pos ? h('span', 'Posición') : null, pos ? h('span', `${Geo.fmtDDM(pos.lat, true, 1)}  ${Geo.fmtDDM(pos.lon, false, 1)}`) : null,
           )));
-      }
+      });
     };
     const live = throttle(render, 1500);
     return {

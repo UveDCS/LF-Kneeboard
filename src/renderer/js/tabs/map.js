@@ -6,6 +6,7 @@
 import { icon, iconSvg } from '../icons.js';
 import { h, clear, deg, nm } from '../util.js';
 import { wpName, advanceSeq } from './mission.js';
+import { supportPos } from '../support-pos.js';
 
 const BASES = {
   sat: { name: 'Satélite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: 'Esri, Maxar, Earthstar' },
@@ -280,13 +281,7 @@ export const map = {
         L.marker(c, { icon: L.divIcon({ className: 'asset-marker', html: iconSvg('bullseye', 26, '#38bdf8') }) }).bindTooltip('Bullseye').addTo(layers.bulls)
           .on('click', (e) => { L.DomEvent.stop(e); popupAt(L.latLng(c[0], c[1]), { title: 'Bullseye' }); });
       }
-      for (const s of m.support) {
-        if (s.lat == null) continue;
-        L.marker([s.lat, s.lon], { icon: L.divIcon({ className: 'asset-marker', html: iconSvg(ICON[s.kind] || 'target', 24, '#ffffff') }) })
-          .bindTooltip(`${s.callsign} · ${s.kind}${s.freq ? ` · ${s.freq}` : ''}${s.tacan ? ` · ${s.tacan}` : ''}`)
-          .on('click', (e) => { L.DomEvent.stop(e); popupAt(L.latLng(s.lat, s.lon), { title: s.callsign }); })
-          .addTo(layers.support);
-      }
+      drawSupport(true);
       drawAirfields();
       if (ctx.S.live) drawNav(ctx.S.live);
       if (refit) fit();
@@ -307,6 +302,26 @@ export const map = {
     }
 
     // Línea discontinua desde tu avión hasta el siguiente punto, con rumbo y distancia.
+    // Apoyo: en directo si DCS lo da; las plantillas que copia un script (sin posición real) no se dibujan.
+    // La firma de lo dibujado va en la propia capa (se vacía al repintar el mapa entero).
+    function drawSupport(force = false) {
+      const m = ctx.S.mission;
+      if (!m || !layers.support) return;
+      const pos = m.support.map((s, i) => supportPos(m, ctx.S.live, i));
+      const sig = JSON.stringify(pos.map((p) => (p ? [p.lat.toFixed(3), p.lon.toFixed(3)] : null)));
+      if (!force && sig === layers.support.lfkbSig) return;
+      layers.support.lfkbSig = sig;
+      layers.support.clearLayers();
+      m.support.forEach((s, i) => {
+        const p = pos[i];
+        if (!p) return;
+        L.marker([p.lat, p.lon], { icon: L.divIcon({ className: 'asset-marker', html: iconSvg(ICON[s.kind] || 'target', 24, '#ffffff') }) })
+          .bindTooltip(`${s.callsign} · ${s.kind}${s.freq ? ` · ${s.freq}` : ''}${s.tacan ? ` · ${s.tacan}` : ''}${p.src === 'live' ? ' · en directo' : ''}`)
+          .on('click', (e) => { L.DomEvent.stop(e); popupAt(L.latLng(p.lat, p.lon), { title: s.callsign }); })
+          .addTo(layers.support);
+      });
+    }
+
     function drawNav(l) {
       layers.nav.clearLayers();
       const m = ctx.S.mission;
@@ -332,6 +347,7 @@ export const map = {
         if (svg) svg.style.transform = `rotate(${Math.round(l.hdg || 0)}deg)`;
       }
       drawNav(l);
+      drawSupport();
       if (follow) mapObj.panTo([l.lat, l.lon], { animate: false });
     }
 

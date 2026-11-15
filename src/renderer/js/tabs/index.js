@@ -10,6 +10,7 @@ import { map } from './map.js';
 import { radiolog, shared } from './social.js';
 import { dtc } from './dtc.js';
 import { fuel } from './fuel.js';
+import { carrier } from './carrier.js';
 
 export const TAB_TYPES = {
   'dcs-kneeboard': dcsKneeboard,
@@ -25,6 +26,7 @@ export const TAB_TYPES = {
   support,
   timers,
   fuel,
+  carrier,
   notes,
   map,
   draw,

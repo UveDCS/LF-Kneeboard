@@ -135,6 +135,10 @@ class DcsLink extends EventEmitter {
         }
         break;
       }
+      case 'objects':
+        // Posición real de tanqueros, AWACS y portaaviones (el script la manda cada 5 s si DCS la da).
+        this.objects = { ok: msg.ok !== false, list: Array.isArray(msg.list) ? msg.list : [], at: Date.now() };
+        break;
       case 'sources':
         // Diagnóstico (Ajustes > Integración DCS): puntos que da LoGetRoute para este avión...
         this.loGetRoute = msg.loGetRoute || 0;
@@ -319,6 +323,32 @@ class DcsLink extends EventEmitter {
     return { lat: p.lat, lon: p.lon, alt: p.alt, mgrs: p.mgrs, src: p.mapView ? 'F10' : 'cámara', at: Date.now() };
   }
 
+  // Posición en directo de cada elemento de apoyo de la misión (mismo orden que mission.support), o null.
+  // Se empareja por nombre de grupo: el de la misión o una copia hecha por un script («Texaco#001», «Texaco-1»...).
+  // Una plantilla sin pareja por nombre se empareja por tipo si en el aire solo hay uno de ese tipo en tu bando.
+  supportLive() {
+    const o = this.objects;
+    const m = this.mission;
+    if (!o || !o.ok || !m || !Array.isArray(m.support) || Date.now() - o.at > 20000) return null;
+    const coal = m.coalition === 'red' ? 1 : m.coalition === 'blue' ? 2 : null;
+    const mine = o.list.filter((x) => x && x.lat != null && (coal == null || x.coal == null || Number(x.coal) === coal));
+    const used = new Set();
+    return m.support.map((s) => {
+      const g = String(s.group || '').toLowerCase();
+      let hit = g ? mine.find((x) => {
+        const xg = String(x.group || '').toLowerCase();
+        return !used.has(x) && (xg === g || xg.startsWith(`${g}#`) || xg.startsWith(`${g}-`) || xg.startsWith(`${g} `));
+      }) : null;
+      if (!hit && s.late) {
+        const same = mine.filter((x) => !used.has(x) && x.type === s.type);
+        if (same.length === 1) hit = same[0];
+      }
+      if (!hit) return null;
+      used.add(hit);
+      return { lat: hit.lat, lon: hit.lon, altFt: hit.alt != null ? Math.round(hit.alt * 3.28084 / 100) * 100 : null, hdg: hit.hdg };
+    });
+  }
+
   onState(s) {
     const live = {
       type: s.type, lat: s.lat, lon: s.lon, altM: s.alt, aglM: s.agl, hdg: s.hdg,
@@ -327,6 +357,7 @@ class DcsLink extends EventEmitter {
       modelTime: s.mt, missionTime: s.start != null ? s.start + s.mt : null, paused: !!s.paused,
     };
     live.gotoIdx = this.gotoIdx != null ? this.gotoIdx : null;
+    live.support = this.supportLive();
     this.live = live;
     if (live.type && this.mission && this.mission.unit && this.mission.unit.type !== live.type && !this.manual) {
       this.identity.type = live.type;

@@ -55,6 +55,8 @@ setTimeout(async () => {
   const p = await link.capture();
   const kp = await link.request({ cmd: 'kbprobe' }, 3000);
   ok(kp && kp.where === 'global' && kp.found === 1 && /KUTAISI/.test(fs.readFileSync(kp.path, 'utf8')), `Prueba del kneeboard del módulo: ${kp && `${kp.where}, ${kp.found} indicador(es)`}`);
+  const ob = link.objects;
+  ok(ob && ob.ok && ob.list.length === 3 && ob.list.some((x) => x.group === 'Texaco#001' && x.lat === 42.5) && !ob.list.some((x) => x.type === 'F-16C_50'), `Tanqueros y AWACS en directo: ${ob && ob.list.map((x) => `${x.type} ${x.group}`).join(', ')}`);
   ok(p && Math.abs(p.lat - 42.123456) < 1e-6 && p.alt === 321 && p.mgrs === '38T KM 12345 67890' && p.src === 'F10', `Captura del F10: ${JSON.stringify(p)}`);
 }, 2500);
 

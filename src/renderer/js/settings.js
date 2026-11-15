@@ -4,6 +4,7 @@ import { THEMES } from './themes.js';
 import { TAB_TYPES } from './tabs/index.js';
 import { loadPdfJs } from './tabs/docs.js';
 import { icon, tabIcon, PICKABLE } from './icons.js';
+import { cvwSection } from './settings-cvw.js';
 
 const kb = window.kb;
 let C = null;          // configuración
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'voz', icon: 'mic', label: 'Órdenes de voz' },
   { id: 'compartir', icon: 'users', label: 'Vuelo compartido' },
   { id: 'dcs', icon: 'plug', label: 'Integración DCS' },
+  { id: 'portaaviones', icon: 'ship', label: 'Portaaviones' },
   { id: 'actualizar', icon: 'update', label: 'Actualizar y perfil' },
   { id: 'acerca', icon: 'info', label: 'Acerca de' },
 ];
@@ -997,6 +999,9 @@ function logsCard() {
     h('div.small.muted', 'Guarda en un .zip los registros del kneeboard (errores.log, vr.log, openxr-layer.log y las líneas «LF Kneeboard» de dcs.log), para mandarlos por Discord. Nada más: ni tu configuración ni datos de tu PC. En las rutas, tu nombre de usuario de Windows sale como «Piloto». Guárdalos justo después del fallo, sin volver a abrir el kneeboard ni DCS.'),
     out);
 }
+
+// Paquete naval (settings-cvw.js).
+R.portaaviones = () => cvwSection({ main, kb, render, askText });
 
 R.acerca = () => {
   main.append(h('h1', 'Acerca de'),

@@ -226,6 +226,35 @@ local ok, err = pcall(function()
     send({ t = 'sources', loGetRoute = n })
   end
 
+  -- Dónde están de verdad los tanqueros, AWACS y portaaviones (los de la misión pueden ser plantillas que un
+  -- script copia en otro sitio). LoGetWorldObjects solo responde si el servidor deja exportar objetos.
+  local SUPPORT_TYPES = {
+    ['KC-135'] = true, ['KC135MPRS'] = true, ['KC130'] = true, ['KC130J'] = true, ['S-3B Tanker'] = true,
+    ['IL-78M'] = true, ['KC_10_Extender'] = true, ['KC_10_Extender_D'] = true,
+    ['E-3A'] = true, ['E-2C'] = true, ['A-50'] = true, ['KJ-2000'] = true,
+    ['CVN_71'] = true, ['CVN_72'] = true, ['CVN_73'] = true, ['CVN_75'] = true, ['Stennis'] = true,
+    ['Forrestal'] = true, ['LHA_Tarawa'] = true, ['KUZNECOW'] = true, ['CV_1143_5'] = true,
+  }
+  local lastObjects = -1e9 -- el primero, en cuanto empieza la misión
+  local function sendSupport()
+    local okObj, objs = pcall(function() return Export.LoGetWorldObjects() end)
+    if not okObj or type(objs) ~= 'table' then
+      send({ t = 'objects', ok = false })
+      return
+    end
+    local list = {}
+    for _, o in pairs(objs) do
+      if type(o) == 'table' and o.Name and SUPPORT_TYPES[o.Name] and o.LatLongAlt then
+        list[#list + 1] = {
+          type = o.Name, group = o.GroupName, unit = o.UnitName, coal = o.CoalitionID,
+          lat = o.LatLongAlt.Lat, lon = o.LatLongAlt.Long, alt = o.LatLongAlt.Alt,
+          hdg = o.Heading and math.deg(o.Heading),
+        }
+      end
+    end
+    send({ t = 'objects', ok = true, n = #list, list = list })
+  end
+
   local lastSend = 0
   local function sendState()
     local st = { t = 'state', mt = DCS.getModelTime(), paused = DCS.getPause() }
@@ -300,6 +329,10 @@ local ok, err = pcall(function()
       lastRoute = now
       pcall(sendRoute)
       pcall(sendPlanSources)
+    end
+    if now - lastObjects >= 5 then
+      lastObjects = now
+      pcall(sendSupport)
     end
   end
 

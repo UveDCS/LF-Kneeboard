@@ -196,3 +196,49 @@ nav button.sel .ico { color: var(--accent); }
   border: 1px solid var(--line); border-radius: 99px; padding: 4px 7px; min-width: 64px; text-align: center; }
 .dcsdir .mono { word-break: break-all; }
 .dcsdir + label.chk, .dcsdir + .warn { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* Ajustes › Portaaviones (paquete naval) */
+.cv-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cv-ver { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; }
+.cv-title { font-weight: 700; margin-bottom: 10px; }
+.cv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; }
+.cv-grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cv-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+label.cv-f { display: flex; flex-direction: column; gap: 5px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; min-width: 0; }
+label.cv-f input.f { text-transform: none; letter-spacing: 0; color: var(--ink); font-size: 14px; font-weight: 400; width: 100%; }
+.cv-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.cv-2.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.cv-2.ev { grid-template-columns: minmax(0, .8fr) minmax(0, 1.5fr); }
+.cv-2 > * { min-width: 0; }
+.cv-mini { font-size: 12px; color: var(--muted); }
+.cv-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.cv-chip { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 3px 11px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; cursor: pointer; }
+.cv-chip.sel { background: rgba(56,189,248,.14); color: var(--accent); border-color: rgba(56,189,248,.4); }
+.cv-chip.add { color: var(--muted); border-style: dashed; font-family: inherit; }
+.t.cv td { padding: 5px 6px; }
+.t.cv input.f, .t.cv select.f { width: 100%; padding: 5px 8px; font-size: 13px; }
+.t.cv input.f.narrow { width: 72px; }
+.t.cv .num, .t.cv input.num { font-family: 'JetBrains Mono', monospace; }
+.t.cv .calc { font-family: 'JetBrains Mono', monospace; color: var(--muted); white-space: nowrap; }
+.t.cv td.x { width: 30px; text-align: center; }
+.t.cv th input.colname { width: calc(100% - 26px); padding: 3px 6px; font-size: 11px; text-transform: none; }
+.cv-x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 6px; }
+.cv-x:hover { color: var(--bad); background: var(--panel2); }
+.cv-radios { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 14px; }
+.cv-radio { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.cv-radio input.ch { width: 56px; flex: none; }
+.cv-radio input.f { min-width: 0; flex: 1; padding: 5px 8px; }
+.cv-drrs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.cv-drr1 { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 4px; align-items: center; }
+.cv-drr1 input.f { min-width: 0; padding: 5px 8px; }
+.cv-scroll { overflow-x: auto; }
+.cv-air th { font-size: 10.5px; white-space: nowrap; }
+.cv-air th b { display: block; color: var(--ink); font-size: 13px; }
+.cv-air td.cv-sq { font-weight: 700; white-space: nowrap; }
+.cv-cell { min-height: 34px; min-width: 96px; border: 1px solid var(--line); border-radius: 8px; padding: 4px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; background: var(--bg); }
+.cv-cell:hover { border-color: #3a4a5c; }
+.cv-cell.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,.2); }
+.cv-fl { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.3; }
+.cv-fl .m { color: var(--accent); }
+.cv-fl.air { color: var(--muted); }
+.cv-empty { color: var(--line); text-align: center; font-size: 14px; }

@@ -4,6 +4,7 @@
 // Lo de cada salida (puntos de combate, tramos, tanquero) se guarda por misión en config.plan.sorties.
 import { icon } from '../icons.js';
 import { h, clear, emptyState } from '../util.js';
+import { supportPos } from '../support-pos.js';
 import { FIELDS, UNITS, valuesFor, planSortie, unitFor, defaultUnit, toUnit, fromUnit } from '../fuel-data.js';
 
 const LB = 2.20462;
@@ -106,6 +107,7 @@ export const fuel = {
   create(ctx) {
     const el = h('div.fuelplan');
     let shownType = null;
+    let lastRender = 0;
     let openFields = false;
 
     const plan = () => ctx.S.config.plan || {};
@@ -162,7 +164,12 @@ export const fuel = {
       UNIT = unitFor(t, plan().fuel);
       const U = UNITS[UNIT];
       const so = sortie();
-      const tankers = ((m && m.support) || []).filter((x) => x.kind === 'Tanquero' && x.lat != null);
+      // Tanqueros con posición válida: en directo si DCS la da, o la de la misión si no es una plantilla que copia un script.
+      const allTankers = ((m && m.support) || []).map((x, i) => ({ s: x, pos: supportPos(m, ctx.S.live, i) })).filter((t) => t.s.kind === 'Tanquero');
+      const tankers = allTankers.filter((t) => t.pos).map(({ s, pos }) => ({ ...s, lat: pos.lat, lon: pos.lon, altFt: pos.altFt, live: pos.src === 'live' }));
+      const noPos = allTankers.filter((t) => !t.pos).map((t) => t.s.callsign);
+      // Puntos de combate: los eliges tú, o se vuela toda la ruta y el combate va en el punto más lejano.
+      const combatOn = so.combatPoints === true || (so.combatPoints == null && (so.entry != null || so.exit != null));
       const load = m && m.unit && m.unit.fuelKg != null ? m.unit.fuelKg * LB : null;
       // Tanquero: de dónde sale su posición (src) y si vas a pasar por él (use, por defecto no).
       const tkCfg = so.tanker || {};
@@ -170,7 +177,8 @@ export const fuel = {
       const src = ['map', 'manual', 'coords'].includes(tkCfg.src) && !(tkCfg.src === 'map' && !tankers.length) ? tkCfg.src : tankers.length ? 'map' : 'coords';
       const curCall = tankers.some((x) => x.callsign === tkCfg.callsign) ? tkCfg.callsign : (tankers[0] || {}).callsign;
       const r = planSortie({ values, route: m && m.route, distanceNm: ctx.Geo.distanceNm, loadLb: load, tankers,
-        sortie: { ...so, tanker: use ? { ...tkCfg, src, callsign: curCall } : null } });
+        sortie: { ...so, combatPoints: combatOn, tanker: use ? { ...tkCfg, src, callsign: curCall } : null } });
+      lastRender = Date.now();
       const pts = r.points;
       const wpLabel = (i) => { const p = pts[i]; return p ? `WP${p.idx != null ? p.idx : i}${p.name ? ` ${p.name}` : ''}` : '—'; };
       const tk = r.tanker;
@@ -207,11 +215,20 @@ export const fuel = {
         const last = pts.length - 1;
         const entries = Array.from({ length: last }, (_, i) => i + 1);
         const exits = entries.filter((i) => i >= r.entry);
-        el.append(h('div.card',
-          h('div.grid2',
-            h('div', h('div.label', 'El combate empieza en'), wpStepper(entries, r.entry, (v) => saveSortie({ entry: v, exit: Math.max(v, r.exit) }), wpLabel)),
-            h('div', h('div.label', 'Y termina en'), wpStepper(exits, r.exit, (v) => saveSortie({ exit: v }), wpLabel))),
-          h('div.small.muted', { style: { marginTop: '.4rem' } }, 'Entre esos dos puntos manda la ventana de combate; antes es la ida y después la vuelta.')));
+        const card = h('div.card',
+          h('div.card-row', h('div.label', 'Puntos de combate'), h('span.bar-spacer'),
+            h('button.fuel-sw', { className: `fuel-sw${combatOn ? ' on' : ''}`, onclick: () => saveSortie({ combatPoints: !combatOn }) }, 'Elegir dónde empieza y termina', h('i'))));
+        if (combatOn) {
+          card.append(
+            h('div.grid2', { style: { marginTop: '.5rem' } },
+              h('div', h('div.label', 'El combate empieza en'), wpStepper(entries, r.entry, (v) => saveSortie({ entry: v, exit: Math.max(v, r.exit) }), wpLabel)),
+              h('div', h('div.label', 'Y termina en'), wpStepper(exits, r.exit, (v) => saveSortie({ exit: v }), wpLabel))),
+            h('div.small.muted', { style: { marginTop: '.4rem' } }, 'Entre esos dos puntos manda la ventana de combate; antes es la ida y después la vuelta.'));
+        } else {
+          card.append(h('div.small.muted', { style: { marginTop: '.4rem' } },
+            `Se cuenta toda la ruta y los minutos de combate se suman en el punto más lejano (${wpLabel(r.entry)}). Actívalo para elegir dónde empieza y termina.`));
+        }
+        el.append(card);
       }
 
       // ---- perfil
@@ -266,10 +283,16 @@ export const fuel = {
           tankers.map((x) => chip(x.callsign, src === 'map' && curCall === x.callsign, () => setTk({ src: 'map', callsign: x.callsign }))),
           chip('Punto de la ruta', src === 'manual', () => setTk({ src: 'manual' })),
           chip('Coordenadas', src === 'coords', () => setTk({ src: 'coords' }))));
+      if (noPos.length) {
+        tkCard.append(h('div.small.warnc', { style: { marginBottom: '.4rem' } },
+          `${noPos.join(', ')}: en la misión ${noPos.length === 1 ? 'es una plantilla que copia' : 'son plantillas que copia'} un script, así que no se sabe dónde ${noPos.length === 1 ? 'vuela' : 'vuelan'}. Si DCS da su posición en directo, ${noPos.length === 1 ? 'saldrá' : 'saldrán'} aquí; si no, usa «Coordenadas».`));
+      }
       // Dónde está.
       if (src === 'map') {
         const x = tankers.find((y) => y.callsign === curCall);
-        tkCard.append(h('div.small.muted', `${curCall}${x && x.type ? ` · ${x.type}` : ''}${x && x.altFt ? ` · ${altText(x.altFt)}` : ''}: posición de la misión. Si al despegar aún no está en su estación, usa «Coordenadas».`));
+        tkCard.append(h('div.small.muted', `${curCall}${x && x.type ? ` · ${x.type}` : ''}${x && x.altFt ? ` · ${altText(x.altFt)}` : ''}: ${x && x.live
+          ? 'posición en directo, la que da DCS ahora mismo.'
+          : 'posición de la misión. Si al despegar aún no está en su estación, usa «Coordenadas».'}`));
       } else if (src === 'manual' && r.hasRoute) {
         const validWp = Array.from({ length: pts.length - 1 }, (_, i) => i + 1).filter((i) => i <= r.entry || i >= r.exit);
         const curWp = validWp.includes(Number(tkCfg.wp)) ? Number(tkCfg.wp) : (tk && tk.wp) || validWp[0];
@@ -362,7 +385,12 @@ export const fuel = {
       show: refresh,
       title: () => 'Combustible',
       onMission: (m) => { if (m !== lastMission) { lastMission = m; refresh(); } },
-      onLive: () => { if (type() !== shownType) render(); },
+      // Con un tanquero en directo, se recalcula cada 10 s (se mueve en su órbita).
+      onLive: (l) => {
+        if (type() !== shownType) return render();
+        const tk = (sortie().tanker || {});
+        if (tk.use && (tk.src || 'map') === 'map' && l && Array.isArray(l.support) && Date.now() - lastRender > 10000) refresh();
+      },
       onConfig: refresh,
     };
   },

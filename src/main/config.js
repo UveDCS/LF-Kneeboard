@@ -83,6 +83,7 @@ const BUILTIN = {
   map: ['Mapa', 'map'],
   timers: ['Tiempos', 'timer'],
   fuel: ['Combustible', 'fuel'],
+  carrier: ['Portaaviones', 'ship'],
   draw: ['Pizarra', 'board'],
   radiolog: ['Mensajes', 'messages'],
   shared: ['Compartido', 'inbox'],
@@ -152,7 +153,7 @@ function templateTabs(id, current) {
 
 function defaults() {
   return {
-    version: 7,
+    version: 8,
     firstRun: true,
     theme: 'tablet',
     night: false,
@@ -209,6 +210,7 @@ class Config {
       if ((saved.version || 1) < 5) migrateV5(this.data);
       if ((saved.version || 1) < 6) migrateV6(this.data);
       if ((saved.version || 1) < 7) migrateV7(this.data);
+      if ((saved.version || 1) < 8) migrateV8(this.data);
       // El «modo noche» antiguo (un filtro rojo encima de cualquier tema) pasa a ser la variante Noche del tema.
       if (this.data.night) {
         if (!isNightTheme(this.data.theme)) this.data.theme = nightPair(this.data.theme);
@@ -322,6 +324,12 @@ function migrateV6(data) {
 function migrateV7(data) {
   if (Array.isArray(data.tabs)) data.tabs = fillAllTypes(data.tabs.map((t) => ({ ...t })), []);
   data.version = 7;
+}
+
+// v8: pestaña Portaaviones (paquete naval), al final y sin fijar.
+function migrateV8(data) {
+  if (Array.isArray(data.tabs)) data.tabs = fillAllTypes(data.tabs.map((t) => ({ ...t })), []);
+  data.version = 8;
 }
 
 // Preset de pestañas guardado por el piloto: copia de sus pestañas (con sus identificadores, para no perder datos).

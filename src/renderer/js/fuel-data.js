@@ -174,8 +174,10 @@ export function planSortie({ values: v, route, distanceNm, loadLb = null, sortie
   if (hasRoute) {
     const last = pts.length - 1;
     const far = farthestIndex(pts, distanceNm);
-    entry = Math.min(last, Math.max(1, num(sortie.entry) != null ? num(sortie.entry) : far));
-    exit = Math.min(last, Math.max(entry, num(sortie.exit) != null ? num(sortie.exit) : entry));
+    // Sin puntos de combate (combatPoints === false): se vuela toda la ruta y la ventana se suma en el punto más lejano.
+    const wp = sortie.combatPoints !== false;
+    entry = Math.min(last, Math.max(1, wp && num(sortie.entry) != null ? num(sortie.entry) : far));
+    exit = Math.min(last, Math.max(entry, wp && num(sortie.exit) != null ? num(sortie.exit) : entry));
     for (let i = 0; i < last; i++) {
       const a = pts[i], b = pts[i + 1];
       const section = i + 1 <= entry ? 'ida' : i >= exit ? 'vuelta' : 'zona';

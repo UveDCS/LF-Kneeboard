@@ -162,6 +162,9 @@ function supportAssets(mission, coalition, theatre) {
       link4: link4[0] && link4[0].params ? `Link 4 ${fmtFreq(link4[0].params.frequency)}` : null,
       altFt: orbit && orbit.params && orbit.params.altitude ? Math.round(orbit.params.altitude * 3.28084 / 100) * 100 : (p0.alt ? Math.round(p0.alt * 3.28084 / 100) * 100 : null),
       speedKt: orbit && orbit.params && orbit.params.speed ? Math.round(orbit.params.speed * 1.943844) : null,
+      // Con activación retrasada suele ser una plantilla que un script copia en otro sitio (Foothold, MOOSE...):
+      // su posición en la misión no es donde vuela. La de verdad llega de DCS en directo (live.support).
+      late: !!group.lateActivation,
       x: p0.x, y: p0.y, ...pointLL(theatre, p0.x, p0.y),
       points: pts.slice(0, 6).map((p) => ({ x: p.x, y: p.y, ...pointLL(theatre, p.x, p.y) })),
     });
