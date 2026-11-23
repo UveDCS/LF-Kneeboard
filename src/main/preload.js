@@ -57,7 +57,6 @@ contextBridge.exposeInMainWorld('kb', {
   logsExport: () => ipcRenderer.invoke('logs:export'),
   timer: (cmd) => ipcRenderer.invoke('timer', cmd),
   messagesClear: () => ipcRenderer.invoke('messages:clear'),
-  kneeboardProbe: () => ipcRenderer.invoke('dcs:kbprobe'),
   storeGet: (name) => ipcRenderer.invoke('store:get', name),
   storeSet: (name, data) => ipcRenderer.send('store:set', name, data),
   cvwExport: (text, name) => ipcRenderer.invoke('cvw:export', text, name),

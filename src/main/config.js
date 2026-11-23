@@ -169,7 +169,7 @@ function defaults() {
       { state: { tab: 0, pages: {} }, bounds: null, vr: { pos: [0.13, -0.36, -0.42], rot: [-8, -48, 0], width: 0.24 } },
       { state: { tab: 1, pages: {} }, bounds: null, vr: { pos: [-0.13, -0.36, -0.42], rot: [8, -48, 0], width: 0.24 } },
     ],
-    vr: { enabled: true, gazeZoom: true, zoomScale: 1.6, opacityIdle: 0.85, opacityGaze: 1, hideWindow: false },
+    vr: { enabled: true, gazeZoom: true, zoomScale: 1.6, opacityIdle: 0.85, opacityGaze: 1, hideWindow: false, sharpness: 'alta' },
     tabs: defaultTabs(),
     tabPresets: [],
     bindings: DEFAULT_BINDINGS,

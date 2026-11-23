@@ -9,11 +9,14 @@ import { cvwSection } from './settings-cvw.js';
 const kb = window.kb;
 let C = null;          // configuración
 let INIT = null;
-let section = location.hash.slice(1) || 'general';
+// Secciones que se movieron: los enlaces viejos llevan a su sitio nuevo.
+const ALIAS = { dcs: 'ajustes' };
+let section = ALIAS[location.hash.slice(1)] || location.hash.slice(1) || 'ajustes';
 let bindNames = new Map();
 
 const SECTIONS = [
   { id: 'bienvenida', icon: 'welcome', label: 'Bienvenida' },
+  { id: 'ajustes', icon: 'settings', label: 'Ajustes generales' },
   { id: 'general', icon: 'palette', label: 'Aspecto' },
   { id: 'pestanas', icon: 'tabs', label: 'Pestañas' },
   { id: 'controles', icon: 'gamepad', label: 'Controles' },
@@ -22,7 +25,6 @@ const SECTIONS = [
   { id: 'biblioteca', icon: 'mission', label: 'Piernógrafo' },
   { id: 'voz', icon: 'mic', label: 'Órdenes de voz' },
   { id: 'compartir', icon: 'users', label: 'Vuelo compartido' },
-  { id: 'dcs', icon: 'plug', label: 'Integración DCS' },
   { id: 'portaaviones', icon: 'ship', label: 'Portaaviones' },
   { id: 'actualizar', icon: 'update', label: 'Actualizar y perfil' },
   { id: 'acerca', icon: 'info', label: 'Acerca de' },
@@ -41,6 +43,7 @@ function nav() {
 }
 
 function go(id) {
+  id = ALIAS[id] || id;
   section = id;
   location.hash = id;
   nav();
@@ -97,7 +100,7 @@ R.bienvenida = async () => {
       h('div.steps',
         h('div.step', h('div',
           h('b', 'Conectar con DCS'),
-          h('div.muted.small', dirs.length ? `Se copiará un archivo en ${dirs.map((d) => `${d}\\Scripts\\Hooks`).join(' y ')}. No se toca tu Export.lua, así que convive con DCS-BIOS, Tacview, SRS u OpenKneeboard.` : 'No encuentro la carpeta Saved Games\\DCS. Abre DCS una vez y vuelve aquí, o elígela tú en Integración DCS.'),
+          h('div.muted.small', dirs.length ? `Se copiará un archivo en ${dirs.map((d) => `${d}\\Scripts\\Hooks`).join(' y ')}. No se toca tu Export.lua, así que convive con DCS-BIOS, Tacview, SRS u OpenKneeboard.` : 'No encuentro la carpeta Saved Games\\DCS. Abre DCS una vez y vuelve aquí, o elígela tú en Ajustes generales › Integración DCS.'),
           dirs.length ? null : h('button.btn.small', { style: { marginTop: '6px' }, onclick: async () => {
             await patch({ firstRun: false });
             go('dcs');
@@ -121,9 +124,9 @@ R.bienvenida = async () => {
         const r = await kb.integrationInstall({ hook: hook && dirs.length > 0, layer });
         await patch({ firstRun: false, vr: { enabled: layer } });
         if (r.error) alert(`Algo ha fallado: ${r.error}`);
-        go('general');
+        go('ajustes');
       } }, 'Instalar y empezar'),
-      h('button.btn', { onclick: async () => { await patch({ firstRun: false }); go('general'); } }, 'Ahora no')),
+      h('button.btn', { onclick: async () => { await patch({ firstRun: false }); go('ajustes'); } }, 'Ahora no')),
   );
 };
 
@@ -138,29 +141,12 @@ R.general = () => {
   main.append(grid,
     h('h2', 'Opciones'),
     h('div.card',
-      chk('Dos kneeboards', 'Un segundo kneeboard independiente (por ejemplo, radios a la izquierda y plan a la derecha).', C.dual, (v) => patch({ dual: v })),
-      chk('Iniciar con Windows', 'Se abre oculto al encender el PC (en la bandeja), listo para cuando entres en DCS: sácalo con tu tecla.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
-      chk('Siempre encima de DCS', 'Recomendado si juegas en ventana o pantalla completa sin bordes.', C.alwaysOnTop, (v) => patch({ alwaysOnTop: v })),
-      chk('Clic a través', 'El ratón atraviesa el kneeboard en el monitor (se puede alternar con una tecla).', C.clickThrough, (v) => patch({ clickThrough: v })),
       slider('Opacidad en el monitor', C.overlayOpacity, 0.3, 1, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ overlayOpacity: v })),
       h('div.row', h('span', { style: { width: '170px' } }, 'Al sacarlo y guardarlo'),
         h('select.f', { onchange: (e) => patch({ stowAnim: e.target.value }) },
           [['slide', 'Sube y se desvanece'], ['fade', 'Solo se desvanece'], ['none', 'Sin animación (aparece al instante)']]
             .map(([v, l]) => h('option', { value: v, selected: (C.stowAnim || 'slide') === v }, l)))),
       h('div.small.muted', 'Si dentro de DCS la animación va a tirones, prueba «Solo se desvanece» o «Sin animación».')),
-    h('h2', 'Tamaño en el monitor (2D)'),
-    h('div.card',
-      slider('Textos y botones', C.uiScale || 1, 0.7, 1.6, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ uiScale: v })),
-      [0, 1].slice(0, C.dual ? 2 : 1).map((i) => slider(C.dual ? `Alto del kneeboard ${i + 1}` : 'Alto de la ventana', sizeOf(i), 0.3, 1, 0.01, (v) => `${Math.round(v * 100)} % de la pantalla`, (v) => kb.setSize(i, v))),
-      h('div.small.muted', 'También puedes arrastrar la esquina inferior derecha del kneeboard, o usar Ctrl + rueda del ratón sobre él para los textos.')),
-    h('h2', 'Cruz del centro (coordenadas del F10)'),
-    h('div.card',
-      h('div.row', h('span', { style: { width: '170px' } }, 'Mostrar la cruz'),
-        h('select.f', { onchange: (e) => patch({ crosshair: e.target.value }) },
-          [['auto', 'Automática: mientras ves la página Coordenadas del Bloc'], ['always', 'Siempre'], ['never', 'Nunca']]
-            .map(([v, l]) => h('option', { value: v, selected: (C.crosshair === false ? 'never' : C.crosshair || 'auto') === v }, l)))),
-      chk('Mostrarla también al detectar el mapa F10 (experimental)', 'Intenta saber si tienes el F10 abierto por la posición de la cámara. Puedes ver qué detecta en Integración DCS.', C.crosshairF10, (v) => patch({ crosshairF10: v })),
-      h('div.small.muted', 'Marca el centro de la ventana de DCS (y el centro de tu vista en VR): es el punto que se guarda al capturar coordenadas. También puedes asignar la acción «Mostrar la cruz del centro».')),
   );
 };
 
@@ -454,6 +440,11 @@ R.vr = async () => {
     !st.vrActive && (st.layer.registered || st.layerLog) ? vrDiagnosis(st) : null,
     chk('Mostrar en VR', null, C.vr.enabled, (v) => patch({ vr: { enabled: v } })),
     chk('Ocultar la ventana del monitor', 'Útil si solo vuelas en VR. Para escribir con el teclado usa la acción «Modo escritura».', C.vr.hideWindow, (v) => patch({ vr: { hideWindow: v } })),
+    h('div.row', h('span', { style: { width: '170px' } }, 'Nitidez en VR'),
+      h('select.f', { onchange: (e) => patch({ vr: { sharpness: e.target.value } }) },
+        [['alta', 'Alta (1600 píxeles de alto)'], ['maxima', 'Máxima (2200 píxeles, más carga)'], ['monitor', 'Como la ventana del monitor']]
+          .map(([v, l]) => h('option', { value: v, selected: (C.vr.sharpness || 'alta') === v }, l)))),
+    h('div.small.muted', 'La imagen del visor sale de la ventana del kneeboard. Con Alta o Máxima, mientras estás en VR la ventana se aparta del monitor y se dibuja a esa resolución: el contenido es el mismo, con más detalle (útil con PDF e imágenes). Si notas tirones, baja un nivel.'),
     chk('Ampliar al mirarlo', 'El kneeboard crece cuando lo miras de frente.', C.vr.gazeZoom, (v) => patch({ vr: { gazeZoom: v } })),
     slider('Ampliación', C.vr.zoomScale, 1, 2.5, 0.05, (v) => `×${v.toFixed(2)}`, (v) => patch({ vr: { zoomScale: v } })),
     slider('Opacidad sin mirar', C.vr.opacityIdle, 0.1, 1, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ vr: { opacityIdle: v } })),
@@ -902,9 +893,34 @@ function dcsDirsCard(st) {
   return card;
 }
 
-R.dcs = async () => {
+// Ajustes generales: lo que no es de aspecto (dos kneeboards, arranque, tamaño en el monitor) y la conexión con DCS.
+R.ajustes = async () => {
+  main.append(h('h1', 'Ajustes generales'), h('p.lead', 'Cómo funciona el kneeboard en tu PC: uno o dos kneeboards, si arranca con Windows, su tamaño en el monitor y la conexión con DCS.'),
+    h('div.card',
+      chk('Dos kneeboards', 'Un segundo kneeboard independiente (por ejemplo, radios a la izquierda y plan a la derecha).', C.dual, async (v) => { await patch({ dual: v }); render(); }),
+      chk('Iniciar con Windows', 'Se abre oculto al encender el PC (en la bandeja), listo para cuando entres en DCS: sácalo con tu tecla.', C.startWithWindows, (v) => patch({ startWithWindows: v })),
+      chk('Siempre encima de DCS', 'Recomendado si juegas en ventana o pantalla completa sin bordes.', C.alwaysOnTop, (v) => patch({ alwaysOnTop: v })),
+      chk('Clic a través', 'El ratón atraviesa el kneeboard en el monitor (se puede alternar con una tecla).', C.clickThrough, (v) => patch({ clickThrough: v }))),
+    h('h2', 'Tamaño en el monitor (2D)'),
+    h('div.card',
+      slider('Textos y botones', C.uiScale || 1, 0.7, 1.6, 0.05, (v) => `${Math.round(v * 100)} %`, (v) => patch({ uiScale: v })),
+      [0, 1].slice(0, C.dual ? 2 : 1).map((i) => slider(C.dual ? `Alto del kneeboard ${i + 1}` : 'Alto de la ventana', sizeOf(i), 0.3, 1, 0.01, (v) => `${Math.round(v * 100)} % de la pantalla`, (v) => kb.setSize(i, v))),
+      h('div.small.muted', 'También puedes arrastrar la esquina inferior derecha del kneeboard, o usar Ctrl + rueda del ratón sobre él para los textos.')),
+    h('h2', 'Cruz del centro (coordenadas del F10)'),
+    h('div.card',
+      h('div.row', h('span', { style: { width: '170px' } }, 'Mostrar la cruz'),
+        h('select.f', { onchange: (e) => patch({ crosshair: e.target.value }) },
+          [['auto', 'Automática: mientras ves la página Coordenadas del Bloc'], ['always', 'Siempre'], ['never', 'Nunca']]
+            .map(([v, l]) => h('option', { value: v, selected: (C.crosshair === false ? 'never' : C.crosshair || 'auto') === v }, l)))),
+      chk('Mostrarla también al detectar el mapa F10 (experimental)', 'Intenta saber si tienes el F10 abierto por la posición de la cámara. Puedes ver qué detecta más abajo, en Integración DCS.', C.crosshairF10, (v) => patch({ crosshairF10: v })),
+      h('div.small.muted', 'Marca el centro de la ventana de DCS (y el centro de tu vista en VR): es el punto que se guarda al capturar coordenadas. También puedes asignar la acción «Mostrar la cruz del centro».')),
+  );
+  await dcsBlock();
+};
+
+async function dcsBlock() {
   const st = await kb.integrationStatus();
-  main.append(h('h1', 'Integración con DCS'), h('p.lead', 'El script de DCS envía al kneeboard tu posición, la misión y los mensajes, y devuelve las coordenadas del F10. Es un archivo en Scripts\\Hooks; no modifica Export.lua.'));
+  main.append(h('h2', 'Integración DCS'), h('p.small.muted', { style: { margin: '-4px 0 10px' } }, 'El script de DCS envía al kneeboard tu posición, la misión y los mensajes, y devuelve las coordenadas del F10. Es un archivo en Scripts\\Hooks; no modifica Export.lua.'));
   const card = dcsDirsCard(st);
   card.append(h('div.row',
     h('button.btn.primary', { onclick: async () => { const r = await kb.integrationInstall({ hook: true }); if (r.error) alert(r.error); render(); } }, st.hooks.some((x) => x.state !== 'instalado') ? 'Instalar / actualizar' : 'Reinstalar'),
@@ -923,22 +939,9 @@ R.dcs = async () => {
       ? `herramienta de ruta del F10 ${rs.routeTool ? 'sí' : 'no'} · editor de DTC del juego ${rs.dtcEditor ? 'sí' : `no (ábrelo una vez${rs.dtcProbe ? ` · ${rs.dtcProbe}` : ''})`}`
       : 'puente con la interfaz de DCS sin conexión (reinicia DCS tras instalar)'}`
     : 'Ruta: sin datos (entra en una misión)');
-  // Prueba: kneeboards dinámicos de los módulos (los que el propio módulo rellena, como los del Viggen).
-  const probeOut = h('div.small.muted', 'Entra en la cabina del avión (por ejemplo, el Viggen) y pulsa «Probar».');
-  const probeCard = h('div.card',
-    h('div.row', h('b', 'Kneeboards de los módulos (prueba)'), h('span.grow'),
-      h('button.btn.small', { onclick: async () => {
-        probeOut.textContent = 'Probando…';
-        const r = await kb.kneeboardProbe();
-        probeOut.textContent = !r ? 'DCS no ha respondido: entra en una misión (el script de DCS tiene que estar actualizado, reinicia DCS si acabas de instalar).'
-          : `list_indication: ${r.where} · ${r.found} indicadores con texto. Resultado en ${r.path}`;
-      } }, 'Probar')),
-    h('div.small.muted', 'Algunos módulos dibujan páginas de kneeboard que cambian con el mapa (aeródromos, waypoints, radios del Viggen…). No son imágenes: las rellena el módulo. Esta prueba mira si DCS deja leer ese texto para traerlo aquí.'),
-    probeOut);
   main.append(card,
     h('div.card', h('div.row', h('b', 'Estado'), st.dcsConnected ? h('span.pillst.ok.ok', 'DCS conectado') : h('span.pillst', 'Sin conexión: entra en una misión')), camInfo, srcInfo,
-      h('div.small.muted', `Puertos UDP locales ${C.dcs.appPort} (app) y ${C.dcs.hookPort} (DCS). Solo se usan dentro de tu PC.`)),
-    probeCard);
+      h('div.small.muted', `Puertos UDP locales ${C.dcs.appPort} (app) y ${C.dcs.hookPort} (DCS). Solo se usan dentro de tu PC.`)));
 };
 
 R.actualizar = async () => {

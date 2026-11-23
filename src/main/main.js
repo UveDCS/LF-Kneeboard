@@ -268,6 +268,19 @@ function releaseFocus(win) {
   if (fg && focus.foreground() !== fg) focus.bringToFront(fg);
 }
 
+// «Nitidez en VR»: alto en píxeles de la imagen que va al visor. Esa imagen es la propia ventana, así que una
+// ventana pequeña en el monitor se veía borrosa en VR. Mientras estás en el visor, la ventana se aparta del
+// monitor y se agranda a ese alto; el texto se escala con el ancho de la ventana (base.css), así que se ve
+// igual pero con más detalle. «monitor» = la imagen tiene el tamaño de la ventana del monitor (como antes).
+const VR_HEIGHT = { monitor: 0, alta: 1600, maxima: 2200 };
+function vrRenderSize(c) {
+  const px = VR_HEIGHT[c.vr.sharpness || 'alta'] || 0;
+  if (!px || !c.vr.enabled || !vr || !vr.ok || !vr.active) return null;
+  const sf = screen.getPrimaryDisplay().scaleFactor || 1;
+  const height = Math.round(px / sf);
+  return { width: Math.round(height * ASPECT), height };
+}
+
 function applyWindowState(i) {
   const win = views[i];
   if (!win || win.isDestroyed()) return;
@@ -280,12 +293,20 @@ function applyWindowState(i) {
   // Guardado (o «Ocultar la ventana del monitor» en VR): la ventana NO se oculta, se aparca fuera de todas las
   // pantallas. Ocultándola, Windows y Chromium soltaban sus recursos de la tarjeta gráfica y, con DCS abierto
   // ocupando la GPU y su memoria, al volver a sacarla iba a tirones hasta medio minuto.
-  const park = !!c.hidden || (c.vr.enabled && c.vr.hideWindow);
-  if (park && !win.__offscreen) {
+  // En VR con «Nitidez en VR», además se aparca a la resolución del visor (ver vrRenderSize).
+  const big = vrRenderSize(c);
+  const park = !!c.hidden || (c.vr.enabled && c.vr.hideWindow) || !!big;
+  if (park) {
     const all = screen.getAllDisplays().map((d) => d.bounds);
     const minX = Math.min(...all.map((d) => d.x));
-    win.__offscreen = true;
-    win.setPosition(minX - win.getBounds().width - 200, 0);
+    // Fuera del visor vuelve a su tamaño de siempre (no gastar memoria de la gráfica en una ventana enorme).
+    const saved = cfg.get().views[i].bounds || defaultBounds(i);
+    const size = big || { width: saved.width, height: saved.height };
+    const cur = win.getBounds();
+    if (!win.__offscreen || cur.width !== size.width || cur.height !== size.height) {
+      win.__offscreen = true;
+      win.setBounds({ x: minX - size.width - 200, y: 0, width: size.width, height: size.height });
+    }
   } else if (!park && win.__offscreen) {
     win.__offscreen = false;
     const b = cfg.get().views[i].bounds || defaultBounds(i);
@@ -1444,7 +1465,6 @@ function registerIpc() {
   ipcMain.handle('voice:status', () => voice.status);
   ipcMain.handle('timer', (e, cmd) => timerCmd(cmd));
   ipcMain.handle('messages:clear', () => { dcs.messages.length = 0; broadcast('messages-cleared'); });
-  ipcMain.handle('dcs:kbprobe', () => dcs.request({ cmd: 'kbprobe' }, 4000));
   // Paquete naval (.lfcvw): el texto lo prepara y lo comprueba la página (cvw-data.js); aquí solo los diálogos.
   ipcMain.handle('cvw:export', async (e, text, name) => {
     const win = BrowserWindow.fromWebContents(e.sender);
@@ -1712,6 +1732,7 @@ app.whenReady().then(() => {
   vr.on('gaze', (i, g) => sendToView(i, 'gaze', g));
   vr.on('active', (a) => {
     broadcast('vr-active', a);
+    views.forEach((_, i) => applyWindowState(i)); // «Nitidez en VR»: agranda la ventana o la devuelve al monitor
     views.forEach((w, i) => { if (a) startFrames(i); else if (!process.env.LFKB_SNAPSHOT) stopFrames(i); });
     vr.emit('log', a ? 'Visor activo: se envían imágenes al visor' : 'Visor en espera: se deja de capturar');
   });
